@@ -41,47 +41,55 @@ int main(int argc, char* argv[])
 	CIndexStatements CIndexStatementsObject;
 	CSettings CSettingsObject;
 	CRelationships CRelationshipsObject;
-	CMain::ReadFromCSimpleIni(CSettingsObject);
 	vector <CString> statements;
 	vector <CString> RelationFields;
 	vector <CString> IndexStatements;
 	vector <CString> UniqueFields;
-    CString widepath = (CString)argv[1];                        // Path to the file that we want
-	CDaoDatabase db;                                            // Create CDaoDatabase object
-	db.Open(widepath);                                          // Open the database file that we want
-	short nTableCount = db.GetTableDefCount();                  // Get how many tables are in the selected database
-	CString *sTableNames = new CString[nTableCount];
-	short nNonSystemTableCount=0;
-	for(int i = 0; i < nTableCount; i++)
-	{
-		CDaoTableDefInfo tabledefinfo;                           
-        db.GetTableDefInfo(i,tabledefinfo);                      
-		if(tabledefinfo.m_lAttributes == 0)                      
-	   	{  
-			sTableNames[nNonSystemTableCount] = tabledefinfo.m_strName;
-			nNonSystemTableCount++;
+    CString widepath = (CString)argv[1];
+	CMain::ReadFromCSimpleIni(CSettingsObject);
+	try
+	{                                                           
+		CDaoDatabase db;                                            // Path to the file that we want
+		db.Open(widepath);                                          // Create CDaoDatabase object
+		short nTableCount = db.GetTableDefCount();               // Open the database file that we want   
+		CString *sTableNames = new CString[nTableCount];      // Get how many tables are in the selected database
+		short nNonSystemTableCount=0;
+		for(int i = 0; i < nTableCount; i++)
+		{
+			CDaoTableDefInfo tabledefinfo;                           
+			db.GetTableDefInfo(i,tabledefinfo);                      
+			if(tabledefinfo.m_lAttributes == 0)                      
+	   		{  
+				sTableNames[nNonSystemTableCount] = tabledefinfo.m_strName;
+				nNonSystemTableCount++;
+			}
 		}
+		for(int i = 0; i < nTableCount; i++)
+		  {
+			CDaoTableDefInfo tabledefinfo;                           // Create tabledefinfo  object & save all information in it about the table we are currently analyzing
+			db.GetTableDefInfo(i,tabledefinfo);                      // tabledefinfo we save information about the i-th table
+			if(tabledefinfo.m_lAttributes == 0)                      // We choose only the elements that we need
+	   		{  
+				  short nRelationCount = db.GetRelationCount();
+				  if(!i && CSettingsObject.bRelationshipAdd)
+					 CRelationshipsObject.Relationhips(db,RelationFields,nRelationCount); 
+				  CDaoTableDef TableDef(&db);
+				  statements.push_back(_T("CREATE TABLE   `"));  
+				  statements.back() += tabledefinfo.m_strName;
+				  statements.back() += (_T("` ("));
+				  TableDef.Open(tabledefinfo.m_strName); //We open one of tabledefinfo structural objects (this time table name)  
+				  if(CSettingsObject.bIndexAdd) CIndexStatementsObject.Indexes(TableDef,IndexStatements,tabledefinfo,sTableNames,nNonSystemTableCount,UniqueFields);
+				  if(CSettingsObject.bFieldsAdd) CFieldStatementsObject.fFields(TableDef, tabledefinfo, statements,UniqueFields,CSettingsObject);    
+			} 
+		 }
+		delete[] sTableNames; 
+		db.Close();
 	}
-	for(int i = 0; i < nTableCount; i++)
-      {
-        CDaoTableDefInfo tabledefinfo;                           // Create tabledefinfo  object & save all information in it about the table we are currently analyzing
-        db.GetTableDefInfo(i,tabledefinfo);                      // tabledefinfo we save information about the i-th table
-		if(tabledefinfo.m_lAttributes == 0)                      // We choose only the elements that we need
-	   	{  
-			  short nRelationCount = db.GetRelationCount();
-			  if(!i && CSettingsObject.bRelationshipAdd)
-				 CRelationshipsObject.Relationhips(db,RelationFields,nRelationCount); 
-		      CDaoTableDef TableDef(&db);
-		      statements.push_back(_T("CREATE TABLE   `"));  
-			  statements.back() += tabledefinfo.m_strName;
-			  statements.back() += (_T("` ("));
-			  TableDef.Open(tabledefinfo.m_strName); //We open one of tabledefinfo structural objects (this time table name)  
-			  if(CSettingsObject.bIndexAdd) CIndexStatementsObject.Indexes(TableDef,IndexStatements,tabledefinfo,sTableNames,nNonSystemTableCount,UniqueFields);
-			  if(CSettingsObject.bFieldsAdd) CFieldStatementsObject.fFields(TableDef, tabledefinfo, statements,UniqueFields,CSettingsObject);    
-		} 
-     }
-	delete[] sTableNames; 
-	db.Close();
+	catch(CDaoException *e)
+	{
+		ASSERT(FALSE);
+		e->Delete();
+	}
 	AfxDaoTerm();
 	CSQLiteConversionObject.SqliteConversion(statements,IndexStatements,RelationFields);
     return 0;

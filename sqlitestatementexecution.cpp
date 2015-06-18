@@ -63,7 +63,7 @@ void CSQLiteConversion::SqliteConversion(std::vector <CString> const &statements
     sqlite3 *sqlitedatabase;
     int  rcc;
      /* Open database */
-     rcc = sqlite3_open("testas24.sqlite", &sqlitedatabase);
+     rcc = sqlite3_open("pt34.sqlite", &sqlitedatabase);
      if( rcc )
 	 {
          fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(sqlitedatabase));

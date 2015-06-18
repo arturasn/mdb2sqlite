@@ -3,6 +3,6 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LocalDebuggerCommandArguments>C:\Users\arturasN\Desktop\pt34.mdb</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
-    <LocalDebuggerCommand>C:\Users\arturasN\Documents\ExecutionToSqlite\Debug\naujastestas.exe</LocalDebuggerCommand>
+    <LocalDebuggerCommand>$(TargetPath)</LocalDebuggerCommand>
   </PropertyGroup>
 </Project>

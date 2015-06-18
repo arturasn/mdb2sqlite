@@ -13,6 +13,40 @@
 static char THIS_FILE[]=__FILE__;
 #define new DEBUG_NEW
 #endif
+/*
+template <class TOleVariant>
+static inline COleDateTime GetDateTime(const TOleVariant &varSrc) {
+	LPCVARIANT pSrc = (LPCVARIANT)varSrc;
+	switch (pSrc->vt)
+	{
+	case VT_DATE:
+		return COleDateTime(varSrc);
+	}
+	COleDateTime dt;
+	dt.SetStatus (COleDateTime::null);
+	return dt;
+}
+template <class TOleDateTime>
+inline time_t OleDateTimeToTime(const TOleDateTime &oleDt)
+{
+    struct tm tmDate;
+	memset(&tmDate, 0, sizeof(tm));
+    tmDate.tm_sec  = oleDt.GetSecond();
+    tmDate.tm_min  = oleDt.GetMinute();
+    tmDate.tm_hour = oleDt.GetHour();
+    tmDate.tm_mday = oleDt.GetDay();
+    tmDate.tm_mon  = oleDt.GetMonth() - 1;
+    tmDate.tm_year = oleDt.GetYear() - 1900;
+    tmDate.tm_isdst = -1;
+    return mktime(&tmDate);
+}
+
+template <class TOleVariant>
+inline time_t VariantToTime(const TOleVariant &oleTime) 
+{
+    COleDateTime oleDt(oleTime);
+	return ::OleDateTimeToTime(oleDt);
+}*/
 void CFieldStatements::fFields(CDaoTableDef &TableDef, CDaoTableDefInfo &tabledefinfo, std::vector <CString> &statements, std::vector <CString> &UniqueFields, CSettings &CSettingsObject)
 {
 	 
@@ -72,22 +106,22 @@ void CFieldStatements::FieldTypeAdd(CDaoTableDef &TableDef, const CDaoFieldInfo 
 				        case dbInteger: statements.back() += (_T("INTEGER"));  break;
 						case dbLong : statements.back() += (_T("INTEGER"));  break;
 			   	        case dbCurrency: statements.back() += (_T("INTEGER"));  break;
-				        case dbSingle: statements.back() += (_T("SINGLE"));  break;
+				        case dbSingle: statements.back() += (_T("INTEGER"));  break;
 				        case dbDouble: statements.back() += (_T("REAL"));  break;
-				        case dbDate: statements.back() += (_T("DATE")); break;
+				        case dbDate: statements.back() += (_T("INTEGER")); break;
 						case dbBinary: statements.back() += (_T("BLOB")); break;
 				        case dbText: statements.back() += (_T("TEXT"));  break;
 						case dbLongBinary: statements.back() += (_T("BLOB"));  break;
 						case dbMemo: statements.back() += (_T("TEXT"));  break;
-						case dbGUID: ASSERT(FALSE); statements.back() += (_T("GUID"));  break;
+						case dbGUID: ASSERT(FALSE); statements.back() += (_T("TEXT"));  break;
 						case dbBigInt: statements.back() += (_T("INTEGER"));  break;
 						case dbVarBinary: statements.back() += (_T("BLOB"));  break;
 						case dbChar: statements.back() += (_T("TEXT"));  break;
-						case dbNumeric: statements.back() += (_T("NUMERIC"));  break;
+						case dbNumeric: statements.back() += (_T("INTEGER"));  break;
 						case dbDecimal: statements.back() += (_T("INTEGER"));  break;
 						case dbFloat: statements.back() += (_T("REAL"));  break;
-						case dbTime: statements.back() += (_T("TIME"));  break;
-						case dbTimeStamp: ASSERT(FALSE); statements.back() += (_T("TIME"));  break;
+						case dbTime: statements.back() += (_T("INTEGER"));  break;
+						case dbTimeStamp: ASSERT(FALSE); statements.back() += (_T("INTEGER"));  break;
 				        default: break;
 				      }
 }
@@ -129,6 +163,7 @@ void CFieldStatements::Records(CDaoTableDef &TableDef, const CDaoTableDefInfo &t
 			    	for(int m = 0; m < nFieldCount;m++)
 			        	{
 				        	recordset.GetFieldValue(sFieldnames[m], COlevar);
+						//	COleDateTime time = ::GetDateTime(COlevar);
 							if(COlevar.vt == VT_NULL)
                                statements.back() += _T("NULL");
 							else if(COlevar.vt == VT_I2 || COlevar.vt == VT_I4 || COlevar.vt == VT_R4 || COlevar.vt == VT_R8 || COlevar.vt == VT_BOOL || COlevar.vt == VT_CY || COlevar.vt == VT_UI2 || COlevar.vt == VT_UI4 || COlevar.vt ==  VT_I8 || COlevar.vt == VT_UI8 || COlevar.vt == VT_INT || COlevar.vt ==  VT_UINT || COlevar.vt == VT_BLOB)
