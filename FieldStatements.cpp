@@ -21,19 +21,19 @@ void CFieldStatements::fFields(CDaoTableDef &TableDef, CDaoTableDefInfo &tablede
 	short nFieldCount = TableDef.GetFieldCount();        // Counts how manys fields there are in the database of a current sellected table
 	CString *sFieldnames = new CString[nFieldCount];     // creating dynamic array of field names
 	bool bIsText;
-	for(int j = 0; j < nFieldCount; ++j)
+	for(int i1 = 0; i1 < nFieldCount; ++i1)
 			  {
 				  bIsText = false;
 				  CDaoFieldInfo fieldinfo;                                          // Create a fieldinfo object in which we will store information about the field
-				  TableDef.GetFieldInfo(j,fieldinfo,AFX_DAO_ALL_INFO);              // We store the information about the j-th field
-				  sFieldnames[j] = fieldinfo.m_strName;                            // saving field names into an array
+				  TableDef.GetFieldInfo(i1,fieldinfo,AFX_DAO_ALL_INFO);              // We store the information about the j-th field
+				  sFieldnames[i1] = fieldinfo.m_strName;                            // saving field names into an array
 				  statements.back() += _T("      `");
 				  statements.back() += fieldinfo.m_strName;
 				  statements.back() += (_T("`     ")); 
 				  CDaoRecordset rc;
 				  rc.Open(&TableDef);
 				  CDaoFieldInfo recordinfo;
-				  rc.GetFieldInfo(j,recordinfo);
+				  rc.GetFieldInfo(i1,recordinfo);
 				  if(settings.bFieldTypeAdd) 
 				  { 
                      #pragma deprecated(FieldTypeAdd)
@@ -59,9 +59,9 @@ void CFieldStatements::fFields(CDaoTableDef &TableDef, CDaoTableDefInfo &tablede
 						  #pragma deprecated(UniqueFieldAdd)
 						  UniqueFieldAdd(statements,fieldinfo,tabledefinfo,UniqueFields);
 				       }
-				  if(bIsText)
+				  if(bIsText && settings.bCollateNoCaseFieldsAdd)
 					  statements.back() += _T(" COLLATE NOCASE");
-					if(j != nFieldCount-1)
+					if(i1 != nFieldCount-1)
 						statements.back() += (_T(","));
 			    	else
 						statements.back() += (_T(");"));
@@ -125,9 +125,9 @@ void CFieldStatements::UniqueFieldAdd(std::vector <CString> &statements, const C
 	CString temp = tabledefinfo.m_strName;
 	temp += fieldinfo.m_strName;
 	unsigned nVectorSize = UniqueFields.size();
-	for(unsigned m = 0; m < nVectorSize; ++m)
+	for(unsigned i2 = 0; i2 < nVectorSize; ++i2)
 	{
-		if(!(temp.Compare(UniqueFields[m])))
+		if(!(temp.Compare(UniqueFields[i2])))
 		{
 			statements.back() += _T(" UNIQUE");
 			break;
@@ -143,11 +143,11 @@ void CFieldStatements::Records(CDaoTableDef &TableDef, const CDaoTableDefInfo &t
 	    sParrent = _T("INSERT INTO   `");
 	    sParrent += ((LPCTSTR)tabledefinfo.m_strName);
 	    sParrent += _T("`  (");
-		  for(int j = 0; j < nFieldCount; ++j)
+		  for(int i1 = 0; i1 < nFieldCount; ++i1)
 	      {
 			  sParrent += _T("`");
-			  sParrent += sFieldnames[j]; 
-			  if(j != nFieldCount-1)
+			  sParrent += sFieldnames[i1]; 
+			  if(i1 != nFieldCount-1)
 			  	 sParrent += _T("`, ");
 			  else sParrent += "`)";
 		  }
@@ -156,9 +156,9 @@ void CFieldStatements::Records(CDaoTableDef &TableDef, const CDaoTableDefInfo &t
 			     { 
 					statements.push_back(sParrent);
 			      	statements.back() += _T(" VALUES (");
-			    	for(int m = 0; m < nFieldCount; ++m)
+			    	for(int i2 = 0; i2 < nFieldCount; ++i2)
 			        	{
-				        	recordset.GetFieldValue(sFieldnames[m], COlevar);
+				        	recordset.GetFieldValue(sFieldnames[i2], COlevar);
 							if(COlevar.vt == VT_NULL)
                                statements.back() += _T("NULL");
 							else if(COlevar.vt == VT_I2 || COlevar.vt == VT_I4 || COlevar.vt == VT_R4 || COlevar.vt == VT_R8 || COlevar.vt == VT_BOOL || COlevar.vt == VT_CY || COlevar.vt == VT_UI2 || COlevar.vt == VT_UI4 || COlevar.vt ==  VT_I8 || COlevar.vt == VT_UI8 || COlevar.vt == VT_INT || COlevar.vt ==  VT_UINT || COlevar.vt == VT_BLOB)
@@ -171,7 +171,7 @@ void CFieldStatements::Records(CDaoTableDef &TableDef, const CDaoTableDefInfo &t
 								statements.back() += sString;
 								statements.back() += _T("'");
 							}
-				        	if(m != nFieldCount - 1)
+				        	if(i2 != nFieldCount - 1)
 					        	statements.back() += _T(", ");
 					        else statements.back() += _T(");");
 				        }
@@ -184,14 +184,14 @@ void CFieldStatements::FieldCollation(CDaoTableDef &TableDef, CDaoTableDefInfo &
 {
 	TableDef.Open(tabledefinfo.m_strName);
 	short nFieldCount = TableDef.GetFieldCount(); 
-	for(int j = 0; j < nFieldCount; ++j)
+	for(int i1 = 0; i1 < nFieldCount; ++i1)
 			  {
 				  CDaoFieldInfo fieldinfo;                                          
-				  TableDef.GetFieldInfo(j,fieldinfo,AFX_DAO_ALL_INFO); 
+				  TableDef.GetFieldInfo(i1,fieldinfo,AFX_DAO_ALL_INFO); 
 				  CDaoRecordset rc;
 				  rc.Open(&TableDef);
 				  CDaoFieldInfo recordinfo;
-				  rc.GetFieldInfo(j,recordinfo);
+				  rc.GetFieldInfo(i1,recordinfo);
 				  switch(recordinfo.m_nType)
 				  {
 						case dbText: CollateIndexFields.push_back(tabledefinfo.m_strName); CollateIndexFields.back() += fieldinfo.m_strName; break;

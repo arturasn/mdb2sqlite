@@ -27,6 +27,7 @@
 
 #include <iostream>
 
+#pragma warning(disable : 4995)
 
 
 // TODO: reference additional headers your program requires here

@@ -17,7 +17,9 @@ class CSettings
 		        bDefaultValueAdd, 
 		        bFieldTypeAdd,
 		        bIndexAdd,
-		        bUniqueFieldAdd; 
+		        bUniqueFieldAdd,
+		        bCollateNoCaseIndexAdd,
+				bCollateNoCaseFieldsAdd;
  };
 class CMain
 {

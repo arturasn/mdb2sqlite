@@ -34,7 +34,7 @@ void CSQLiteConversion::SqliteStatementExecution(std::vector <CString> const &st
 	 for(unsigned i = 0; i < nVectorLength; ++i)
 	 {
 		std::string sB = ConvertToUTF8(statements[i]);
-        const char* pszC = strdup(sB.c_str());
+        const char* pszC = _strdup(sB.c_str());
         rc = sqlite3_exec(sqlitedatabase, pszC, NULL, 0, &zErrMsg);
 		sqlite3_exec(sqlitedatabase, "PRAGMA synchronous = OFF", NULL, NULL, &zErrMsg);
 		sqlite3_exec(sqlitedatabase, "PRAGMA journal_mode = MEMORY", NULL, NULL, &zErrMsg);

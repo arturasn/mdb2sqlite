@@ -13,14 +13,14 @@ static char THIS_FILE[]=__FILE__;
 
 #pragma warning(disable : 4995)
 
-void CIndexStatements::Indexes(CDaoTableDef &TableDef, std::vector <CString> &IndexStatements, const CDaoTableDefInfo &tabledefinfo, CString *&sTableNames, const short &nTableCount, std::vector <CString> &UniqueFields, std::vector <CString> &CollateIndexFields)
+void CIndexStatements::Indexes(CDaoTableDef &TableDef, std::vector <CString> &IndexStatements, const CDaoTableDefInfo &tabledefinfo, CString *&sTableNames, const short &nTableCount, std::vector <CString> &UniqueFields, std::vector <CString> &CollateIndexFields, const bool &bCollateNoCaseIndexAdd)
 {
 	CString sParrent;
 	 short nIndexCount = TableDef.GetIndexCount();
-			  for(int j = 0; j < nIndexCount; ++j)
+			  for(int i1 = 0; i1 < nIndexCount; ++i1)
 			  {
 				  CDaoIndexInfo indexinfo;
-				  TableDef.GetIndexInfo(j,indexinfo,AFX_DAO_ALL_INFO);
+				  TableDef.GetIndexInfo(i1,indexinfo,AFX_DAO_ALL_INFO);
 				  if(indexinfo.m_strName.Find('{') != -1 || indexinfo.m_strName.Find('}') != -1 || IndexFilter(tabledefinfo,indexinfo,sTableNames,nTableCount))
 				     continue;
 				  if(indexinfo.m_bUnique == TRUE)
@@ -34,19 +34,23 @@ void CIndexStatements::Indexes(CDaoTableDef &TableDef, std::vector <CString> &In
 				  IndexStatements.back() += tabledefinfo.m_strName;
 				  IndexStatements.back() += _T("(");
 				  short nColumnCount = indexinfo.m_nFields;
-				  for(int m = 0; m < nColumnCount; ++m)
+				  for(int i2 = 0; i2 < nColumnCount; ++i2)
 				  {
 					  IndexStatements.back() += _T("'");
 					  if(indexinfo.m_bUnique == TRUE)
 					  {
 						  UniqueFields.push_back(tabledefinfo.m_strName);
-						  UniqueFields.back() += indexinfo.m_pFieldInfos[m].m_strName;
+						  UniqueFields.back() += indexinfo.m_pFieldInfos[i2].m_strName;
 					  }
-					  sParrent += indexinfo.m_pFieldInfos[m].m_strName;
-					  IndexStatements.back() += indexinfo.m_pFieldInfos[m].m_strName;					  
+					  sParrent += indexinfo.m_pFieldInfos[i2].m_strName;
+					  IndexStatements.back() += indexinfo.m_pFieldInfos[i2].m_strName;					  
 					  IndexStatements.back() += _T("'");
-					  if(IsIndexFieldText(sParrent,CollateIndexFields)) IndexStatements.back() +=  _T(" COLLATE NOCASE ");
-					  if(m == nColumnCount-1)
+					  if(bCollateNoCaseIndexAdd)
+					   {
+					     if(IsIndexFieldText(sParrent,CollateIndexFields)) 
+						    	IndexStatements.back() +=  _T(" COLLATE NOCASE ");
+					   }
+					  if(i2 == nColumnCount-1)
 						  IndexStatements.back() += _T(")");
 					  else IndexStatements.back() += _T(",");
 				  }
@@ -60,10 +64,10 @@ bool CIndexStatements::IndexFilter(const CDaoTableDefInfo &tabledefinfo, const C
 	CString temp = tabledefinfo.m_strName + _T("1");
 	CString temp2 = tabledefinfo.m_strName + _T("2");
 	CString temp3 = tabledefinfo.m_strName + tabledefinfo.m_strName;
-	for(int m = 0; m < nTableCount; ++m)
+	for(int i2 = 0; i2 < nTableCount; ++i2)
 	{
 		
-		if((indexinfo.m_strName.Find(sTableNames[m]) != -1) && sTableNames[m].Compare(tabledefinfo.m_strName))
+		if((indexinfo.m_strName.Find(sTableNames[i2]) != -1) && sTableNames[i2].Compare(tabledefinfo.m_strName))
 			return true;
 		if(indexinfo.m_strName.Find(temp) != -1 || indexinfo.m_strName.Find(temp2) != -1 || indexinfo.m_strName.Find(temp3) != -1)
 			return true;
@@ -73,9 +77,9 @@ bool CIndexStatements::IndexFilter(const CDaoTableDefInfo &tabledefinfo, const C
 bool CIndexStatements::IsIndexFieldText(CString sParrent , std::vector <CString> &CollateIndexFields)
 {
 	unsigned nVectorLength = CollateIndexFields.size();
-	for(int k = 0; k < nVectorLength; ++k)
+	for(unsigned i3 = 0; i3 < nVectorLength; ++i3)
 	{
-		if(!sParrent.Compare(CollateIndexFields[k]))
+		if(!sParrent.Compare(CollateIndexFields[i3]))
 			return true;
 	}
 	return false;

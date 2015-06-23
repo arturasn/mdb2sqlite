@@ -32,6 +32,8 @@ void CMain::ReadFromCSimpleIni(CSettings &settings)
 	settings.bFieldTypeAdd = ini.GetBoolValue(_T("Settings"),_T("FieldTypeAdd"),true);
 	settings.bIndexAdd = ini.GetBoolValue(_T("Settings"),_T("IndexAdd"),true);
 	settings.bUniqueFieldAdd = ini.GetBoolValue(_T("Settings"),_T("UniqueFieldAdd"),true);
+	settings.bCollateNoCaseIndexAdd = ini.GetBoolValue(_T("Settings"),_T("CollateNoCaseForIndex"),true);
+	settings.bCollateNoCaseFieldsAdd = ini.GetBoolValue(_T("Settings"),_T("CollateNoCaseForFields"),true);
 }
 
 int main(int argc, char* argv[])
@@ -70,7 +72,8 @@ int main(int argc, char* argv[])
 				CDaoTableDef TableDef(&db);
 				sTableNames[nNonSystemTableCount] = tabledefinfo.m_strName;
 				nNonSystemTableCount++;
-				CFieldStatementsObject.FieldCollation(TableDef,tabledefinfo,CollateIndexFields);
+				if(settings.bCollateNoCaseIndexAdd) 
+					CFieldStatementsObject.FieldCollation(TableDef,tabledefinfo,CollateIndexFields);
 			}
 		}
 		for(int i = 0; i < nTableCount; ++i)
@@ -93,7 +96,7 @@ int main(int argc, char* argv[])
 				  if(settings.bIndexAdd) 
 					  {
                           #pragma deprecated(Indexes)
-						  CIndexStatementsObject.Indexes(TableDef,IndexStatements,tabledefinfo,sTableNames,nNonSystemTableCount,UniqueFields,CollateIndexFields);
+						  CIndexStatementsObject.Indexes(TableDef,IndexStatements,tabledefinfo,sTableNames,nNonSystemTableCount,UniqueFields,CollateIndexFields,settings.bCollateNoCaseIndexAdd);
 				      }
 				  if(settings.bFieldsAdd) 
 					  {

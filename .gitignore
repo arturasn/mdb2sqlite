@@ -27,4 +27,4 @@
 
 /naujastestas/*.filters 
 /naujastestas/Debug
-/naujastestas/*.tlog
+*.tlog
