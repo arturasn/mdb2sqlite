@@ -1,6 +1,6 @@
 
-#ifndef INCLUDED_SQLITESTATEMENTEXECUTION_H
-#define INCLUDED_SQLITESTATEMENTEXECUTION_H
+#ifndef __INCLUDED_SQLITESTATEMENTEXECUTION_H__
+#define __INCLUDED_SQLITESTATEMENTEXECUTION_H__
 #pragma once
 
 #include "stdafx.h"
@@ -9,13 +9,14 @@
 #include <stdio.h>
 #include <vector>
 
+#pragma warning(disable : 4995)
+
 class CSQLiteConversion
 {
 public: 
-	void SqliteConversion(std::vector <CString> const &statements, std::vector <CString> const &IndexStatements,  std:: vector <CString> const &RelationFields);
+	void SqliteConversion(std::vector <CString> const &statements, std::vector <CString> const &IndexStatements,  std:: vector <CString> const &RelationFields ,char* dPath);
 private:		
 	void SqliteStatementExecution(std::vector <CString> const &statements, sqlite3 *&sqlitedatabase, int rc);
-    static int callback(void *NotUsed, int argc, char **argv, char **azColName);
-	CString ConvertToUTF8(const wchar_t *wstr);
+	std::string ConvertToUTF8(const wchar_t *wstr);
 };
 #endif

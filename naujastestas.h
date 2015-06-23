@@ -4,6 +4,8 @@
 
 #include "Resource.h"
 
+#pragma warning(disable : 4995)
+
 class CSettings
  {
  public:
@@ -20,6 +22,6 @@ class CSettings
 class CMain
 {
    public:
-	 static void ReadFromCSimpleIni(CSettings &CSettingsObject);
+	 static void ReadFromCSimpleIni(CSettings &settings);
 };
 #endif

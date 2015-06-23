@@ -74,9 +74,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <None Include="ReadMe.txt" />
-  </ItemGroup>
-  <ItemGroup>
     <ClInclude Include="FieldStatements.h" />
     <ClInclude Include="IndexStatements.h" />
     <ClInclude Include="naujastestas.h" />
@@ -101,6 +98,12 @@
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="naujastestas.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="sqlite3.dll" />
+  </ItemGroup>
+  <ItemGroup>
+    <Library Include="sqlite3.lib" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

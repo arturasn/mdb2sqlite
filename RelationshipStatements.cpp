@@ -9,11 +9,11 @@
 static char THIS_FILE[]=__FILE__;
 #define new DEBUG_NEW
 #endif
-
+#pragma warning(disable : 4995)
 void CRelationships::Relationhips(CDaoDatabase &db, std::vector <CString> &RelationFields, const short nRelationCount)
 {
 			  CDaoRelationInfo relationinfo;
-			  for(int j = 0; j < nRelationCount; j++)
+			  for(int j = 0; j < nRelationCount; ++j)
 			  {
 				  db.GetRelationInfo(j,relationinfo,AFX_DAO_ALL_INFO);
 				  short nRelationFields = relationinfo.m_nFields;
@@ -22,7 +22,7 @@ void CRelationships::Relationhips(CDaoDatabase &db, std::vector <CString> &Relat
 				  RelationFields.back() += _T("Delete AFTER DELETE ON ");
 				  RelationFields.back() +=  relationinfo.m_strTable;
 				  RelationFields.back() += _T(" FOR EACH ROW BEGIN");
-				  for(int m = 0; m < nRelationFields; m++)
+				  for(int m = 0; m < nRelationFields; ++m)
 				  { 
 					  RelationFields.back() += _T(" DELETE FROM ");
 				      RelationFields.back() += relationinfo.m_strForeignTable;
@@ -34,14 +34,14 @@ void CRelationships::Relationhips(CDaoDatabase &db, std::vector <CString> &Relat
 				  }
 				  RelationFields.back() += _T(" END; ");
 			  }
-			  for(int j = 0; j < nRelationCount; j++)
+			  for(int j = 0; j < nRelationCount; ++j)
 			  {
 				  db.GetRelationInfo(j,relationinfo,AFX_DAO_ALL_INFO);
 				  short nRelationFields = relationinfo.m_nFields;
 				  RelationFields.push_back(_T("CREATE TRIGGER "));
 				  RelationFields.back() += relationinfo.m_strName;
 				  RelationFields.back() += _T("Update AFTER UPDATE OF ");
-				  for(int m = 0; m < nRelationFields; m++)
+				  for(int m = 0; m < nRelationFields; ++m)
 				  {
 					  RelationFields.back() += relationinfo.m_pFieldInfos[m].m_strName;
 					  if(m != nRelationFields-1)
@@ -50,7 +50,7 @@ void CRelationships::Relationhips(CDaoDatabase &db, std::vector <CString> &Relat
 				  RelationFields.back() += _T(" ON ");
 				  RelationFields.back() += relationinfo.m_strTable;
 				  RelationFields.back() += _T(" BEGIN ");
-				  for(int m = 0; m < nRelationFields; m++)
+				  for(int m = 0; m < nRelationFields; ++m)
 				  {
 				  RelationFields.back() += _T("UPDATE ");
 				  RelationFields.back() += relationinfo.m_strForeignTable;
