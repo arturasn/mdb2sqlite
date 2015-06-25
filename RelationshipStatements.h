@@ -7,11 +7,9 @@
 #include <vector>
 #pragma once
 
-#pragma warning(disable : 4995)
-
 class CRelationships
 {
 	public: 
-		void Relationhips(CDaoDatabase &db, std::vector <CString> &RelationFields, const short nRelationCount);
+		void Relationhips(CDaoDatabase &db, std::vector<CString> &RelationFields, const short nRelationCount);
 };
 #endif

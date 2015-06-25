@@ -14,7 +14,6 @@
 #include "sqlitestatementexecution.h"
 #include "RelationshipStatements.h"
 
- #pragma warning(disable : 4995)
 void CSettingsReader::ReadFromCSimpleIni(CSettings &settings)
 {
 	CSimpleIni ini;
@@ -49,11 +48,11 @@ int main(int argc, char* argv[])
 	CIndexStatements CIndexStatementsObject;
 	CSettings settings;
 	CRelationships CRelationshipsObject;
-	std::vector <CString> statements;
-	std::vector <CString> RelationFields;
-	std::vector <CString> IndexStatements;
-	std::vector <CString> UniqueFields;
-	std::vector <CString> CollateIndexFields;
+	std::vector<CString> statements;
+	std::vector<CString> RelationFields;
+	std::vector<CString> IndexStatements;
+	std::vector<CString> UniqueFields;
+	std::vector<CString> CollateIndexFields;
     CString widepath = (CString)argv[1];
 	CSettingsReader::ReadFromCSimpleIni(settings);
 	try

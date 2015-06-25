@@ -13,9 +13,8 @@ static char THIS_FILE[]=__FILE__;
 #define new DEBUG_NEW
 #endif
 
-#pragma warning(disable : 4995)
 
-void CFieldStatements::fFields(CDaoTableDef &TableDef, CDaoTableDefInfo &tabledefinfo, std::vector <CString> &statements, std::vector <CString> &UniqueFields, CSettings &settings)
+void CFieldStatements::fFields(CDaoTableDef &TableDef, CDaoTableDefInfo &tabledefinfo, std::vector<CString> &statements, std::vector<CString> &UniqueFields, CSettings &settings)
 {
 	 
 	short nFieldCount = TableDef.GetFieldCount();        // Counts how manys fields there are in the database of a current sellected table
@@ -124,14 +123,14 @@ void CFieldStatements::FieldTypeAdd(CDaoTableDef &TableDef, const CDaoFieldInfo 
 				        default: break;
 				      }
 }
-void CFieldStatements::UniqueFieldAdd(std::vector <CString> &statements, const CDaoFieldInfo &fieldinfo, const CDaoTableDefInfo &tabledefinfo, std::vector <CString> &UniqueFields)
+void CFieldStatements::UniqueFieldAdd(std::vector<CString> &statements, const CDaoFieldInfo &fieldinfo, const CDaoTableDefInfo &tabledefinfo, std::vector<CString> &UniqueFields)
 {
 	CString temp = tabledefinfo.m_strName;
 	temp += fieldinfo.m_strName;
-	unsigned nVectorSize = UniqueFields.size();
-	for(unsigned i2 = 0; i2 < nVectorSize; ++i2)
+	auto end_it = UniqueFields.end();
+	for(auto i2 = UniqueFields.begin(); i2 != end_it; ++i2)
 	{
-		if(!(temp.Compare(UniqueFields[i2])))
+		if(!(temp.Compare(*i2)))
 		{
 			statements.back() += _T(" UNIQUE");
 			break;
@@ -184,7 +183,7 @@ void CFieldStatements::Records(CDaoTableDef &TableDef, const CDaoTableDefInfo &t
 			  statements.push_back(_T("END TRANSACTION"));
 			  delete[] sFieldnames;           // deleting dynamic array
 }
-void CFieldStatements::FieldCollation(CDaoTableDef &TableDef, CDaoTableDefInfo &tabledefinfo, std::vector <CString> &CollateIndexFields, const bool &m_bTrimTextValues)
+void CFieldStatements::FieldCollation(CDaoTableDef &TableDef, CDaoTableDefInfo &tabledefinfo, std::vector<CString> &CollateIndexFields, const bool &m_bTrimTextValues)
 {
 	TableDef.Open(tabledefinfo.m_strName);
 	short nFieldCount = TableDef.GetFieldCount(); 

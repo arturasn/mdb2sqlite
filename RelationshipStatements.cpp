@@ -11,9 +11,8 @@ static char THIS_FILE[]=__FILE__;
 #define new DEBUG_NEW
 #endif
 
-#pragma warning(disable : 4995)
 
-void CRelationships::Relationhips(CDaoDatabase &db, std::vector <CString> &RelationFields, const short nRelationCount)
+void CRelationships::Relationhips(CDaoDatabase &db, std::vector<CString> &RelationFields, const short nRelationCount)
 {
 			  CDaoRelationInfo relationinfo;
 			  for(int i1 = 0; i1 < nRelationCount; ++i1)

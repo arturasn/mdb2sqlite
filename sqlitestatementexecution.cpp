@@ -12,7 +12,6 @@ static char THIS_FILE[]=__FILE__;
 #endif
 
   #pragma comment (lib, "sqlite3.lib")
-  #pragma warning(disable : 4995)
 
 std::string CSQLiteConversion::ConvertToUTF8(const wchar_t *wstr)
     {
@@ -28,13 +27,13 @@ std::string CSQLiteConversion::ConvertToUTF8(const wchar_t *wstr)
         WideCharToMultiByte(CP_UTF8, 0, &wstr[0], nLen, &strTo[0], size_needed, NULL, NULL);
         return strTo;
     }
-void CSQLiteConversion::SqliteStatementExecution(std::vector <CString> &statements, sqlite3 *&sqlitedatabase, int rc)
+void CSQLiteConversion::SqliteStatementExecution(std::vector<CString> &statements, sqlite3 *&sqlitedatabase, int rc)
 	{
 	 char *zErrMsg = 0;
-	 unsigned nVectorLength = statements.size();
-	 for(unsigned i = 0; i < nVectorLength; ++i)
+	 auto end_it = statements.end();
+      for (auto it = statements.begin(); it != end_it; ++it)
 	 {
-		std::string sB = ConvertToUTF8(statements[i]);
+		std::string sB = ConvertToUTF8(*it);
         const char* pszC = _strdup(sB.c_str());		
         rc = sqlite3_exec(sqlitedatabase, pszC, NULL, 0, &zErrMsg);
         if( rc != SQLITE_OK )
@@ -47,7 +46,7 @@ void CSQLiteConversion::SqliteStatementExecution(std::vector <CString> &statemen
           fprintf(stdout, "Table created successfully\n");
 	 }
    }
-void CSQLiteConversion::SqliteConversion(std::vector <CString> &statements, std::vector <CString> &IndexStatements, std::vector <CString> &RelationFields , char* dPath)
+void CSQLiteConversion::SqliteConversion(std::vector<CString> &statements, std::vector<CString> &IndexStatements, std::vector<CString> &RelationFields , char* dPath)
  {
 	char *zErrMsg = 0;
     sqlite3 *sqlitedatabase;

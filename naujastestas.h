@@ -4,8 +4,6 @@
 
 #include "Resource.h"
 
-#pragma warning(disable : 4995)
-
 class CSettings
  {
  public:

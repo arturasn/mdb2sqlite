@@ -11,9 +11,7 @@ static char THIS_FILE[]=__FILE__;
 #define new DEBUG_NEW
 #endif
 
-#pragma warning(disable : 4995)
-
-void CIndexStatements::Indexes(CDaoTableDef &TableDef, std::vector <CString> &IndexStatements, const CDaoTableDefInfo &tabledefinfo, CString *&sTableNames, const short &nTableCount, std::vector <CString> &UniqueFields, std::vector <CString> &CollateIndexFields, const bool &m_bCollateNoCaseIndexAdd, const bool &m_bTrimTextValues)
+void CIndexStatements::Indexes(CDaoTableDef &TableDef, std::vector<CString> &IndexStatements, const CDaoTableDefInfo &tabledefinfo, CString *&sTableNames, const short &nTableCount, std::vector<CString> &UniqueFields, std::vector<CString> &CollateIndexFields, const bool &m_bCollateNoCaseIndexAdd, const bool &m_bTrimTextValues)
 {
 	CString sParrent;
 	 short nIndexCount = TableDef.GetIndexCount();
@@ -80,12 +78,12 @@ bool CIndexStatements::IndexFilter(const CDaoTableDefInfo &tabledefinfo, const C
    return false;
 }
 
-bool CIndexStatements::IsIndexFieldText(CString sParrent , std::vector <CString> &CollateIndexFields)
+bool CIndexStatements::IsIndexFieldText(CString sParrent , std::vector<CString> &CollateIndexFields)
 {
-	unsigned nVectorLength = CollateIndexFields.size();
-	for(unsigned i3 = 0; i3 < nVectorLength; ++i3)
+	auto end_it = CollateIndexFields.end();
+	for(auto i3 = CollateIndexFields.begin(); i3 != end_it; ++i3)
 	{
-		if(!sParrent.Compare(CollateIndexFields[i3]))
+		if(!sParrent.Compare(*i3))
 			return true;
 	}
 	return false;
