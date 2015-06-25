@@ -13,34 +13,34 @@
 #include "IndexStatements.h"
 #include "sqlitestatementexecution.h"
 #include "RelationshipStatements.h"
- using namespace std;
 
  #pragma warning(disable : 4995)
-void CMain::ReadFromCSimpleIni(CSettings &settings)
+void CSettingsReader::ReadFromCSimpleIni(CSettings &settings)
 {
 	CSimpleIni ini;
     ini.SetUnicode();
     SI_Error rc = ini.LoadFile("settings.ini");
     if (rc < 0) 
-		cout << "ERROR LOADING FROM FILE" << endl;
-	settings.bFieldsAdd = ini.GetBoolValue(_T("Settings"),_T("fieldsadd"),true);
-	settings.bRelationshipAdd = ini.GetBoolValue(_T("Settings"),_T("Relationshipadd"),true);
-	settings.bRecordAdd = ini.GetBoolValue(_T("Settings"),_T("RecordAdd"),true);
-	settings.bNotNullAdd = ini.GetBoolValue(_T("Settings"),_T("NotNullAdd"),true);
-	settings.bAutoIncrementAdd = ini.GetBoolValue(_T("Settings"),_T("AutoIncrementAdd"),true);
-	settings.bDefaultValueAdd = ini.GetBoolValue(_T("Settings"),_T("DefaultValueAdd"),true);
-	settings.bFieldTypeAdd = ini.GetBoolValue(_T("Settings"),_T("FieldTypeAdd"),true);
-	settings.bIndexAdd = ini.GetBoolValue(_T("Settings"),_T("IndexAdd"),true);
-	settings.bUniqueFieldAdd = ini.GetBoolValue(_T("Settings"),_T("UniqueFieldAdd"),true);
-	settings.bCollateNoCaseIndexAdd = ini.GetBoolValue(_T("Settings"),_T("CollateNoCaseForIndex"),true);
-	settings.bCollateNoCaseFieldsAdd = ini.GetBoolValue(_T("Settings"),_T("CollateNoCaseForFields"),true);
+		std::cout << "ERROR LOADING FROM FILE" << std::endl;
+	settings.m_bFieldsAdd = ini.GetBoolValue(_T("Settings"),_T("fieldsadd"),true);
+	settings.m_bRelationshipAdd = ini.GetBoolValue(_T("Settings"),_T("Relationshipadd"),true);
+	settings.m_bRecordAdd = ini.GetBoolValue(_T("Settings"),_T("RecordAdd"),true);
+	settings.m_bNotNullAdd = ini.GetBoolValue(_T("Settings"),_T("NotNullAdd"),true);
+	settings.m_bAutoIncrementAdd = ini.GetBoolValue(_T("Settings"),_T("AutoIncrementAdd"),true);
+	settings.m_bDefaultValueAdd = ini.GetBoolValue(_T("Settings"),_T("DefaultValueAdd"),true);
+	settings.m_bFieldTypeAdd = ini.GetBoolValue(_T("Settings"),_T("FieldTypeAdd"),true);
+	settings.m_bIndexAdd = ini.GetBoolValue(_T("Settings"),_T("IndexAdd"),true);
+	settings.m_bUniqueFieldAdd = ini.GetBoolValue(_T("Settings"),_T("UniqueFieldAdd"),true);
+	settings.m_bCollateNoCaseIndexAdd = ini.GetBoolValue(_T("Settings"),_T("CollateNoCaseForIndex"),true);
+	settings.m_bCollateNoCaseFieldsAdd = ini.GetBoolValue(_T("Settings"),_T("CollateNoCaseForFields"),true);
+	settings.m_bTrimTextValues = ini.GetBoolValue(_T("Settings"),_T("TrimTextValues"),true);
 }
 
 int main(int argc, char* argv[])
 {
 	if(argc < 3)
 	{
-		cout << "Conversion failed. Path wasnt provided." << endl;
+		std::cout << "Conversion failed. Path wasnt provided." << std::endl;
 		return 0;
 	}
 	AfxDaoInit();
@@ -49,13 +49,13 @@ int main(int argc, char* argv[])
 	CIndexStatements CIndexStatementsObject;
 	CSettings settings;
 	CRelationships CRelationshipsObject;
-	vector <CString> statements;
-	vector <CString> RelationFields;
-	vector <CString> IndexStatements;
-	vector <CString> UniqueFields;
-	vector <CString> CollateIndexFields;
+	std::vector <CString> statements;
+	std::vector <CString> RelationFields;
+	std::vector <CString> IndexStatements;
+	std::vector <CString> UniqueFields;
+	std::vector <CString> CollateIndexFields;
     CString widepath = (CString)argv[1];
-	CMain::ReadFromCSimpleIni(settings);
+	CSettingsReader::ReadFromCSimpleIni(settings);
 	try
 	{                                                           
 		CDaoDatabase db;                                            // Path to the file that we want
@@ -72,8 +72,8 @@ int main(int argc, char* argv[])
 				CDaoTableDef TableDef(&db);
 				sTableNames[nNonSystemTableCount] = tabledefinfo.m_strName;
 				nNonSystemTableCount++;
-				if(settings.bCollateNoCaseIndexAdd) 
-					CFieldStatementsObject.FieldCollation(TableDef,tabledefinfo,CollateIndexFields);
+				if(settings.m_bCollateNoCaseIndexAdd) 
+					CFieldStatementsObject.FieldCollation(TableDef,tabledefinfo,CollateIndexFields,settings.m_bTrimTextValues);
 			}
 		}
 		for(int i = 0; i < nTableCount; ++i)
@@ -83,7 +83,7 @@ int main(int argc, char* argv[])
 			if(tabledefinfo.m_lAttributes == 0)                      // We choose only the elements that we need
 	   		{  
 				  short nRelationCount = db.GetRelationCount();
-				  if(!i && settings.bRelationshipAdd)
+				  if(!i && settings.m_bRelationshipAdd)
 				  {
 					  #pragma deprecated(Relationships)
 					 CRelationshipsObject.Relationhips(db,RelationFields,nRelationCount); 
@@ -93,12 +93,12 @@ int main(int argc, char* argv[])
 				  statements.back() += tabledefinfo.m_strName;
 				  statements.back() += (_T("` ("));
 				  TableDef.Open(tabledefinfo.m_strName); //We open one of tabledefinfo structural objects (this time table name)  
-				  if(settings.bIndexAdd) 
+				  if(settings.m_bIndexAdd) 
 					  {
                           #pragma deprecated(Indexes)
-						  CIndexStatementsObject.Indexes(TableDef,IndexStatements,tabledefinfo,sTableNames,nNonSystemTableCount,UniqueFields,CollateIndexFields,settings.bCollateNoCaseIndexAdd);
+						  CIndexStatementsObject.Indexes(TableDef,IndexStatements,tabledefinfo,sTableNames,nNonSystemTableCount,UniqueFields,CollateIndexFields,settings.m_bCollateNoCaseIndexAdd,settings.m_bTrimTextValues);
 				      }
-				  if(settings.bFieldsAdd) 
+				  if(settings.m_bFieldsAdd) 
 					  {
 						  #pragma deprecated(fFields)
 						  CFieldStatementsObject.fFields(TableDef, tabledefinfo, statements,UniqueFields,settings);  

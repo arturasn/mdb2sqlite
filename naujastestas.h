@@ -9,19 +9,20 @@
 class CSettings
  {
  public:
-	       bool bFieldsAdd, 
-		        bRelationshipAdd, 
-		        bRecordAdd, 
-		        bNotNullAdd, 
-		        bAutoIncrementAdd,
-		        bDefaultValueAdd, 
-		        bFieldTypeAdd,
-		        bIndexAdd,
-		        bUniqueFieldAdd,
-		        bCollateNoCaseIndexAdd,
-				bCollateNoCaseFieldsAdd;
+	bool m_bFieldsAdd; 
+	bool m_bRelationshipAdd;
+	bool m_bRecordAdd;
+	bool m_bNotNullAdd; 
+	bool m_bAutoIncrementAdd;
+	bool m_bDefaultValueAdd; 
+	bool m_bFieldTypeAdd;
+	bool m_bIndexAdd;
+	bool m_bUniqueFieldAdd;
+	bool m_bCollateNoCaseIndexAdd;
+	bool m_bCollateNoCaseFieldsAdd;
+	bool m_bTrimTextValues;
  };
-class CMain
+class CSettingsReader
 {
    public:
 	 static void ReadFromCSimpleIni(CSettings &settings);

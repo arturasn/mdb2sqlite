@@ -13,7 +13,7 @@ static char THIS_FILE[]=__FILE__;
 
 #pragma warning(disable : 4995)
 
-void CIndexStatements::Indexes(CDaoTableDef &TableDef, std::vector <CString> &IndexStatements, const CDaoTableDefInfo &tabledefinfo, CString *&sTableNames, const short &nTableCount, std::vector <CString> &UniqueFields, std::vector <CString> &CollateIndexFields, const bool &bCollateNoCaseIndexAdd)
+void CIndexStatements::Indexes(CDaoTableDef &TableDef, std::vector <CString> &IndexStatements, const CDaoTableDefInfo &tabledefinfo, CString *&sTableNames, const short &nTableCount, std::vector <CString> &UniqueFields, std::vector <CString> &CollateIndexFields, const bool &m_bCollateNoCaseIndexAdd, const bool &m_bTrimTextValues)
 {
 	CString sParrent;
 	 short nIndexCount = TableDef.GetIndexCount();
@@ -40,12 +40,18 @@ void CIndexStatements::Indexes(CDaoTableDef &TableDef, std::vector <CString> &In
 					  if(indexinfo.m_bUnique == TRUE)
 					  {
 						  UniqueFields.push_back(tabledefinfo.m_strName);
-						  UniqueFields.back() += indexinfo.m_pFieldInfos[i2].m_strName;
+						  if(m_bTrimTextValues)
+							  UniqueFields.back() += indexinfo.m_pFieldInfos[i2].m_strName.TrimLeft().TrimRight();
+						  else UniqueFields.back() += indexinfo.m_pFieldInfos[i2].m_strName;
 					  }
-					  sParrent += indexinfo.m_pFieldInfos[i2].m_strName;
-					  IndexStatements.back() += indexinfo.m_pFieldInfos[i2].m_strName;					  
+					  if(m_bTrimTextValues)
+						  sParrent += indexinfo.m_pFieldInfos[i2].m_strName.TrimLeft().TrimRight();
+					  else sParrent += indexinfo.m_pFieldInfos[i2].m_strName;
+					  if(m_bTrimTextValues)
+						  IndexStatements.back() += indexinfo.m_pFieldInfos[i2].m_strName.TrimLeft().TrimRight();	
+					  else IndexStatements.back() += indexinfo.m_pFieldInfos[i2].m_strName;					  
 					  IndexStatements.back() += _T("'");
-					  if(bCollateNoCaseIndexAdd)
+					  if(m_bCollateNoCaseIndexAdd)
 					   {
 					     if(IsIndexFieldText(sParrent,CollateIndexFields)) 
 						    	IndexStatements.back() +=  _T(" COLLATE NOCASE ");

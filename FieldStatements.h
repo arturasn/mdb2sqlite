@@ -15,7 +15,7 @@ class CFieldStatements
 public:
 	void fFields(CDaoTableDef &TableDef, CDaoTableDefInfo &tabledefinfo, std::vector <CString> &statements, std::vector <CString> &UniqueFields,CSettings &settings);
 	void Records(CDaoTableDef &TableDef, const CDaoTableDefInfo &tabledefinfo, short nFieldCount, CString *&sFieldnames, std::vector <CString> &statements);
-	void FieldCollation(CDaoTableDef &TableDef, CDaoTableDefInfo &tabledefinfo, std::vector <CString> &CollateIndexFields);
+	void FieldCollation(CDaoTableDef &TableDef, CDaoTableDefInfo &tabledefinfo, std::vector <CString> &CollateIndexFields, const bool &m_bTrimTextValues);
 private:
 	void NotNullAdd(const CDaoFieldInfo &fieldinfo, std::vector <CString> &statements);
 	void AutoIncrementAdd( const CDaoFieldInfo &fieldinfo, std::vector <CString> &statements);

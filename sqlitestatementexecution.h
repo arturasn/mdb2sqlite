@@ -14,9 +14,9 @@
 class CSQLiteConversion
 {
 public: 
-	void SqliteConversion(std::vector <CString> const &statements, std::vector <CString> const &IndexStatements,  std:: vector <CString> const &RelationFields ,char* dPath);
+	void SqliteConversion(std::vector <CString> &statements, std::vector <CString> &IndexStatements,  std:: vector <CString> &RelationFields ,char* dPath);
 private:		
-	void SqliteStatementExecution(std::vector <CString> const &statements, sqlite3 *&sqlitedatabase, int rc);
+	void SqliteStatementExecution(std::vector <CString> &statements, sqlite3 *&sqlitedatabase, int rc);
 	std::string ConvertToUTF8(const wchar_t *wstr);
 };
 #endif

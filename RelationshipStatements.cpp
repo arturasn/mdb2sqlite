@@ -4,12 +4,15 @@
 #include <afxdao.h>
 #include <afxdb.h>
 #include <vector>
+
 #ifdef _DEBUG
 #undef THIS_FILE
 static char THIS_FILE[]=__FILE__;
 #define new DEBUG_NEW
 #endif
+
 #pragma warning(disable : 4995)
+
 void CRelationships::Relationhips(CDaoDatabase &db, std::vector <CString> &RelationFields, const short nRelationCount)
 {
 			  CDaoRelationInfo relationinfo;

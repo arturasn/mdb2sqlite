@@ -26,47 +26,51 @@ void CFieldStatements::fFields(CDaoTableDef &TableDef, CDaoTableDefInfo &tablede
 				  bIsText = false;
 				  CDaoFieldInfo fieldinfo;                                          // Create a fieldinfo object in which we will store information about the field
 				  TableDef.GetFieldInfo(i1,fieldinfo,AFX_DAO_ALL_INFO);              // We store the information about the j-th field
-				  sFieldnames[i1] = fieldinfo.m_strName;                            // saving field names into an array
+				  if(settings.m_bTrimTextValues) 
+					  sFieldnames[i1] = fieldinfo.m_strName.TrimRight().TrimLeft(); 
+				  else sFieldnames[i1] = fieldinfo.m_strName;
 				  statements.back() += _T("      `");
-				  statements.back() += fieldinfo.m_strName;
+				  if(settings.m_bTrimTextValues)
+					  statements.back() += fieldinfo.m_strName.TrimLeft().TrimRight();
+				  else statements.back() += fieldinfo.m_strName;
 				  statements.back() += (_T("`     ")); 
 				  CDaoRecordset rc;
 				  rc.Open(&TableDef);
 				  CDaoFieldInfo recordinfo;
 				  rc.GetFieldInfo(i1,recordinfo);
-				  if(settings.bFieldTypeAdd) 
+				  if(settings.m_bFieldTypeAdd) 
 				  { 
                      #pragma deprecated(FieldTypeAdd)
 				     FieldTypeAdd(TableDef,recordinfo,statements,bIsText);
 				  }
-				  if(settings.bNotNullAdd)  
+				  if(settings.m_bNotNullAdd)  
 					  {
 						  #pragma deprecated(NotNullAdd)
 						  NotNullAdd(fieldinfo,statements);
 				      }
-				  if(settings.bDefaultValueAdd) 
+				  if(settings.m_bDefaultValueAdd) 
 					  {
 						  #pragma deprecated(DefaultValueAdd)
 						  DefaultValueAdd(fieldinfo,statements);
 				      } 
-				  if(settings.bAutoIncrementAdd)
+				  if(settings.m_bAutoIncrementAdd)
 	                    {
 							#pragma deprecated(AutoIncrementAdd)
 							AutoIncrementAdd(fieldinfo,statements);
 				        }
-				  if(settings.bUniqueFieldAdd) 
+				  if(settings.m_bUniqueFieldAdd) 
 					  {
 						  #pragma deprecated(UniqueFieldAdd)
 						  UniqueFieldAdd(statements,fieldinfo,tabledefinfo,UniqueFields);
 				       }
-				  if(bIsText && settings.bCollateNoCaseFieldsAdd)
+				  if(bIsText && settings.m_bCollateNoCaseFieldsAdd)
 					  statements.back() += _T(" COLLATE NOCASE");
 					if(i1 != nFieldCount-1)
 						statements.back() += (_T(","));
 			    	else
 						statements.back() += (_T(");"));
 			  }
-	if(settings.bRecordAdd) 
+	if(settings.m_bRecordAdd) 
 		{
 			#pragma deprecated(Records)
 			Records(TableDef,tabledefinfo,nFieldCount,sFieldnames,statements);
@@ -180,7 +184,7 @@ void CFieldStatements::Records(CDaoTableDef &TableDef, const CDaoTableDefInfo &t
 			  statements.push_back(_T("END TRANSACTION"));
 			  delete[] sFieldnames;           // deleting dynamic array
 }
-void CFieldStatements::FieldCollation(CDaoTableDef &TableDef, CDaoTableDefInfo &tabledefinfo, std::vector <CString> &CollateIndexFields)
+void CFieldStatements::FieldCollation(CDaoTableDef &TableDef, CDaoTableDefInfo &tabledefinfo, std::vector <CString> &CollateIndexFields, const bool &m_bTrimTextValues)
 {
 	TableDef.Open(tabledefinfo.m_strName);
 	short nFieldCount = TableDef.GetFieldCount(); 
@@ -194,10 +198,10 @@ void CFieldStatements::FieldCollation(CDaoTableDef &TableDef, CDaoTableDefInfo &
 				  rc.GetFieldInfo(i1,recordinfo);
 				  switch(recordinfo.m_nType)
 				  {
-						case dbText: CollateIndexFields.push_back(tabledefinfo.m_strName); CollateIndexFields.back() += fieldinfo.m_strName; break;
-				        case dbMemo: CollateIndexFields.push_back(tabledefinfo.m_strName); CollateIndexFields.back() += fieldinfo.m_strName; break;
-						case dbGUID: CollateIndexFields.push_back(tabledefinfo.m_strName); CollateIndexFields.back() += fieldinfo.m_strName; break;
-                        case dbChar: CollateIndexFields.push_back(tabledefinfo.m_strName); CollateIndexFields.back() += fieldinfo.m_strName; break;
+				  case dbText: CollateIndexFields.push_back(tabledefinfo.m_strName);  m_bTrimTextValues? CollateIndexFields.back() += fieldinfo.m_strName.TrimLeft().TrimRight() : CollateIndexFields.back() += fieldinfo.m_strName ; break;
+				        case dbMemo: CollateIndexFields.push_back(tabledefinfo.m_strName); m_bTrimTextValues? CollateIndexFields.back() += fieldinfo.m_strName.TrimLeft().TrimRight() : CollateIndexFields.back() += fieldinfo.m_strName ; break;
+						case dbGUID: CollateIndexFields.push_back(tabledefinfo.m_strName); m_bTrimTextValues? CollateIndexFields.back() += fieldinfo.m_strName.TrimLeft().TrimRight() : CollateIndexFields.back() += fieldinfo.m_strName ; break;
+                        case dbChar: CollateIndexFields.push_back(tabledefinfo.m_strName); m_bTrimTextValues? CollateIndexFields.back() += fieldinfo.m_strName.TrimLeft().TrimRight() : CollateIndexFields.back() += fieldinfo.m_strName ; break;
 						default: break;
 				  }
 	          }
