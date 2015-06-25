@@ -57,23 +57,23 @@ void CIndexStatements::Indexes(CDaoTableDef &TableDef, std::vector <CString> &In
 				  IndexStatements.back() += _T(";");
 			  }
 }
+
 bool CIndexStatements::IndexFilter(const CDaoTableDefInfo &tabledefinfo, const CDaoIndexInfo &indexinfo, CString *&sTableNames, const short &nTableCount)
 {
-	if(indexinfo.m_strName.Find(tabledefinfo.m_strName) == -1)
-	  return false;
-	CString temp = tabledefinfo.m_strName + _T("1");
-	CString temp2 = tabledefinfo.m_strName + _T("2");
-	CString temp3 = tabledefinfo.m_strName + tabledefinfo.m_strName;
-	for(int i2 = 0; i2 < nTableCount; ++i2)
-	{
-		
-		if((indexinfo.m_strName.Find(sTableNames[i2]) != -1) && sTableNames[i2].Compare(tabledefinfo.m_strName))
-			return true;
-		if(indexinfo.m_strName.Find(temp) != -1 || indexinfo.m_strName.Find(temp2) != -1 || indexinfo.m_strName.Find(temp3) != -1)
-			return true;
-	}
-	return false;
+  if(indexinfo.m_strName.Find(tabledefinfo.m_strName) == -1)
+     return false;
+  int nStart = indexinfo.m_strName.Find(tabledefinfo.m_strName,tabledefinfo.m_strName.GetLength());
+  for(int i2 = 0; i2 < nTableCount; ++i2)
+    {
+
+      if((indexinfo.m_strName.Find(sTableNames[i2]) != -1) && sTableNames[i2].Compare(tabledefinfo.m_strName))
+         return true;
+      if(!(indexinfo.m_strName.Left(nStart).Compare(sTableNames[i2])))
+         return true;
+    }
+   return false;
 }
+
 bool CIndexStatements::IsIndexFieldText(CString sParrent , std::vector <CString> &CollateIndexFields)
 {
 	unsigned nVectorLength = CollateIndexFields.size();

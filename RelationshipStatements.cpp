@@ -58,7 +58,7 @@ void CRelationships::Relationhips(CDaoDatabase &db, std::vector <CString> &Relat
 
                       RelationFields.back() += relationinfo.m_pFieldInfos[i2].m_strForeignName;
 					  RelationFields.back() += _T(" = new.");
-					  RelationFields.back() += relationinfo.m_pFieldInfos[i2].m_strForeignName;
+					  RelationFields.back() += relationinfo.m_pFieldInfos[i2].m_strName;
 				      RelationFields.back() += _T(" WHERE ");
 					  RelationFields.back() += relationinfo.m_pFieldInfos[i2].m_strForeignName;
 					  RelationFields.back() += _T(" = OLD.");

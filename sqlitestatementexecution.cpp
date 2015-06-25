@@ -34,10 +34,8 @@ void CSQLiteConversion::SqliteStatementExecution(std::vector <CString> const &st
 	 for(unsigned i = 0; i < nVectorLength; ++i)
 	 {
 		std::string sB = ConvertToUTF8(statements[i]);
-        const char* pszC = _strdup(sB.c_str());
+        const char* pszC = _strdup(sB.c_str());		
         rc = sqlite3_exec(sqlitedatabase, pszC, NULL, 0, &zErrMsg);
-		sqlite3_exec(sqlitedatabase, "PRAGMA synchronous = OFF", NULL, NULL, &zErrMsg);
-		sqlite3_exec(sqlitedatabase, "PRAGMA journal_mode = MEMORY", NULL, NULL, &zErrMsg);
         if( rc != SQLITE_OK )
 	      {
             fprintf(stderr, "SQL error: %s\n", zErrMsg);
@@ -50,6 +48,7 @@ void CSQLiteConversion::SqliteStatementExecution(std::vector <CString> const &st
    }
 void CSQLiteConversion::SqliteConversion(std::vector <CString> const &statements, std::vector <CString> const &IndexStatements, std::vector <CString> const &RelationFields ,char* dPath)
  {
+	char *zErrMsg = 0;
     sqlite3 *sqlitedatabase;
     int  rcc;
      /* Open database */
@@ -63,6 +62,8 @@ void CSQLiteConversion::SqliteConversion(std::vector <CString> const &statements
 	 {
         fprintf(stdout, "Opened database successfully\n");
         /* Execute SQL statements */
+		sqlite3_exec(sqlitedatabase, "PRAGMA synchronous = OFF", NULL, NULL, &zErrMsg);
+		sqlite3_exec(sqlitedatabase, "PRAGMA journal_mode = MEMORY", NULL, NULL, &zErrMsg);
 	    SqliteStatementExecution(statements,sqlitedatabase,rcc);
 		SqliteStatementExecution(RelationFields,sqlitedatabase,rcc);
 	    SqliteStatementExecution(IndexStatements,sqlitedatabase,rcc);
