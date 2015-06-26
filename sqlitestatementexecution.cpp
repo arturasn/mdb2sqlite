@@ -1,9 +1,5 @@
 #include "stdafx.h"
 #include "sqlitestatementexecution.h"
-#include "naujastestas.h"
-#include "sqlite3.h"
-#include <stdio.h>
-#include <vector>
 
 #ifdef _DEBUG
 #undef THIS_FILE
@@ -51,22 +47,20 @@ void CSQLiteConversion::SqliteConversion(std::vector<CString> &statements, std::
 	char *zErrMsg = 0;
     sqlite3 *sqlitedatabase;
     int  rcc;
-     /* Open database */
-     rcc = sqlite3_open(dPath, &sqlitedatabase);
+    rcc = sqlite3_open(dPath, &sqlitedatabase);
      if( rcc )
-	 {
+	   {
          fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(sqlitedatabase));
          exit(0);
-     }
+       }
 	 else
-	 {
-        fprintf(stdout, "Opened database successfully\n");
-        /* Execute SQL statements */
-		sqlite3_exec(sqlitedatabase, "PRAGMA synchronous = OFF", NULL, NULL, &zErrMsg);
-		sqlite3_exec(sqlitedatabase, "PRAGMA journal_mode = MEMORY", NULL, NULL, &zErrMsg);
-	    SqliteStatementExecution(statements,sqlitedatabase,rcc);
-		SqliteStatementExecution(RelationFields,sqlitedatabase,rcc);
-	    SqliteStatementExecution(IndexStatements,sqlitedatabase,rcc);
-	 }
+	   {
+         fprintf(stdout, "Opened database successfully\n");
+		 sqlite3_exec(sqlitedatabase, "PRAGMA synchronous = OFF", NULL, NULL, &zErrMsg);
+		 sqlite3_exec(sqlitedatabase, "PRAGMA journal_mode = MEMORY", NULL, NULL, &zErrMsg);
+	     SqliteStatementExecution(statements,sqlitedatabase,rcc);
+		 SqliteStatementExecution(RelationFields,sqlitedatabase,rcc);
+	     SqliteStatementExecution(IndexStatements,sqlitedatabase,rcc);
+	   }
      sqlite3_close(sqlitedatabase);
  }

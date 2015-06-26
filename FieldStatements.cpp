@@ -1,11 +1,5 @@
-#pragma once
-
 #include "stdafx.h"
 #include "FieldStatements.h"
-#include "naujastestas.h"
-#include <afxdao.h>
-#include <afxdb.h>
-#include <vector>
 
 #ifdef _DEBUG
 #undef THIS_FILE
@@ -17,14 +11,14 @@ static char THIS_FILE[]=__FILE__;
 void CFieldStatements::fFields(CDaoTableDef &TableDef, CDaoTableDefInfo &tabledefinfo, std::vector<CString> &statements, std::vector<CString> &UniqueFields, CSettings &settings)
 {
 	 
-	short nFieldCount = TableDef.GetFieldCount();        // Counts how manys fields there are in the database of a current sellected table
-	CString *sFieldnames = new CString[nFieldCount];     // creating dynamic array of field names
+	short nFieldCount = TableDef.GetFieldCount();        
+	CString *sFieldnames = new CString[nFieldCount];     
 	bool bIsText;
 	for(int i1 = 0; i1 < nFieldCount; ++i1)
 			  {
 				  bIsText = false;
-				  CDaoFieldInfo fieldinfo;                                          // Create a fieldinfo object in which we will store information about the field
-				  TableDef.GetFieldInfo(i1,fieldinfo,AFX_DAO_ALL_INFO);              // We store the information about the j-th field
+				  CDaoFieldInfo fieldinfo;                                          
+				  TableDef.GetFieldInfo(i1,fieldinfo,AFX_DAO_ALL_INFO);              
 				  if(settings.m_bTrimTextValues) 
 					  sFieldnames[i1] = fieldinfo.m_strName.TrimRight().TrimLeft(); 
 				  else sFieldnames[i1] = fieldinfo.m_strName;
@@ -38,30 +32,15 @@ void CFieldStatements::fFields(CDaoTableDef &TableDef, CDaoTableDefInfo &tablede
 				  CDaoFieldInfo recordinfo;
 				  rc.GetFieldInfo(i1,recordinfo);
 				  if(settings.m_bFieldTypeAdd) 
-				  { 
-                     #pragma deprecated(FieldTypeAdd)
 				     FieldTypeAdd(TableDef,recordinfo,statements,bIsText);
-				  }
 				  if(settings.m_bNotNullAdd)  
-					  {
-						  #pragma deprecated(NotNullAdd)
-						  NotNullAdd(fieldinfo,statements);
-				      }
+					  NotNullAdd(fieldinfo,statements);
 				  if(settings.m_bDefaultValueAdd) 
-					  {
-						  #pragma deprecated(DefaultValueAdd)
-						  DefaultValueAdd(fieldinfo,statements);
-				      } 
+					 DefaultValueAdd(fieldinfo,statements);
 				  if(settings.m_bAutoIncrementAdd)
-	                    {
-							#pragma deprecated(AutoIncrementAdd)
-							AutoIncrementAdd(fieldinfo,statements);
-				        }
+						AutoIncrementAdd(fieldinfo,statements);
 				  if(settings.m_bUniqueFieldAdd) 
-					  {
-						  #pragma deprecated(UniqueFieldAdd)
 						  UniqueFieldAdd(statements,fieldinfo,tabledefinfo,UniqueFields);
-				       }
 				  if(bIsText && settings.m_bCollateNoCaseFieldsAdd)
 					  statements.back() += _T(" COLLATE NOCASE");
 					if(i1 != nFieldCount-1)
@@ -70,10 +49,7 @@ void CFieldStatements::fFields(CDaoTableDef &TableDef, CDaoTableDefInfo &tablede
 						statements.back() += (_T(");"));
 			  }
 	if(settings.m_bRecordAdd) 
-		{
-			#pragma deprecated(Records)
 			Records(TableDef,tabledefinfo,nFieldCount,sFieldnames,statements);
-	    }
 }
 	void CFieldStatements::NotNullAdd(const CDaoFieldInfo &fieldinfo, std::vector <CString> &statements)
 {
@@ -82,7 +58,7 @@ void CFieldStatements::fFields(CDaoTableDef &TableDef, CDaoTableDefInfo &tablede
 }
 void CFieldStatements::AutoIncrementAdd( const CDaoFieldInfo &fieldinfo, std::vector <CString> &statements)
 {
-	if(fieldinfo.m_lAttributes & dbAutoIncrField) // Checking if it should be autoincremented
+	if(fieldinfo.m_lAttributes & dbAutoIncrField) 
 					   statements.back() += _T(" PRIMARY KEY AUTOINCREMENT");
 }
 void CFieldStatements::DefaultValueAdd( const CDaoFieldInfo &fieldinfo, std::vector <CString> &statements)
@@ -139,7 +115,7 @@ void CFieldStatements::UniqueFieldAdd(std::vector<CString> &statements, const CD
 }
 void CFieldStatements::Records(CDaoTableDef &TableDef, const CDaoTableDefInfo &tabledefinfo, short nFieldCount, CString *&sFieldnames, std::vector <CString> &statements)
 {
-		COleVariant COlevar;                                        // variable which stores variables of all types
+		COleVariant COlevar;                                        
 	    CDaoRecordset recordset;
 	    recordset.Open(&TableDef);
 	    CString sParrent;
@@ -181,7 +157,7 @@ void CFieldStatements::Records(CDaoTableDef &TableDef, const CDaoTableDefInfo &t
 					recordset.MoveNext(); 
 		         }
 			  statements.push_back(_T("END TRANSACTION"));
-			  delete[] sFieldnames;           // deleting dynamic array
+			  delete[] sFieldnames;           
 }
 void CFieldStatements::FieldCollation(CDaoTableDef &TableDef, CDaoTableDefInfo &tabledefinfo, std::vector<CString> &CollateIndexFields, const bool &m_bTrimTextValues)
 {

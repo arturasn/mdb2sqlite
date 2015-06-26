@@ -1,12 +1,11 @@
 #ifndef __INCLUDED_INDEXSTATEMENTS_H__
 #define __INCLUDED_INDEXSTATEMENTS_H__
+
 #pragma once
 
-#include "stdafx.h"
 #include <afxdao.h>
 #include <afxdb.h>
 #include <vector>
-
 
 class CIndexStatements
 {

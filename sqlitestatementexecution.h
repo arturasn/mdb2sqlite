@@ -1,10 +1,8 @@
-
 #ifndef __INCLUDED_SQLITESTATEMENTEXECUTION_H__
 #define __INCLUDED_SQLITESTATEMENTEXECUTION_H__
+
 #pragma once
 
-#include "stdafx.h"
-#include "naujastestas.h"
 #include "sqlite3.h"
 #include <stdio.h>
 #include <vector>

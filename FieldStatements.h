@@ -1,12 +1,11 @@
 #ifndef __INCLUDED_FIELDSTATEMENTS_H__
 #define __INCLUDED_FIELDSTATEMENTS_H__
+
 #pragma once
 
-#include "stdafx.h"
-#include "naujastestas.h"
-#include <afxdao.h>
-#include <afxdb.h>
-#include <vector>
+#ifndef __INCLUDED_NAUJASTESTAS_H__
+	#include "naujastestas.h"
+#endif
 
 class CFieldStatements
 {

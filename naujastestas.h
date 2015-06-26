@@ -1,8 +1,22 @@
-#ifndef INCLUDED_NAUJASTESTAS_H
-#define INCLUDED_NAUJASTESTAS_H
+#ifndef __INCLUDED_NAUJASTESTAS_H__
+#define __INCLUDED_NAUJASTESTAS_H__
 #pragma once
 
 #include "Resource.h"
+#include <iostream>
+#include <afxdao.h>
+#include <afxdb.h>
+#include <vector>
+#include "SimpleIni.h"
+#ifndef __INCLUDED_INDEXSTATEMENTS_H__
+	#include "IndexStatements.h"
+#endif
+#ifndef __INCLUDED_SQLITESTATEMENTEXECUTION_H__
+	#include "sqlitestatementexecution.h"
+#endif
+#ifndef __INCLUDED_RELATIONSHIPSTATEMENTS_H__
+	#include "RelationshipStatements.h"
+#endif
 
 class CSettings
  {

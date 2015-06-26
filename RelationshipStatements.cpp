@@ -1,9 +1,5 @@
 #include "stdafx.h"
-#include "naujastestas.h"
 #include "RelationshipStatements.h"
-#include <afxdao.h>
-#include <afxdb.h>
-#include <vector>
 
 #ifdef _DEBUG
 #undef THIS_FILE

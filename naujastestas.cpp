@@ -1,18 +1,6 @@
-// naujastestas.cpp : Defines the entry point for the console application.
-//
 #include "stdafx.h"
 #include "naujastestas.h"
-#include <iostream>
-#include <stdio.h>
-#include <stdlib.h>
-#include <afxdao.h>
-#include <afxdb.h>
-#include <vector>
-#include "SimpleIni.h"
 #include "FieldStatements.h"
-#include "IndexStatements.h"
-#include "sqlitestatementexecution.h"
-#include "RelationshipStatements.h"
 
 void CSettingsReader::ReadFromCSimpleIni(CSettings &settings)
 {
@@ -57,10 +45,10 @@ int main(int argc, char* argv[])
 	CSettingsReader::ReadFromCSimpleIni(settings);
 	try
 	{                                                           
-		CDaoDatabase db;                                            // Path to the file that we want
-		db.Open(widepath);                                          // Create CDaoDatabase object
-		short nTableCount = db.GetTableDefCount();               // Open the database file that we want   
-		CString *sTableNames = new CString[nTableCount];      // Get how many tables are in the selected database
+		CDaoDatabase db;                                            
+		db.Open(widepath);                                          
+		short nTableCount = db.GetTableDefCount();                 
+		CString *sTableNames = new CString[nTableCount];      
 		short nNonSystemTableCount=0;
 		for(int i = 0; i < nTableCount; ++i)
 		{
@@ -77,31 +65,22 @@ int main(int argc, char* argv[])
 		}
 		for(int i = 0; i < nTableCount; ++i)
 		  {
-			CDaoTableDefInfo tabledefinfo;                           // Create tabledefinfo  object & save all information in it about the table we are currently analyzing
-			db.GetTableDefInfo(i,tabledefinfo);                      // tabledefinfo we save information about the i-th table
-			if(tabledefinfo.m_lAttributes == 0)                      // We choose only the elements that we need
+			CDaoTableDefInfo tabledefinfo;                           
+			db.GetTableDefInfo(i,tabledefinfo);                      
+			if(tabledefinfo.m_lAttributes == 0)                      // We choose only the elements that we need database adds some system files
 	   		{  
 				  short nRelationCount = db.GetRelationCount();
 				  if(!i && settings.m_bRelationshipAdd)
-				  {
-					  #pragma deprecated(Relationships)
 					 CRelationshipsObject.Relationhips(db,RelationFields,nRelationCount); 
-				  }
 				  CDaoTableDef TableDef(&db);
 				  statements.push_back(_T("CREATE TABLE   `"));  
 				  statements.back() += tabledefinfo.m_strName;
 				  statements.back() += (_T("` ("));
-				  TableDef.Open(tabledefinfo.m_strName); //We open one of tabledefinfo structural objects (this time table name)  
+				  TableDef.Open(tabledefinfo.m_strName);   
 				  if(settings.m_bIndexAdd) 
-					  {
-                          #pragma deprecated(Indexes)
-						  CIndexStatementsObject.Indexes(TableDef,IndexStatements,tabledefinfo,sTableNames,nNonSystemTableCount,UniqueFields,CollateIndexFields,settings.m_bCollateNoCaseIndexAdd,settings.m_bTrimTextValues);
-				      }
+					 CIndexStatementsObject.Indexes(TableDef,IndexStatements,tabledefinfo,sTableNames,nNonSystemTableCount,UniqueFields,CollateIndexFields,settings.m_bCollateNoCaseIndexAdd,settings.m_bTrimTextValues);
 				  if(settings.m_bFieldsAdd) 
-					  {
-						  #pragma deprecated(fFields)
-						  CFieldStatementsObject.fFields(TableDef, tabledefinfo, statements,UniqueFields,settings);  
-				      }
+					 CFieldStatementsObject.fFields(TableDef, tabledefinfo, statements,UniqueFields,settings);  
 			} 
 		 }
 		delete[] sTableNames; 
