@@ -10,59 +10,62 @@ static char THIS_FILE[]=__FILE__;
 
 void CRelationships::Relationhips(CDaoDatabase &db, std::vector<CString> &RelationFields, const short nRelationCount)
 {
-			  CDaoRelationInfo relationinfo;
-			  for(int i1 = 0; i1 < nRelationCount; ++i1)
-			  {
-				  db.GetRelationInfo(i1,relationinfo,AFX_DAO_ALL_INFO);
-				  short nRelationFields = relationinfo.m_nFields;
-				  RelationFields.push_back(_T("CREATE TRIGGER "));
-				  RelationFields.back() += relationinfo.m_strName;
-				  RelationFields.back() += _T("Delete AFTER DELETE ON ");
-				  RelationFields.back() +=  relationinfo.m_strTable;
-				  RelationFields.back() += _T(" FOR EACH ROW BEGIN");
-				  for(int i2 = 0; i2 < nRelationFields; ++i2)
-				  { 
-					  RelationFields.back() += _T(" DELETE FROM ");
-				      RelationFields.back() += relationinfo.m_strForeignTable;
-				      RelationFields.back() += _T(" WHERE ");
-                      RelationFields.back() += relationinfo.m_pFieldInfos[i2].m_strForeignName;
-					  RelationFields.back() += _T(" = OLD.");
-					  RelationFields.back() += relationinfo.m_pFieldInfos[i2].m_strName;
-					  RelationFields.back() += _T(";");
-				  }
-				  RelationFields.back() += _T(" END; ");
-			  }
-			  for(int i1 = 0; i1 < nRelationCount; ++i1)
-			  {
-				  db.GetRelationInfo(i1,relationinfo,AFX_DAO_ALL_INFO);
-				  short nRelationFields = relationinfo.m_nFields;
-				  RelationFields.push_back(_T("CREATE TRIGGER "));
-				  RelationFields.back() += relationinfo.m_strName;
-				  RelationFields.back() += _T("Update AFTER UPDATE OF ");
-				  for(int i2 = 0; i2 < nRelationFields; ++i2)
-				  {
-					  RelationFields.back() += relationinfo.m_pFieldInfos[i2].m_strName;
-					  if(i2 != nRelationFields-1)
-						  RelationFields.back() += _T(", ");
-				  }
-				  RelationFields.back() += _T(" ON ");
-				  RelationFields.back() += relationinfo.m_strTable;
-				  RelationFields.back() += _T(" BEGIN ");
-				  for(int i2 = 0; i2 < nRelationFields; ++i2)
-				  {
-				  RelationFields.back() += _T("UPDATE ");
-				  RelationFields.back() += relationinfo.m_strForeignTable;
-				  RelationFields.back() += _T(" SET ");
+		CString sStatement;
+		CDaoRelationInfo relationinfo;
+		for(int i1 = 0; i1 < nRelationCount; ++i1)
+		{
+			db.GetRelationInfo(i1,relationinfo,AFX_DAO_ALL_INFO);
+			short nRelationFields = relationinfo.m_nFields;
+			sStatement = _T("CREATE TRIGGER ");
+			sStatement += relationinfo.m_strName;
+			sStatement += _T("Delete AFTER DELETE ON ");
+			sStatement +=  relationinfo.m_strTable;
+			sStatement += _T(" FOR EACH ROW BEGIN");
+			for(int i2 = 0; i2 < nRelationFields; ++i2)
+			{ 
+				sStatement += _T(" DELETE FROM ");
+				sStatement += relationinfo.m_strForeignTable;
+				sStatement += _T(" WHERE ");
+				sStatement += relationinfo.m_pFieldInfos[i2].m_strForeignName;
+				sStatement += _T(" = OLD.");
+				sStatement += relationinfo.m_pFieldInfos[i2].m_strName;
+				sStatement += _T(";");
+			}
+			sStatement += _T(" END; ");
+			RelationFields.push_back(sStatement);
+		}
+		for(int i1 = 0; i1 < nRelationCount; ++i1)
+		{
+			db.GetRelationInfo(i1,relationinfo,AFX_DAO_ALL_INFO);
+			short nRelationFields = relationinfo.m_nFields;
+			sStatement = _T("CREATE TRIGGER ");
+			sStatement += relationinfo.m_strName;
+			sStatement += _T("Update AFTER UPDATE OF ");
+			for(int i2 = 0; i2 < nRelationFields; ++i2)
+			{
+				sStatement += relationinfo.m_pFieldInfos[i2].m_strName;
+				if(i2 != nRelationFields-1)
+					sStatement += _T(", ");
+			}
+			sStatement += _T(" ON ");
+			sStatement += relationinfo.m_strTable;
+			sStatement += _T(" BEGIN ");
+			for(int i2 = 0; i2 < nRelationFields; ++i2)
+			{
+			sStatement += _T("UPDATE ");
+			sStatement += relationinfo.m_strForeignTable;
+			sStatement += _T(" SET ");
 
-                      RelationFields.back() += relationinfo.m_pFieldInfos[i2].m_strForeignName;
-					  RelationFields.back() += _T(" = new.");
-					  RelationFields.back() += relationinfo.m_pFieldInfos[i2].m_strName;
-				      RelationFields.back() += _T(" WHERE ");
-					  RelationFields.back() += relationinfo.m_pFieldInfos[i2].m_strForeignName;
-					  RelationFields.back() += _T(" = OLD.");
-					  RelationFields.back() += relationinfo.m_pFieldInfos[i2].m_strName;
-					  RelationFields.back() += _T("; ");
-				  }
-				  RelationFields.back() += _T("END; ");
-			  }		  
+				sStatement += relationinfo.m_pFieldInfos[i2].m_strForeignName;
+				sStatement += _T(" = new.");
+				sStatement += relationinfo.m_pFieldInfos[i2].m_strName;
+				sStatement += _T(" WHERE ");
+				sStatement += relationinfo.m_pFieldInfos[i2].m_strForeignName;
+				sStatement += _T(" = OLD.");
+				sStatement += relationinfo.m_pFieldInfos[i2].m_strName;
+				sStatement += _T("; ");
+			}
+			sStatement += _T("END; ");
+			RelationFields.push_back(sStatement);
+		}		  
 }

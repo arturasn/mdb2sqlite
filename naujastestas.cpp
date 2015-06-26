@@ -37,10 +37,12 @@ int main(int argc, char* argv[])
 	CSettings settings;
 	CRelationships CRelationshipsObject;
 	std::vector<CString> statements;
+	std::vector<CString> InsertStatements;
 	std::vector<CString> RelationFields;
 	std::vector<CString> IndexStatements;
 	std::vector<CString> UniqueFields;
 	std::vector<CString> CollateIndexFields;
+	CString sStatement;
     CString widepath = (CString)argv[1];
 	CSettingsReader::ReadFromCSimpleIni(settings);
 	try
@@ -73,14 +75,15 @@ int main(int argc, char* argv[])
 				  if(!i && settings.m_bRelationshipAdd)
 					 CRelationshipsObject.Relationhips(db,RelationFields,nRelationCount); 
 				  CDaoTableDef TableDef(&db);
-				  statements.push_back(_T("CREATE TABLE   `"));  
-				  statements.back() += tabledefinfo.m_strName;
-				  statements.back() += (_T("` ("));
+				  sStatement = _T("CREATE TABLE   `");  
+				  sStatement += tabledefinfo.m_strName;
+				  sStatement += (_T("` ("));
 				  TableDef.Open(tabledefinfo.m_strName);   
 				  if(settings.m_bIndexAdd) 
 					 CIndexStatementsObject.Indexes(TableDef,IndexStatements,tabledefinfo,sTableNames,nNonSystemTableCount,UniqueFields,CollateIndexFields,settings.m_bCollateNoCaseIndexAdd,settings.m_bTrimTextValues);
 				  if(settings.m_bFieldsAdd) 
-					 CFieldStatementsObject.fFields(TableDef, tabledefinfo, statements,UniqueFields,settings);  
+					 CFieldStatementsObject.fFields(TableDef, tabledefinfo, InsertStatements,UniqueFields,settings,sStatement); 
+				  statements.push_back(sStatement);
 			} 
 		 }
 		delete[] sTableNames; 
@@ -92,7 +95,7 @@ int main(int argc, char* argv[])
 		e->Delete();
 	}
 	AfxDaoTerm();
-	CSQLiteConversionObject.SqliteConversion(statements,IndexStatements,RelationFields,argv[2]);
+	CSQLiteConversionObject.SqliteConversion(statements,InsertStatements,IndexStatements,RelationFields,argv[2]);
     return 0;
 }
 

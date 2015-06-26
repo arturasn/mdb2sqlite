@@ -42,7 +42,7 @@ void CSQLiteConversion::SqliteStatementExecution(std::vector<CString> &statement
           fprintf(stdout, "Table created successfully\n");
 	 }
    }
-void CSQLiteConversion::SqliteConversion(std::vector<CString> &statements, std::vector<CString> &IndexStatements, std::vector<CString> &RelationFields , char* dPath)
+void CSQLiteConversion::SqliteConversion(std::vector<CString> &statements, std::vector<CString> &InsertStatements, std::vector<CString> &IndexStatements, std::vector<CString> &RelationFields , char* dPath)
  {
 	char *zErrMsg = 0;
     sqlite3 *sqlitedatabase;
@@ -59,6 +59,7 @@ void CSQLiteConversion::SqliteConversion(std::vector<CString> &statements, std::
 		 sqlite3_exec(sqlitedatabase, "PRAGMA synchronous = OFF", NULL, NULL, &zErrMsg);
 		 sqlite3_exec(sqlitedatabase, "PRAGMA journal_mode = MEMORY", NULL, NULL, &zErrMsg);
 	     SqliteStatementExecution(statements,sqlitedatabase,rcc);
+		 SqliteStatementExecution(InsertStatements,sqlitedatabase,rcc);
 		 SqliteStatementExecution(RelationFields,sqlitedatabase,rcc);
 	     SqliteStatementExecution(IndexStatements,sqlitedatabase,rcc);
 	   }

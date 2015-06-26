@@ -8,7 +8,7 @@ static char THIS_FILE[]=__FILE__;
 #endif
 
 
-void CFieldStatements::fFields(CDaoTableDef &TableDef, CDaoTableDefInfo &tabledefinfo, std::vector<CString> &statements, std::vector<CString> &UniqueFields, CSettings &settings)
+void CFieldStatements::fFields(CDaoTableDef &TableDef, CDaoTableDefInfo &tabledefinfo, std::vector<CString> &InsertStatements, std::vector<CString> &UniqueFields, CSettings &settings, CString &sStatement)
 {
 	 
 	short nFieldCount = TableDef.GetFieldCount();        
@@ -22,84 +22,113 @@ void CFieldStatements::fFields(CDaoTableDef &TableDef, CDaoTableDefInfo &tablede
 				  if(settings.m_bTrimTextValues) 
 					  sFieldnames[i1] = fieldinfo.m_strName.TrimRight().TrimLeft(); 
 				  else sFieldnames[i1] = fieldinfo.m_strName;
-				  statements.back() += _T("      `");
+				  sStatement += _T("      `");
 				  if(settings.m_bTrimTextValues)
-					  statements.back() += fieldinfo.m_strName.TrimLeft().TrimRight();
-				  else statements.back() += fieldinfo.m_strName;
-				  statements.back() += (_T("`     ")); 
+					  sStatement += fieldinfo.m_strName.TrimLeft().TrimRight();
+				  else sStatement += fieldinfo.m_strName;
+				  sStatement += (_T("`     ")); 
 				  CDaoRecordset rc;
 				  rc.Open(&TableDef);
 				  CDaoFieldInfo recordinfo;
 				  rc.GetFieldInfo(i1,recordinfo);
 				  if(settings.m_bFieldTypeAdd) 
-				     FieldTypeAdd(TableDef,recordinfo,statements,bIsText);
+				     FieldTypeAdd(TableDef,recordinfo,bIsText,sStatement);
 				  if(settings.m_bNotNullAdd)  
-					  NotNullAdd(fieldinfo,statements);
+					  NotNullAdd(fieldinfo,sStatement);
 				  if(settings.m_bDefaultValueAdd) 
-					 DefaultValueAdd(fieldinfo,statements);
+					 DefaultValueAdd(fieldinfo,tabledefinfo,sStatement);
 				  if(settings.m_bAutoIncrementAdd)
-						AutoIncrementAdd(fieldinfo,statements);
+						AutoIncrementAdd(fieldinfo,sStatement);
 				  if(settings.m_bUniqueFieldAdd) 
-						  UniqueFieldAdd(statements,fieldinfo,tabledefinfo,UniqueFields);
+						  UniqueFieldAdd(fieldinfo,tabledefinfo,UniqueFields,sStatement);
 				  if(bIsText && settings.m_bCollateNoCaseFieldsAdd)
-					  statements.back() += _T(" COLLATE NOCASE");
+					  sStatement += _T(" COLLATE NOCASE");
 					if(i1 != nFieldCount-1)
-						statements.back() += (_T(","));
+						sStatement += (_T(","));
 			    	else
-						statements.back() += (_T(");"));
+						sStatement+= (_T(");"));
 			  }
 	if(settings.m_bRecordAdd) 
-			Records(TableDef,tabledefinfo,nFieldCount,sFieldnames,statements);
+			Records(TableDef,tabledefinfo,nFieldCount,sFieldnames,InsertStatements);
 }
-	void CFieldStatements::NotNullAdd(const CDaoFieldInfo &fieldinfo, std::vector <CString> &statements)
+	void CFieldStatements::NotNullAdd(const CDaoFieldInfo &fieldinfo,CString &sStatement)
 {
 	 if(fieldinfo.m_bRequired)
-		statements.back() += _T(" NOT NULL");
+		sStatement += _T(" NOT NULL");
 }
-void CFieldStatements::AutoIncrementAdd( const CDaoFieldInfo &fieldinfo, std::vector <CString> &statements)
+void CFieldStatements::AutoIncrementAdd( const CDaoFieldInfo &fieldinfo, CString &sStatement)
 {
 	if(fieldinfo.m_lAttributes & dbAutoIncrField) 
-					   statements.back() += _T(" PRIMARY KEY AUTOINCREMENT");
+					   sStatement += _T(" PRIMARY KEY AUTOINCREMENT");
 }
-void CFieldStatements::DefaultValueAdd( const CDaoFieldInfo &fieldinfo, std::vector <CString> &statements)
+void CFieldStatements::DefaultValueAdd( const CDaoFieldInfo &fieldinfo, CDaoTableDefInfo &tabledefinfo, CString &sStatement)
 {
-	if(fieldinfo.m_strDefaultValue != "")
+	if(!(fieldinfo.m_strDefaultValue.IsEmpty()))
+		 {
+				   if(!(fieldinfo.m_strDefaultValue.CompareNoCase(_T("Yes"))))
 				   {
-				   statements.back() += _T(" DEFAULT ");
-				   statements.back() += (LPCTSTR)fieldinfo.m_strDefaultValue;
+					   sStatement += _T(" DEFAULT -1");
+					   return;
 				   }
+				   if(!(fieldinfo.m_strDefaultValue.CompareNoCase(_T("No"))))
+				   {
+					   sStatement += _T(" DEFAULT 0");
+					   return;
+				   }
+				   if(!(fieldinfo.m_strDefaultValue.CompareNoCase(_T("true"))))
+				   {
+					   sStatement += _T(" DEFAULT -1");
+					   return;
+				   }
+				   if(!(fieldinfo.m_strDefaultValue.CollateNoCase(_T("false"))))
+				   {
+					   sStatement += _T(" DEFAULT 0");
+					   return;
+				   }
+				   if(!(fieldinfo.m_strDefaultValue.CollateNoCase(_T("1"))))
+				   {
+					   sStatement += _T(" DEFAULT -1");
+					   return;
+				   }
+				   if(!(fieldinfo.m_strDefaultValue.CollateNoCase(_T("0"))))
+				   {
+				      sStatement += _T(" DEFAULT 0");
+					  return;
+				   }
+				   std::wcout << "Unable to Recognize default value:" << (LPCTSTR)fieldinfo.m_strDefaultValue << " on Table:" << (LPCTSTR)tabledefinfo.m_strName << " Column:" << (LPCTSTR)fieldinfo.m_strName << std::endl;
+		}
 }
-void CFieldStatements::FieldTypeAdd(CDaoTableDef &TableDef, const CDaoFieldInfo &recordinfo, std::vector <CString> &statements, bool &bIsText)
+void CFieldStatements::FieldTypeAdd(CDaoTableDef &TableDef, const CDaoFieldInfo &recordinfo, bool &bIsText, CString &sStatement)
 {
 	              CDaoRecordset recordset;
 			      recordset.Open(&TableDef);
 				   switch(recordinfo.m_nType)
 				     {
-				        case dbBoolean: statements.back() += (_T("INTEGER"));break;
-				        case dbByte: statements.back() += (_T("INTEGER"));  break;
-				        case dbInteger: statements.back() += (_T("INTEGER"));  break;
-						case dbLong : statements.back() += (_T("INTEGER"));  break;
-			   	        case dbCurrency: statements.back() += (_T("INTEGER"));  break;
-				        case dbSingle: statements.back() += (_T("INTEGER"));  break;
-				        case dbDouble: statements.back() += (_T("REAL"));  break;
-				        case dbDate: statements.back() += (_T("INTEGER")); break;
-						case dbBinary: statements.back() += (_T("BLOB")); break;
-				        case dbText: statements.back() += (_T("TEXT")); bIsText = true; break;
-						case dbLongBinary: statements.back() += (_T("BLOB"));  break;
-						case dbMemo: statements.back() += (_T("TEXT"));  bIsText = true; break;
-						case dbGUID: ASSERT(FALSE); statements.back() += (_T("TEXT"));  bIsText = true; break;
-						case dbBigInt: statements.back() += (_T("INTEGER"));  break;
-						case dbVarBinary: statements.back() += (_T("BLOB"));  break;
-						case dbChar: statements.back() += (_T("TEXT"));  bIsText = true; break;
-						case dbNumeric: statements.back() += (_T("INTEGER"));  break;
-						case dbDecimal: statements.back() += (_T("INTEGER"));  break;
-						case dbFloat: statements.back() += (_T("REAL"));  break;
-						case dbTime: statements.back() += (_T("INTEGER"));  break;
-						case dbTimeStamp: ASSERT(FALSE); statements.back() += (_T("INTEGER"));  break;
+				        case dbBoolean: sStatement += (_T("INTEGER"));break;
+				        case dbByte: sStatement += (_T("INTEGER"));  break;
+				        case dbInteger: sStatement += (_T("INTEGER"));  break;
+						case dbLong : sStatement += (_T("INTEGER"));  break;
+			   	        case dbCurrency: sStatement += (_T("INTEGER"));  break;
+				        case dbSingle: sStatement += (_T("INTEGER"));  break;
+				        case dbDouble: sStatement += (_T("REAL"));  break;
+				        case dbDate: sStatement += (_T("INTEGER")); break;
+						case dbBinary: sStatement += (_T("BLOB")); break;
+				        case dbText: sStatement += (_T("TEXT")); bIsText = true; break;
+						case dbLongBinary: sStatement += (_T("BLOB"));  break;
+						case dbMemo: sStatement += (_T("TEXT"));  bIsText = true; break;
+						case dbGUID: ASSERT(FALSE); sStatement += (_T("TEXT"));  bIsText = true; break;
+						case dbBigInt: sStatement += (_T("INTEGER"));  break;
+						case dbVarBinary: sStatement += (_T("BLOB"));  break;
+						case dbChar: sStatement += (_T("TEXT"));  bIsText = true; break;
+						case dbNumeric: sStatement += (_T("INTEGER"));  break;
+						case dbDecimal: sStatement += (_T("INTEGER"));  break;
+						case dbFloat: sStatement += (_T("REAL"));  break;
+						case dbTime: sStatement += (_T("INTEGER"));  break;
+						case dbTimeStamp: ASSERT(FALSE); sStatement += (_T("INTEGER"));  break;
 				        default: break;
 				      }
 }
-void CFieldStatements::UniqueFieldAdd(std::vector<CString> &statements, const CDaoFieldInfo &fieldinfo, const CDaoTableDefInfo &tabledefinfo, std::vector<CString> &UniqueFields)
+void CFieldStatements::UniqueFieldAdd(const CDaoFieldInfo &fieldinfo, const CDaoTableDefInfo &tabledefinfo, std::vector<CString> &UniqueFields, CString &sStatement)
 {
 	CString temp = tabledefinfo.m_strName;
 	temp += fieldinfo.m_strName;
@@ -108,12 +137,12 @@ void CFieldStatements::UniqueFieldAdd(std::vector<CString> &statements, const CD
 	{
 		if(!(temp.Compare(*i2)))
 		{
-			statements.back() += _T(" UNIQUE");
+			sStatement += _T(" UNIQUE");
 			break;
 		}
 	}
 }
-void CFieldStatements::Records(CDaoTableDef &TableDef, const CDaoTableDefInfo &tabledefinfo, short nFieldCount, CString *&sFieldnames, std::vector <CString> &statements)
+void CFieldStatements::Records(CDaoTableDef &TableDef, const CDaoTableDefInfo &tabledefinfo, short nFieldCount, CString *&sFieldnames, std::vector <CString> &InsertStatements)
 {
 		COleVariant COlevar;                                        
 	    CDaoRecordset recordset;
@@ -130,39 +159,45 @@ void CFieldStatements::Records(CDaoTableDef &TableDef, const CDaoTableDefInfo &t
 			  	 sParrent += _T("`, ");
 			  else sParrent += "`)";
 		  }
-			  statements.push_back(_T("BEGIN TRANSACTION"));
+		      CString sStatement;
+			  InsertStatements.push_back(_T("BEGIN TRANSACTION"));
 			  while(!recordset.IsEOF())
 			     { 
-					statements.push_back(sParrent);
-			      	statements.back() += _T(" VALUES (");
+					sStatement = sParrent;
+			      	sStatement += _T(" VALUES (");
 			    	for(int i2 = 0; i2 < nFieldCount; ++i2)
 			        	{
 				        	recordset.GetFieldValue(sFieldnames[i2], COlevar);
 							if(COlevar.vt == VT_NULL)
-                               statements.back() += _T("NULL");
+                               sStatement += _T("NULL");
 							else if(COlevar.vt == VT_I2 || COlevar.vt == VT_I4 || COlevar.vt == VT_R4 || COlevar.vt == VT_R8 || COlevar.vt == VT_BOOL || COlevar.vt == VT_CY || COlevar.vt == VT_UI2 || COlevar.vt == VT_UI4 || COlevar.vt ==  VT_I8 || COlevar.vt == VT_UI8 || COlevar.vt == VT_INT || COlevar.vt ==  VT_UINT || COlevar.vt == VT_BLOB)
-                                  statements.back() += COlevar;
+                                  sStatement += COlevar;
 							else 
 							{
-								statements.back() += _T("'");
+								sStatement += _T("'");
 								CString sString = COlevar;
 								sString.Replace(_T("'"), _T("''"));
-								statements.back() += sString;
-								statements.back() += _T("'");
+								sStatement += sString;
+								sStatement += _T("'");
 							}
 				        	if(i2 != nFieldCount - 1)
-					        	statements.back() += _T(", ");
-					        else statements.back() += _T(");");
+					        	sStatement += _T(", ");
+					        else
+							    { 
+							     sStatement += _T(");");
+							     InsertStatements.push_back(sStatement);
+							    }
 				        }
 					recordset.MoveNext(); 
 		         }
-			  statements.push_back(_T("END TRANSACTION"));
+			  InsertStatements.push_back(_T("END TRANSACTION"));
 			  delete[] sFieldnames;           
 }
 void CFieldStatements::FieldCollation(CDaoTableDef &TableDef, CDaoTableDefInfo &tabledefinfo, std::vector<CString> &CollateIndexFields, const bool &m_bTrimTextValues)
 {
 	TableDef.Open(tabledefinfo.m_strName);
 	short nFieldCount = TableDef.GetFieldCount(); 
+	CString sStatement;
 	for(int i1 = 0; i1 < nFieldCount; ++i1)
 			  {
 				  CDaoFieldInfo fieldinfo;                                          
@@ -173,11 +208,12 @@ void CFieldStatements::FieldCollation(CDaoTableDef &TableDef, CDaoTableDefInfo &
 				  rc.GetFieldInfo(i1,recordinfo);
 				  switch(recordinfo.m_nType)
 				  {
-				  case dbText: CollateIndexFields.push_back(tabledefinfo.m_strName);  m_bTrimTextValues? CollateIndexFields.back() += fieldinfo.m_strName.TrimLeft().TrimRight() : CollateIndexFields.back() += fieldinfo.m_strName ; break;
-				        case dbMemo: CollateIndexFields.push_back(tabledefinfo.m_strName); m_bTrimTextValues? CollateIndexFields.back() += fieldinfo.m_strName.TrimLeft().TrimRight() : CollateIndexFields.back() += fieldinfo.m_strName ; break;
-						case dbGUID: CollateIndexFields.push_back(tabledefinfo.m_strName); m_bTrimTextValues? CollateIndexFields.back() += fieldinfo.m_strName.TrimLeft().TrimRight() : CollateIndexFields.back() += fieldinfo.m_strName ; break;
-                        case dbChar: CollateIndexFields.push_back(tabledefinfo.m_strName); m_bTrimTextValues? CollateIndexFields.back() += fieldinfo.m_strName.TrimLeft().TrimRight() : CollateIndexFields.back() += fieldinfo.m_strName ; break;
+						case dbText: sStatement = tabledefinfo.m_strName;  m_bTrimTextValues? sStatement += fieldinfo.m_strName.TrimLeft().TrimRight() : sStatement += fieldinfo.m_strName ; break;
+				        case dbMemo: sStatement = tabledefinfo.m_strName; m_bTrimTextValues? sStatement += fieldinfo.m_strName.TrimLeft().TrimRight() : sStatement += fieldinfo.m_strName ; break;
+						case dbGUID: sStatement = tabledefinfo.m_strName; m_bTrimTextValues? sStatement += fieldinfo.m_strName.TrimLeft().TrimRight() : sStatement += fieldinfo.m_strName ; break;
+                        case dbChar: sStatement = tabledefinfo.m_strName; m_bTrimTextValues? sStatement += fieldinfo.m_strName.TrimLeft().TrimRight() : sStatement += fieldinfo.m_strName ; break;
 						default: break;
 				  }
+				  CollateIndexFields.push_back(sStatement);
 	          }
 }

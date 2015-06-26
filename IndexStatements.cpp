@@ -9,7 +9,9 @@ static char THIS_FILE[]=__FILE__;
 
 void CIndexStatements::Indexes(CDaoTableDef &TableDef, std::vector<CString> &IndexStatements, const CDaoTableDefInfo &tabledefinfo, CString *&sTableNames, const short &nTableCount, std::vector<CString> &UniqueFields, std::vector<CString> &CollateIndexFields, const bool &m_bCollateNoCaseIndexAdd, const bool &m_bTrimTextValues)
 {
-	CString sParrent;
+	 CString sParrent;
+	 CString sStatement;
+	 CString sStatement2;
 	 short nIndexCount = TableDef.GetIndexCount();
 			  for(int i1 = 0; i1 < nIndexCount; ++i1)
 			  {
@@ -18,43 +20,45 @@ void CIndexStatements::Indexes(CDaoTableDef &TableDef, std::vector<CString> &Ind
 				  if(indexinfo.m_strName.Find('{') != -1 || indexinfo.m_strName.Find('}') != -1 || IndexFilter(tabledefinfo,indexinfo,sTableNames,nTableCount))
 				     continue;
 				  if(indexinfo.m_bUnique == TRUE)
-					  IndexStatements.push_back(_T("CREATE UNIQUE INDEX "));
-				  else IndexStatements.push_back(_T("CREATE INDEX "));
+					  sStatement = _T("CREATE UNIQUE INDEX ");
+				  else sStatement = _T("CREATE INDEX ");
 				  sParrent = tabledefinfo.m_strName;
-				  IndexStatements.back() += tabledefinfo.m_strName;
-				  IndexStatements.back() += _T("_");
-				  IndexStatements.back() += indexinfo.m_strName;
-				  IndexStatements.back() += _T(" ON ");
-				  IndexStatements.back() += tabledefinfo.m_strName;
-				  IndexStatements.back() += _T("(");
+				  sStatement += tabledefinfo.m_strName;
+				  sStatement += _T("_");
+				  sStatement += indexinfo.m_strName;
+				  sStatement += _T(" ON ");
+				  sStatement += tabledefinfo.m_strName;
+				  sStatement += _T("(");
 				  short nColumnCount = indexinfo.m_nFields;
 				  for(int i2 = 0; i2 < nColumnCount; ++i2)
 				  {
-					  IndexStatements.back() += _T("'");
+					  sStatement += _T("'");
 					  if(indexinfo.m_bUnique == TRUE)
 					  {
-						  UniqueFields.push_back(tabledefinfo.m_strName);
+						  sStatement2 = tabledefinfo.m_strName;
 						  if(m_bTrimTextValues)
-							  UniqueFields.back() += indexinfo.m_pFieldInfos[i2].m_strName.TrimLeft().TrimRight();
-						  else UniqueFields.back() += indexinfo.m_pFieldInfos[i2].m_strName;
+							  sStatement2 += indexinfo.m_pFieldInfos[i2].m_strName.TrimLeft().TrimRight();
+						  else sStatement2 += indexinfo.m_pFieldInfos[i2].m_strName;
+						  UniqueFields.push_back(sStatement2);
 					  }
 					  if(m_bTrimTextValues)
 						  sParrent += indexinfo.m_pFieldInfos[i2].m_strName.TrimLeft().TrimRight();
 					  else sParrent += indexinfo.m_pFieldInfos[i2].m_strName;
 					  if(m_bTrimTextValues)
-						  IndexStatements.back() += indexinfo.m_pFieldInfos[i2].m_strName.TrimLeft().TrimRight();	
-					  else IndexStatements.back() += indexinfo.m_pFieldInfos[i2].m_strName;					  
-					  IndexStatements.back() += _T("'");
+						  sStatement += indexinfo.m_pFieldInfos[i2].m_strName.TrimLeft().TrimRight();	
+					  else sStatement += indexinfo.m_pFieldInfos[i2].m_strName;					  
+					  sStatement += _T("'");
 					  if(m_bCollateNoCaseIndexAdd)
 					   {
 					     if(IsIndexFieldText(sParrent,CollateIndexFields)) 
-						    	IndexStatements.back() +=  _T(" COLLATE NOCASE ");
+						    	sStatement +=  _T(" COLLATE NOCASE ");
 					   }
 					  if(i2 == nColumnCount-1)
-						  IndexStatements.back() += _T(")");
-					  else IndexStatements.back() += _T(",");
+						  sStatement += _T(")");
+					  else sStatement += _T(",");
 				  }
-				  IndexStatements.back() += _T(";");
+				  sStatement += _T(";");
+				  IndexStatements.push_back(sStatement);
 			  }
 }
 
