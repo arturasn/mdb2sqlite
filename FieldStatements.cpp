@@ -81,7 +81,7 @@ void CFieldStatements::fFields(CDaoDatabase &db, CDaoTableDef &TableDef, CDaoTab
 					UniqueFieldAdd(fieldinfo, tabledefinfo, UniqueFields, sStatement);
 				if( bIsText && settings.m_bCollateNoCaseFieldsAdd )
 					sStatement += _T(" COLLATE NOCASE");
-				 if( settings.m_bAddComents )
+				 if( settings.m_bAddComments )
 				{
 					sStatement += _T(" /*");
 					sStatement += GetDaoFieldDescription(fieldinfo.m_strName, tabledefinfo.m_strName, db);

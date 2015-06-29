@@ -1,7 +1,4 @@
 #include "stdafx.h"
-#include "naujastestas.h"
-#include "FieldStatements.h"
-#include <vector>
 #include <iostream>
 #include "SimpleIni.h"
 #ifndef __INCLUDED_INDEXSTATEMENTS_H__
@@ -13,7 +10,9 @@
 #ifndef __INCLUDED_RELATIONSHIPSTATEMENTS_H__
 	#include "RelationshipStatements.h"
 #endif
-
+#ifndef __INCLUDED_FIELDSTATEMENTS_H__
+  #include "FieldStatements.h"
+#endif
 
 void CSettingsReader::ReadFromCSimpleIni(CSettings &settings)
 {
@@ -34,7 +33,7 @@ void CSettingsReader::ReadFromCSimpleIni(CSettings &settings)
 	settings.m_bCollateNoCaseIndexAdd = ini.GetBoolValue(_T("Settings"),_T("CollateNoCaseForIndex"),true);
 	settings.m_bCollateNoCaseFieldsAdd = ini.GetBoolValue(_T("Settings"),_T("CollateNoCaseForFields"),true);
 	settings.m_bTrimTextValues = ini.GetBoolValue(_T("Settings"),_T("TrimTextValues"),true);
-	settings.m_bAddComents = ini.GetBoolValue(_T("Settings"),_T("AddComents"),true);
+	settings.m_bAddComments = ini.GetBoolValue(_T("Settings"),_T("AddComents"),true);
 }
 
 int main(int argc, char* argv[])
@@ -45,11 +44,7 @@ int main(int argc, char* argv[])
 		return 0;
 	}
 	AfxDaoInit();
-	CSQLiteConversion CSQLiteConversionObject;
-	CFieldStatements CFieldStatementsObject;
-	CIndexStatements CIndexStatementsObject;
 	CSettings settings;
-	CRelationships CRelationshipsObject;
 	std::vector<CString> statements;
 	std::vector<CString> InsertStatements;
 	std::vector<CString> RelationFields;
@@ -76,7 +71,7 @@ int main(int argc, char* argv[])
 				sTableNames[nNonSystemTableCount] = tabledefinfo.m_strName;
 				nNonSystemTableCount++;
 				if( settings.m_bCollateNoCaseIndexAdd ) 
-					CFieldStatementsObject.FieldCollation(TableDef, tabledefinfo, CollateIndexFields, settings.m_bTrimTextValues);
+					CFieldStatements::FieldCollation(TableDef, tabledefinfo, CollateIndexFields, settings.m_bTrimTextValues);
 			}
 		}
 		for( int i = 0; i < nTableCount; ++i )
@@ -87,16 +82,16 @@ int main(int argc, char* argv[])
 	   		{  
 				  short nRelationCount = db.GetRelationCount();
 				  if( !i && settings.m_bRelationshipAdd )
-					  CRelationshipsObject.Relationhips(db, RelationFields, nRelationCount); 
+					  CRelationships::Relationhips(db, RelationFields, nRelationCount); 
 				  CDaoTableDef TableDef(&db);
 				  sStatement = _T("CREATE TABLE   `");  
 				  sStatement += tabledefinfo.m_strName;
 				  sStatement += (_T("` ("));
 				  TableDef.Open(tabledefinfo.m_strName);   
 				  if( settings.m_bIndexAdd ) 
-						CIndexStatementsObject.Indexes(TableDef, IndexStatements, tabledefinfo, sTableNames, nNonSystemTableCount, UniqueFields, CollateIndexFields, settings.m_bCollateNoCaseIndexAdd, settings.m_bTrimTextValues);
+						CIndexStatements::Indexes(TableDef, IndexStatements, tabledefinfo, sTableNames, nNonSystemTableCount, UniqueFields, CollateIndexFields, settings.m_bCollateNoCaseIndexAdd, settings.m_bTrimTextValues);
 				  if( settings.m_bFieldsAdd ) 
-						CFieldStatementsObject.fFields(db, TableDef, tabledefinfo, InsertStatements, UniqueFields, settings, sStatement); 
+						CFieldStatements::fFields(db, TableDef, tabledefinfo, InsertStatements, UniqueFields, settings, sStatement); 
 				  statements.push_back(sStatement);
 			} 
 		 }
@@ -109,7 +104,7 @@ int main(int argc, char* argv[])
 		e->Delete();
 	}
 	AfxDaoTerm();
-	CSQLiteConversionObject.SqliteConversion(statements, InsertStatements, IndexStatements, RelationFields, argv[2]);
+	CSQLiteConversion::SqliteConversion(statements, InsertStatements, IndexStatements, RelationFields, argv[2]);
     return 0;
 }
 

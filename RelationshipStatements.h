@@ -9,6 +9,6 @@
 class CRelationships
 {
 	public: 
-		void Relationhips(CDaoDatabase &db, std::vector<CString> &RelationFields, const short nRelationCount);
+		static void Relationhips(CDaoDatabase &db, std::vector<CString> &RelationFields, const short nRelationCount);
 };
 #endif
