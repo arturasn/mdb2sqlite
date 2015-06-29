@@ -1,6 +1,19 @@
 #include "stdafx.h"
 #include "naujastestas.h"
 #include "FieldStatements.h"
+#include <vector>
+#include <iostream>
+#include "SimpleIni.h"
+#ifndef __INCLUDED_INDEXSTATEMENTS_H__
+	#include "IndexStatements.h"
+#endif
+#ifndef __INCLUDED_SQLITESTATEMENTEXECUTION_H__
+	#include "sqlitestatementexecution.h"
+#endif
+#ifndef __INCLUDED_RELATIONSHIPSTATEMENTS_H__
+	#include "RelationshipStatements.h"
+#endif
+
 
 void CSettingsReader::ReadFromCSimpleIni(CSettings &settings)
 {
@@ -21,11 +34,12 @@ void CSettingsReader::ReadFromCSimpleIni(CSettings &settings)
 	settings.m_bCollateNoCaseIndexAdd = ini.GetBoolValue(_T("Settings"),_T("CollateNoCaseForIndex"),true);
 	settings.m_bCollateNoCaseFieldsAdd = ini.GetBoolValue(_T("Settings"),_T("CollateNoCaseForFields"),true);
 	settings.m_bTrimTextValues = ini.GetBoolValue(_T("Settings"),_T("TrimTextValues"),true);
+	settings.m_bAddComents = ini.GetBoolValue(_T("Settings"),_T("AddComents"),true);
 }
 
 int main(int argc, char* argv[])
 {
-	if(argc < 3)
+	if(	argc < 3 )
 	{
 		std::cout << "Conversion failed. Path wasnt provided." << std::endl;
 		return 0;
@@ -52,37 +66,37 @@ int main(int argc, char* argv[])
 		short nTableCount = db.GetTableDefCount();                 
 		CString *sTableNames = new CString[nTableCount];      
 		short nNonSystemTableCount=0;
-		for(int i = 0; i < nTableCount; ++i)
+		for( int i = 0; i < nTableCount; ++i )
 		{
 			CDaoTableDefInfo tabledefinfo;                           
 			db.GetTableDefInfo(i,tabledefinfo);                      
-			if(tabledefinfo.m_lAttributes == 0)                      
+			if( tabledefinfo.m_lAttributes == 0 )                      
 	   		{  
 				CDaoTableDef TableDef(&db);
 				sTableNames[nNonSystemTableCount] = tabledefinfo.m_strName;
 				nNonSystemTableCount++;
-				if(settings.m_bCollateNoCaseIndexAdd) 
-					CFieldStatementsObject.FieldCollation(TableDef,tabledefinfo,CollateIndexFields,settings.m_bTrimTextValues);
+				if( settings.m_bCollateNoCaseIndexAdd ) 
+					CFieldStatementsObject.FieldCollation(TableDef, tabledefinfo, CollateIndexFields, settings.m_bTrimTextValues);
 			}
 		}
-		for(int i = 0; i < nTableCount; ++i)
+		for( int i = 0; i < nTableCount; ++i )
 		  {
 			CDaoTableDefInfo tabledefinfo;                           
 			db.GetTableDefInfo(i,tabledefinfo);                      
-			if(tabledefinfo.m_lAttributes == 0)                      // We choose only the elements that we need database adds some system files
+			if( tabledefinfo.m_lAttributes == 0 )                      // We choose only the elements that we need ass the database adds some system files
 	   		{  
 				  short nRelationCount = db.GetRelationCount();
-				  if(!i && settings.m_bRelationshipAdd)
-					 CRelationshipsObject.Relationhips(db,RelationFields,nRelationCount); 
+				  if( !i && settings.m_bRelationshipAdd )
+					  CRelationshipsObject.Relationhips(db, RelationFields, nRelationCount); 
 				  CDaoTableDef TableDef(&db);
 				  sStatement = _T("CREATE TABLE   `");  
 				  sStatement += tabledefinfo.m_strName;
 				  sStatement += (_T("` ("));
 				  TableDef.Open(tabledefinfo.m_strName);   
-				  if(settings.m_bIndexAdd) 
-					 CIndexStatementsObject.Indexes(TableDef,IndexStatements,tabledefinfo,sTableNames,nNonSystemTableCount,UniqueFields,CollateIndexFields,settings.m_bCollateNoCaseIndexAdd,settings.m_bTrimTextValues);
-				  if(settings.m_bFieldsAdd) 
-					 CFieldStatementsObject.fFields(TableDef, tabledefinfo, InsertStatements,UniqueFields,settings,sStatement); 
+				  if( settings.m_bIndexAdd ) 
+						CIndexStatementsObject.Indexes(TableDef, IndexStatements, tabledefinfo, sTableNames, nNonSystemTableCount, UniqueFields, CollateIndexFields, settings.m_bCollateNoCaseIndexAdd, settings.m_bTrimTextValues);
+				  if( settings.m_bFieldsAdd ) 
+						CFieldStatementsObject.fFields(db, TableDef, tabledefinfo, InsertStatements, UniqueFields, settings, sStatement); 
 				  statements.push_back(sStatement);
 			} 
 		 }
@@ -95,7 +109,7 @@ int main(int argc, char* argv[])
 		e->Delete();
 	}
 	AfxDaoTerm();
-	CSQLiteConversionObject.SqliteConversion(statements,InsertStatements,IndexStatements,RelationFields,argv[2]);
+	CSQLiteConversionObject.SqliteConversion(statements, InsertStatements, IndexStatements, RelationFields, argv[2]);
     return 0;
 }
 

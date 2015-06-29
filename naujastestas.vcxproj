@@ -79,12 +79,10 @@
     <ClInclude Include="IndexStatements.h" />
     <ClInclude Include="naujastestas.h" />
     <ClInclude Include="RelationshipStatements.h" />
-    <ClInclude Include="Resource.h" />
     <ClInclude Include="SimpleIni.h" />
     <ClInclude Include="sqlite3.h" />
     <ClInclude Include="sqlitestatementexecution.h" />
     <ClInclude Include="stdafx.h" />
-    <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="FieldStatements.cpp" />
@@ -96,9 +94,6 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
     </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <ResourceCompile Include="naujastestas.rc" />
   </ItemGroup>
   <ItemGroup>
     <None Include="sqlite3.dll" />

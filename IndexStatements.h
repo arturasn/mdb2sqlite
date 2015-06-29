@@ -4,7 +4,6 @@
 #pragma once
 
 #include <afxdao.h>
-#include <afxdb.h>
 #include <vector>
 
 class CIndexStatements

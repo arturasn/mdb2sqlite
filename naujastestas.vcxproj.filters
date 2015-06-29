@@ -26,9 +26,6 @@
     <ClInclude Include="FieldStatements.h">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="Resource.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
     <ClInclude Include="SimpleIni.h">
       <Filter>Source Files</Filter>
     </ClInclude>
@@ -36,9 +33,6 @@
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="stdafx.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
-    <ClInclude Include="targetver.h">
       <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -61,11 +55,6 @@
     <ClCompile Include="naujastestas.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <ResourceCompile Include="naujastestas.rc">
-      <Filter>Resource Files</Filter>
-    </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="sqlite3.dll">

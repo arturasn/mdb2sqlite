@@ -1,30 +1,11 @@
-// stdafx.h : include file for standard system include files,
-// or project specific include files that are used frequently, but
-// are changed infrequently
-//
-
 #pragma once
+#define VC_EXTRALEAN
 
-#include "targetver.h"
-
-#include <stdio.h>
-#include <tchar.h>
-#define _ATL_CSTRING_EXPLICIT_CONSTRUCTORS      
-
-#ifndef VC_EXTRALEAN
-#define VC_EXTRALEAN            
+#ifndef _WIN32_WINNT
+ #define _WIN32_WINNT 0x0501
 #endif
-
-#include <afx.h>
-#include <afxwin.h>         
-#include <afxext.h>         
-#ifndef _AFX_NO_OLE_SUPPORT
-#include <afxdtctl.h>          
-#endif
-#ifndef _AFX_NO_AFXCMN_SUPPORT
-#include <afxcmn.h>                    
-#endif 
-
+  
+#include <afx.h>            
 
 #pragma warning(disable : 4995)
 
