@@ -25,6 +25,10 @@
 *.out
 *.app
 
-/naujastestas/*.filters 
-/naujastestas/Debug
+/mdb2sqlite/*.filters 
+/mdb2sqlite/Debug
 *.tlog
+*.filters 
+*.zip
+*.filters
+/wxwidgets

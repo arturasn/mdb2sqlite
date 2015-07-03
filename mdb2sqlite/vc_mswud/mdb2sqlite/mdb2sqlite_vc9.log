@@ -1,0 +1,39 @@
+﻿Build started 7/3/2015 3:43:22 PM.
+     1>Project "C:\Users\arturasN\Documents\ExecutionToSqlite\mdb2sqlite\mdb2sqlite_vc9.vcxproj" on node 2 (build target(s)).
+     1>InitializeBuildStatus:
+         Touching "vc_mswud\mdb2sqlite\mdb2sqlite.unsuccessfulbuild".
+       ClCompile:
+         All outputs are up-to-date.
+         All outputs are up-to-date.
+       ManifestResourceCompile:
+         All outputs are up-to-date.
+       Link:
+         C:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"vc_mswud\mdb2sqlite.exe" /INCREMENTAL /NOLOGO /LIBPATH:..\wxwidgets\lib\vc_lib wxmsw30ud_core.lib wxbase30ud.lib wxtiffd.lib wxjpegd.lib wxpngd.lib wxzlibd.lib wxregexud.lib wxexpatd.lib kernel32.lib user32.lib gdi32.lib comdlg32.lib winspool.lib winmm.lib comctl32.lib ole32.lib oleaut32.lib uuid.lib rpcrt4.lib advapi32.lib wsock32.lib wininet.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /ManifestFile:"vc_mswud\mdb2sqlite\mdb2sqlite.exe.intermediate.manifest" /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /DEBUG /PDB:"vc_mswud\mdb2sqlite.pdb" /SUBSYSTEM:WINDOWS /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"vc_mswud\mdb2sqlite.lib" /MACHINE:X86 vc_mswud\mdb2sqlite\mdb2sqlite.exe.embed.manifest.res
+         vc_mswud\mdb2sqlite\FieldStatements.obj
+         vc_mswud\mdb2sqlite\IndexStatements.obj
+         vc_mswud\mdb2sqlite\mdb2sqlite.obj
+         vc_mswud\mdb2sqlite\naujastestas.obj
+         vc_mswud\mdb2sqlite\RelationshipStatements.obj
+         vc_mswud\mdb2sqlite\sqlitestatementexecution.obj
+         vc_mswud\mdb2sqlite\stdafx.obj
+         sqlite3.lib
+         sqlite3.lib(sqlite3.obj) : MSIL .netmodule or module compiled with /GL found; restarting link with /LTCG; add /LTCG to the link command line to improve linker performance
+     1>LINK : warning LNK4075: ignoring '/INCREMENTAL' due to '/LTCG' specification
+     1>LINK : warning LNK4098: defaultlib 'MSVCRT' conflicts with use of other libs; use /NODEFAULTLIB:library
+         Generating code
+         Finished generating code
+     1>sqlite3.lib(sqlite3.obj) : warning LNK4099: PDB 'vc90.pdb' was not found with 'sqlite3.lib(sqlite3.obj)' or at 'C:\Users\arturasN\Documents\ExecutionToSqlite\mdb2sqlite\vc_mswud\vc90.pdb'; linking object as if no debug info
+       Manifest:
+         C:\Program Files (x86)\Microsoft SDKs\Windows\v7.0A\bin\mt.exe /nologo /verbose /out:"vc_mswud\mdb2sqlite\mdb2sqlite.exe.embed.manifest" /manifest vc_mswud\mdb2sqlite\mdb2sqlite.exe.intermediate.manifest
+         All outputs are up-to-date.
+       LinkEmbedManifest:
+         All outputs are up-to-date.
+         mdb2sqlite_vc9.vcxproj -> C:\Users\arturasN\Documents\ExecutionToSqlite\mdb2sqlite\vc_mswud\mdb2sqlite.exe
+       FinalizeBuildStatus:
+         Deleting file "vc_mswud\mdb2sqlite\mdb2sqlite.unsuccessfulbuild".
+         Touching "vc_mswud\mdb2sqlite\mdb2sqlite.lastbuildstate".
+     1>Done Building Project "C:\Users\arturasN\Documents\ExecutionToSqlite\mdb2sqlite\mdb2sqlite_vc9.vcxproj" (build target(s)).
+
+Build succeeded.
+
+Time Elapsed 00:00:19.65
