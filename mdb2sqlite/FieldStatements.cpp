@@ -1,5 +1,7 @@
 #include "stdafx.h"
 #include "FieldStatements.h"
+#include <afxdao.h>
+#include <wx/textctrl.h>
 //#include <iostream>
 
 #ifdef _DEBUG
@@ -44,7 +46,14 @@ CString CFieldStatements::GetDaoFieldDescription(CString &strFieldName, CString 
         } 
         return strT; 
     } 
-void CFieldStatements::fFields(CDaoDatabase &db, CDaoTableDef &TableDef, CDaoTableDefInfo &tabledefinfo, std::vector<CString> &InsertStatements, std::vector<CString> &UniqueFields, CSettings &settings, CString &sStatement)
+wxString CFieldStatements::CstringToWxString(const CString &ConversionString)
+{
+	CT2CA pszConvertedAnsiString (ConversionString);
+	std::string strStd (pszConvertedAnsiString);
+	return wxString::FromUTF8(_strdup(strStd.c_str() ) );
+}
+void CFieldStatements::fFields(CDaoDatabase &db, CDaoTableDef &TableDef, CDaoTableDefInfo &tabledefinfo, std::vector<CString> &InsertStatements, std::vector<CString> &UniqueFields, 
+	CSettings &settings, CString &sStatement, wxTextCtrl *&PrgDlg, const bool &bKeyWordList, CString (&ReservedKeyWords)[124])
 {
 	   
 		short nFieldCount = TableDef.GetFieldCount();        
@@ -64,6 +73,23 @@ void CFieldStatements::fFields(CDaoDatabase &db, CDaoTableDef &TableDef, CDaoTab
 					sStatement += fieldinfo.m_strName.TrimLeft().TrimRight();
 				else 
 					sStatement += fieldinfo.m_strName;
+				if( bKeyWordList )
+				{
+					for( int i2 = 0; i2 < 124; ++i2 )
+					{
+						if( !(fieldinfo.m_strName.CompareNoCase(ReservedKeyWords[i2])) )
+						{
+							  wxString ErrorMessage = wxT("Error field name cannot be sqlite keyword, found on table: ");
+							  PrgDlg->SetDefaultStyle(wxTextAttr (*wxRED));
+							  ErrorMessage += CstringToWxString(tabledefinfo.m_strName);
+							  ErrorMessage += wxT(" field name: ");
+							  ErrorMessage += CstringToWxString(fieldinfo.m_strName);
+							  ErrorMessage += wxT("\n");
+							  PrgDlg->WriteText(ErrorMessage);
+							  PrgDlg->SetDefaultStyle(wxTextAttr (wxNullColour));
+						}
+					}
+				}
 				sStatement += (_T("`     ")); 
 				CDaoRecordset rc;
 				rc.Open(&TableDef);
@@ -74,7 +100,7 @@ void CFieldStatements::fFields(CDaoDatabase &db, CDaoTableDef &TableDef, CDaoTab
 				if( settings.m_bNotNullAdd )  
 					NotNullAdd(fieldinfo, sStatement);
 				if( settings.m_bDefaultValueAdd ) 
-					DefaultValueAdd(fieldinfo, tabledefinfo, sStatement);
+					DefaultValueAdd(fieldinfo, tabledefinfo, sStatement, recordinfo, PrgDlg);
 				if( settings.m_bAutoIncrementAdd )
 					AutoIncrementAdd(fieldinfo, sStatement);
 				if( settings.m_bUniqueFieldAdd ) 
@@ -106,41 +132,59 @@ void CFieldStatements::AutoIncrementAdd(const CDaoFieldInfo &fieldinfo, CString 
 	if( fieldinfo.m_lAttributes & dbAutoIncrField ) 
 		sStatement += _T(" PRIMARY KEY AUTOINCREMENT");
 }
-void CFieldStatements::DefaultValueAdd( const CDaoFieldInfo &fieldinfo, CDaoTableDefInfo &tabledefinfo, CString &sStatement)
+void CFieldStatements::DefaultValueAdd( const CDaoFieldInfo &fieldinfo, CDaoTableDefInfo &tabledefinfo, CString &sStatement, CDaoFieldInfo &recordinfo, wxTextCtrl *&PrgDlg)
 {
 	if( !(fieldinfo.m_strDefaultValue.IsEmpty()) )
 		{
-			if( !(fieldinfo.m_strDefaultValue.CompareNoCase(_T("Yes"))) )
+			if ( recordinfo.m_nType == dbBoolean )
 			{
-				sStatement += _T(" DEFAULT -1");
-				return;
+				if( !(fieldinfo.m_strDefaultValue.CompareNoCase(_T("Yes"))) )
+				{
+					sStatement += _T(" DEFAULT -1");
+					return;
+				}
+				if( !(fieldinfo.m_strDefaultValue.CompareNoCase(_T("No"))) )
+				{
+					sStatement += _T(" DEFAULT 0");
+					return;
+				}
+				if( !(fieldinfo.m_strDefaultValue.CompareNoCase(_T("true"))) )
+				{
+					sStatement += _T(" DEFAULT -1");
+					return;
+				}
+				if( !(fieldinfo.m_strDefaultValue.CollateNoCase(_T("false"))) )
+				{
+					sStatement += _T(" DEFAULT 0");
+					return;
+				}
+				if( !(fieldinfo.m_strDefaultValue.CollateNoCase(_T("1"))) )
+				{
+					sStatement += _T(" DEFAULT -1");
+					return;
+				}
+				if( !(fieldinfo.m_strDefaultValue.CollateNoCase(_T("0"))) )
+				{
+					sStatement += _T(" DEFAULT 0");
+					return;
+				}
+				//std::wcout << "Unable to recognize default value:" << (LPCTSTR)fieldinfo.m_strDefaultValue << " on Table:" << (LPCTSTR)tabledefinfo.m_strName << " Column:" << (LPCTSTR)fieldinfo.m_strName << std::endl;
+				PrgDlg->SetDefaultStyle(wxTextAttr (*wxRED));
+				wxString ErrorMessage = wxT("Unable to recognize default value: ");
+				ErrorMessage += CstringToWxString(fieldinfo.m_strDefaultValue);
+				ErrorMessage += wxT(" on table: ");
+				ErrorMessage += CstringToWxString(tabledefinfo.m_strName);
+				ErrorMessage += wxT(" column: ");
+				ErrorMessage += CstringToWxString(fieldinfo.m_strName);
+				ErrorMessage += wxT("\n");
+				PrgDlg->WriteText(ErrorMessage);
+				PrgDlg->SetDefaultStyle(wxTextAttr (wxNullColour));
 			}
-			if( !(fieldinfo.m_strDefaultValue.CompareNoCase(_T("No"))) )
+			else 
 			{
-				sStatement += _T(" DEFAULT 0");
-				return;
+				sStatement += _T(" DEFAULT ");
+				sStatement += fieldinfo.m_strDefaultValue;
 			}
-			if( !(fieldinfo.m_strDefaultValue.CompareNoCase(_T("true"))) )
-			{
-				sStatement += _T(" DEFAULT -1");
-				return;
-			}
-			if( !(fieldinfo.m_strDefaultValue.CollateNoCase(_T("false"))) )
-			{
-				sStatement += _T(" DEFAULT 0");
-				return;
-			}
-			if( !(fieldinfo.m_strDefaultValue.CollateNoCase(_T("1"))) )
-			{
-				sStatement += _T(" DEFAULT -1");
-				return;
-			}
-			if( !(fieldinfo.m_strDefaultValue.CollateNoCase(_T("0"))) )
-			{
-				sStatement += _T(" DEFAULT 0");
-				return;
-			}
-			//std::wcout << "Unable to Recognize default value:" << (LPCTSTR)fieldinfo.m_strDefaultValue << " on Table:" << (LPCTSTR)tabledefinfo.m_strName << " Column:" << (LPCTSTR)fieldinfo.m_strName << std::endl;
 		}
 }
 void CFieldStatements::FieldTypeAdd(CDaoTableDef &TableDef, const CDaoFieldInfo &recordinfo, bool &bIsText, CString &sStatement)

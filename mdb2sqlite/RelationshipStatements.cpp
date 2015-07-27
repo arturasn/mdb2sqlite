@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "RelationshipStatements.h"
+#include <afxdao.h>
 
 #ifdef _DEBUG
 #undef THIS_FILE

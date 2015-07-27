@@ -1,9 +1,6 @@
 #define _AFXDLL
 #include "stdafx.h"
-//#include <wx/wxprec.h>
-//#ifndef WX_PRECOMP
 #include <wx/wx.h>
-//#endif 
 #include "mdb2sqlite.h"
 #include <wx/dialog.h>
 #include <wx/sizer.h>
@@ -11,6 +8,8 @@
 #include <wx/progdlg.h>
 #include <wx/textctrl.h>
 #include "naujastestas.h"
+#include <fstream>
+#include "SimpleIni.h"
 
 IMPLEMENT_APP(MyApp)
 wxBEGIN_EVENT_TABLE ( CustomDialog, wxDialog )
@@ -22,13 +21,16 @@ wxEND_EVENT_TABLE()
 
 bool MyApp::OnInit()
 {
-    CustomDialog *custom = new CustomDialog(wxT("mdb2Sqlite"));
+	remove("Settings.ini");
+	int posx, posy;
+	CustomDialog::GetWindowPosition(posx, posy);
+    CustomDialog *custom = new CustomDialog(wxT("mdb2Sqlite"), posx, posy);
     custom->Show(true);
     return true;
 }
  
-CustomDialog::CustomDialog(const wxString &title)
-       : wxDialog(NULL, -1, title, wxDefaultPosition, wxSize(270, 235), wxRESIZE_BORDER | wxCAPTION)
+CustomDialog::CustomDialog(const wxString &title, const int x, const int y)
+       : wxDialog(NULL, -1, title, wxPoint(x,y), wxSize(270, 235), wxRESIZE_BORDER | wxCAPTION)
 {
   wxSizer * const SourceDestination = new wxStaticBoxSizer(wxVERTICAL, this);
   wxSizer * const SourceFile = new wxStaticBoxSizer(wxVERTICAL, this, "&Source File:");
@@ -70,7 +72,6 @@ CustomDialog::CustomDialog(const wxString &title)
   vbox->AddSpacer(5);
   vbox->Add(hhhbox, 0, wxLEFT | wxALIGN_RIGHT, 120);
   SetSizer(vbox);
-  Centre();
   ShowModal();
   Destroy(); 
 }
@@ -87,6 +88,12 @@ void CustomDialog::OnConvert(wxCommandEvent& event )
 	}
 	else 
 	{
+		int *posx = new int, 
+			*posy = new int;
+	    GetPosition(posx,posy);
+		SaveWindowPosition(posx, posy);
+		delete posx;
+		delete posy;
         char Path[100];
 		char dPath[100];
         strcpy(Path, (const char*)TFilePathLine->GetValue().mb_str(wxConvUTF8));
@@ -145,22 +152,102 @@ void CustomDialog::FileOpen(wxCommandEvent &WXUNUSED(event) )
 }
 void CustomDialog::SettingsChoice(wxCommandEvent& WXUNUSED(event) )
 {
-	wxDialog *dlg = new wxDialog(this, wxID_ANY, wxT("Values to export"), wxDefaultPosition, wxSize(220,330));
+	wxDialog *dlg = new wxDialog(this, wxID_ANY, wxT("Values to export"), wxDefaultPosition, wxSize(220,320));
 	const wxString choices[] =
     {
         wxT("Fields add"), wxT("Relationship add"), wxT("Record add"), wxT("Not Null value add"), wxT("AutoIncrement value add"),
         wxT("Default value add"), wxT("Field type add"), wxT("Index add"), wxT("Unique Fields add"), wxT("Collate nocase for index add"),
-        wxT("Collatee nocase for fields add"), wxT("Trim text values"), wxT("Add field comments"),
+        wxT("Collatee nocase for fields add"), wxT("Trim text values"), wxT("Add field comments"), wxT("Reserved keyword list add")
     };
-	
-    Selections = new wxCheckListBox(dlg, wxID_ANY, wxDefaultPosition, wxSize(50,230), WXSIZEOF(choices), choices);
+    wxCheckListBox *Selections = new wxCheckListBox(dlg, wxID_ANY, wxDefaultPosition, wxSize(50,230), WXSIZEOF(choices), choices);
 	wxSizer *settingsizer = new wxStaticBoxSizer(wxVERTICAL, dlg);
 	settingsizer->Add(Selections, 0, wxEXPAND | wxLEFT | wxRIGHT, 5);
 	settingsizer->AddSpacer(10);
 	settingsizer->Add(new wxStaticLine(dlg), 0, wxEXPAND | wxLEFT | wxRIGHT, 3);
-
-	//settingsizer ->Add(CreateStdDialogButtonSizer  ( wxOK | wxCANCEL ), wxSizerFlags().Expand().Bottom().Border());
+	wxBoxSizer *hbox = new wxBoxSizer(wxHORIZONTAL);
+	hbox->Add(new wxButton(dlg, wxID_OK, "OK", wxDefaultPosition, wxSize(70,25)), 0, wxLEFT, 5);
+	hbox->Add(new wxButton(dlg, wxID_CANCEL, "Cancel", wxDefaultPosition, wxSize(70,25)), 0, wxLEFT, 5);
+	settingsizer->Add(hbox, 0, wxLEFT | wxTOP, 5);
 	dlg->SetSizer(settingsizer);
-	dlg->ShowModal();
+	if(dlg->ShowModal() == wxID_OK)
+		SaveToIni(Selections);
 	dlg->Destroy();
+}
+void CustomDialog::SaveToIni(wxCheckListBox *&Selections)
+{
+	std::ofstream settingfile("Settings.ini");
+	settingfile << "[Settings]" << std::endl;
+	settingfile << "FieldsAdd = "; 
+	                             if(Selections->IsChecked(0)) 
+									settingfile << "true" << std::endl; 
+								 else settingfile << "false" << std::endl;
+	settingfile << "RelationshipAdd = "; 
+	                             if(Selections->IsChecked(1))  
+									settingfile << "true" << std::endl; 
+								 else settingfile << "false" << std::endl;
+	settingfile << "RecordAdd = "; 
+	                             if(Selections->IsChecked(2)) 
+									settingfile << "true" << std::endl; 
+								 else settingfile << "false" << std::endl;
+    settingfile << "NotNullAdd = "; 
+	                             if(Selections->IsChecked(3)) 
+									settingfile << "true" << std::endl; 
+								 else settingfile << "false" << std::endl;
+	settingfile << "AutoIncrementAdd = "; 
+	                             if(Selections->IsChecked(4)) 
+									settingfile << "true" << std::endl; 
+								 else settingfile << "false" << std::endl;
+    settingfile << "DefaultValueAdd = "; 
+	                             if(Selections->IsChecked(5)) 
+									settingfile << "true" << std::endl; 
+								 else settingfile << "false" << std::endl;
+	settingfile << "FieldTypeAdd = "; 
+	                             if(Selections->IsChecked(6)) 
+									settingfile << "true" << std::endl; 
+								 else settingfile << "false" << std::endl;
+	settingfile << "IndexAdd = "; 
+	                             if(Selections->IsChecked(7)) 
+									settingfile << "true" << std::endl; 
+								 else settingfile << "false" << std::endl;
+	settingfile << "UniqueFieldAdd = "; 
+	                             if(Selections->IsChecked(8)) 
+									settingfile << "true" << std::endl; 
+								 else settingfile << "false" << std::endl;
+	settingfile << "CollateNoCaseForIndex = "; 
+	                             if(Selections->IsChecked(9)) 
+									settingfile << "true" << std::endl; 
+								 else settingfile << "false" << std::endl;
+    settingfile << "CollateNoCaseForFields = "; 
+	                             if(Selections->IsChecked(10)) 
+									settingfile << "true" << std::endl; 
+								 else settingfile << "false" << std::endl;
+	settingfile << "TrimTextValues = "; 
+	                             if(Selections->IsChecked(11)) 
+									settingfile << "true" << std::endl; 
+								 else settingfile << "false" << std::endl;
+	settingfile << "AddComments = "; 
+	                             if(Selections->IsChecked(12)) 
+									settingfile << "true" << std::endl; 
+								 else settingfile << "false" << std::endl;
+	settingfile << "KeyWordList = ";
+	                             if(Selections->IsChecked(13))
+									 settingfile << "true" << std::endl;
+								 else settingfile << "false" << std::endl;
+	settingfile.close();
+}
+void CustomDialog::SaveWindowPosition(int *& posx, int *& posy)
+{
+	std::ofstream WindowPositionFile("WindowPosition.ini");
+	WindowPositionFile << "[WindowPosition]" << std::endl;
+	WindowPositionFile << "x = " << *posx << std::endl;
+	WindowPositionFile << "y = " << *posy << std::endl;
+	WindowPositionFile.close();
+}
+void CustomDialog::GetWindowPosition(int &posx, int &posy)
+{
+	CSimpleIni ini;
+    ini.SetUnicode();
+    ini.LoadFile("WindowPosition.ini");
+	posx = ini.GetLongValue(_T("WindowPosition"),_T("x"),550);
+	posy = ini.GetLongValue(_T("WindowPosition"),_T("y"),200);
 }

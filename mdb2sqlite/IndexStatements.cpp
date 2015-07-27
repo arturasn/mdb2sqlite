@@ -1,5 +1,7 @@
 #include "stdafx.h"
 #include "IndexStatements.h"
+#include <afxdao.h>
+#include <wx/textctrl.h>
 
 #ifdef _DEBUG
 #undef THIS_FILE
@@ -7,7 +9,7 @@ static char THIS_FILE[]=__FILE__;
 #define new DEBUG_NEW
 #endif
 
-void CIndexStatements::Indexes(CDaoTableDef &TableDef, std::vector<CString> &IndexStatements, const CDaoTableDefInfo &tabledefinfo, CString *&sTableNames, const short &nTableCount, std::vector<CString> &UniqueFields, std::vector<CString> &CollateIndexFields, const bool &m_bCollateNoCaseIndexAdd, const bool &m_bTrimTextValues)
+void CIndexStatements::Indexes(CDaoTableDef &TableDef, std::vector<CString> &IndexStatements, const CDaoTableDefInfo &tabledefinfo, CString *&sTableNames, const short &nTableCount, std::vector<CString> &UniqueFields, std::vector<CString> &CollateIndexFields, const bool &m_bCollateNoCaseIndexAdd, const bool &m_bTrimTextValues,  wxTextCtrl *&PrgDlg, const bool &bKeyWordList, CString (&ReservedKeyWords)[124])
 {
 	CString sParrent;
 	CString sStatement;
@@ -23,6 +25,24 @@ void CIndexStatements::Indexes(CDaoTableDef &TableDef, std::vector<CString> &Ind
 				sStatement = _T("CREATE UNIQUE INDEX ");
 			else 
 				sStatement = _T("CREATE INDEX ");
+			if ( bKeyWordList )
+			{
+				for( int i2 = 0; i2 < 124; ++i2 )
+				{
+					if( !(indexinfo.m_strName.CompareNoCase(ReservedKeyWords[i1])) )
+						  {
+							  wxString ErrorMessage = wxT("Error index cannot be sqlite keyword, index name found: ");
+							  PrgDlg->SetDefaultStyle(wxTextAttr (*wxRED));
+							  CT2CA pszConvertedAnsiString (indexinfo.m_strName);
+							  std::string strStd (pszConvertedAnsiString);
+							  ErrorMessage += wxString::FromUTF8(_strdup(strStd.c_str() ) );
+							  ErrorMessage += wxT("\n");
+							  PrgDlg->WriteText(ErrorMessage);
+							  PrgDlg->SetDefaultStyle(wxTextAttr (wxNullColour));
+						  }
+
+				}
+			}
 			sParrent = tabledefinfo.m_strName;
 			sStatement += tabledefinfo.m_strName;
 			sStatement += _T("_");

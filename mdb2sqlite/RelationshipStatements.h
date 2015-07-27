@@ -3,7 +3,8 @@
 
 #pragma once
 
-#include <afxdao.h>
+class CDaoDatabase;
+
 #include <vector>
 
 class CRelationships

@@ -21,6 +21,7 @@ class CSettings
 		bool m_bCollateNoCaseFieldsAdd;
 		bool m_bTrimTextValues;
 		bool m_bAddComments;
+		bool m_bKeyWordList;
  };
 class CSettingsReader
 {
