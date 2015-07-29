@@ -1,3 +1,4 @@
+#define _AFXDLL
 #include "stdafx.h"
 #include "sqlitestatementexecution.h"
 #include "sqlite3.h"
@@ -33,7 +34,8 @@ std::string CSQLiteConversion::ConvertToUTF8(const wchar_t *wstr)
         WideCharToMultiByte(CP_UTF8, 0, &wstr[0], nLen, &strTo[0], size_needed, NULL, NULL);
         return strTo;
     }
-void CSQLiteConversion::SqliteStatementExecution(std::vector<CString> &statements, sqlite3 *&sqlitedatabase, int rc , wxGauge *&gauge, unsigned &nValue, wxTextCtrl *&PrgDlg, unsigned &nErrorCount, CString *&sTableNames)
+void CSQLiteConversion::SqliteStatementExecution(std::vector<CString> &statements, sqlite3 *&sqlitedatabase, int rc , wxGauge *&gauge, unsigned &nValue, wxTextCtrl *&PrgDlg, 
+	                                             unsigned &nErrorCount, CString *&sTableNames)
 	{
 	 char *zErrMsg = 0;
 	 auto end_it = statements.end();
@@ -48,7 +50,7 @@ void CSQLiteConversion::SqliteStatementExecution(std::vector<CString> &statement
 	          {
            //     fprintf(stderr, "SQL error: %s\n", zErrMsg);
 				  ++nErrorCount;
-				  PrgDlg->SetDefaultStyle(wxTextAttr (*wxRED));
+				  PrgDlg->SetDefaultStyle(wxTextAttr (wxNullColour, *wxRED));
 				  wxString ErrorMessage = wxT("");
 				  ErrorMessage += wxString::FromUTF8(zErrMsg);
 				  ErrorMessage += " \n";
@@ -80,7 +82,7 @@ void CSQLiteConversion::SqliteStatementExecution(std::vector<CString> &statement
 		 }
    }
 void CSQLiteConversion::SqliteConversion(std::vector<CString> &statements, std::vector<CString> &InsertStatements, std::vector<CString> &IndexStatements, 
-	std:: vector<CString> &RelationFields , const char *dPath, wxGauge *&gauge, wxTextCtrl *&PrgDlg, CString *&sTableNames)
+	                                     std:: vector<CString> &RelationFields , const char *dPath, wxGauge *&gauge, wxTextCtrl *&PrgDlg, CString *&sTableNames)
  {
 	char *zErrMsg = 0;
 	unsigned nErrorCount = 0;

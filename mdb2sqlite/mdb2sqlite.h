@@ -9,29 +9,35 @@ public:
 	 wxTextCtrl *TFilePathLine;
 	 wxTextCtrl *TDestinationPathLine;
 	 wxString FileForExport;
-	 wxBoxSizer *vbox;
-	 void OnExit( wxCommandEvent& event );
-	 void OnConvert(wxCommandEvent& event );
-	 void FileOpen(wxCommandEvent &WXUNUSED(event) );
-	 void SettingsChoice(wxCommandEvent& WXUNUSED(event) );
+	 wxBoxSizer *TopSizer;
+	 
 	 void ProgressBar(char *Path, char *dPath);
-	 void SaveToIni(wxCheckListBox *&Selections);
+	 void CustomDialog::SaveToIni(wxCheckBox *&Rlc, wxCheckBox *&Rcc, wxCheckBox *&NnVc, wxCheckBox *&Aic, wxCheckBox *&Dvc, wxCheckBox *&indc, wxCheckBox *&Ufc, wxCheckBox *&CNcFc, 
+	                              wxCheckBox *&CNcIc, wxCheckBox *&Tc, wxCheckBox *&Dscrc, wxCheckBox *&RKc);
 	 void SaveWindowPosition(int *& posx, int *& posy);
 	 static void GetWindowPosition(int &posx, int &posy);
+private:
+	 void OnExit( wxCommandEvent &WXUNUSED(event) );
+	 void OnConvert(wxCommandEvent &WXUNUSED(event) );
+	 void FileOpen(wxCommandEvent &WXUNUSED(event) );
+	 void SettingsChoice(wxCommandEvent& WXUNUSED(event) );
+	 void OnDump(wxCommandEvent& WXUNUSED(event) );
 	 wxDECLARE_EVENT_TABLE();
 };
 
 class MyApp : public wxApp
 {
-  public:
+ public:
     virtual bool OnInit();
 };
+
 enum
 {
 	Close_button = wxID_HIGHEST + 1, 
 	DIALOGS_FILE_OPEN,
 	Settings_button,
-	Convert_button
+	Convert_button,
+	Dump_button
 };
 
 DECLARE_APP(MyApp)

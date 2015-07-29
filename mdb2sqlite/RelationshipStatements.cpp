@@ -1,3 +1,4 @@
+#define _AFXDLL
 #include "stdafx.h"
 #include "RelationshipStatements.h"
 #include <afxdao.h>

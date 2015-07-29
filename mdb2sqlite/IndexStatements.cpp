@@ -1,3 +1,4 @@
+#define _AFXDLL
 #include "stdafx.h"
 #include "IndexStatements.h"
 #include <afxdao.h>
@@ -9,7 +10,9 @@ static char THIS_FILE[]=__FILE__;
 #define new DEBUG_NEW
 #endif
 
-void CIndexStatements::Indexes(CDaoTableDef &TableDef, std::vector<CString> &IndexStatements, const CDaoTableDefInfo &tabledefinfo, CString *&sTableNames, const short &nTableCount, std::vector<CString> &UniqueFields, std::vector<CString> &CollateIndexFields, const bool &m_bCollateNoCaseIndexAdd, const bool &m_bTrimTextValues,  wxTextCtrl *&PrgDlg, const bool &bKeyWordList, CString (&ReservedKeyWords)[124])
+void CIndexStatements::Indexes(CDaoTableDef &TableDef, std::vector<CString> &IndexStatements, const CDaoTableDefInfo &tabledefinfo, CString *&sTableNames, const short &nTableCount, 
+	                           std::vector<CString> &UniqueFields, std::vector<CString> &CollateIndexFields, const bool &m_bCollateNoCaseIndexAdd, const bool &m_bTrimTextValues,  
+							   wxTextCtrl *&PrgDlg, const bool &bKeyWordList, CString (&ReservedKeyWords)[124])
 {
 	CString sParrent;
 	CString sStatement;
@@ -31,8 +34,8 @@ void CIndexStatements::Indexes(CDaoTableDef &TableDef, std::vector<CString> &Ind
 				{
 					if( !(indexinfo.m_strName.CompareNoCase(ReservedKeyWords[i1])) )
 						  {
-							  wxString ErrorMessage = wxT("Error index cannot be sqlite keyword, index name found: ");
-							  PrgDlg->SetDefaultStyle(wxTextAttr (*wxRED));
+							  wxString ErrorMessage = wxT("WARNING: index found as sqlite keyword this could lead to unexpected behaviour, index name found: ");
+							  PrgDlg->SetDefaultStyle(wxTextAttr (wxNullColour, *wxYELLOW));
 							  CT2CA pszConvertedAnsiString (indexinfo.m_strName);
 							  std::string strStd (pszConvertedAnsiString);
 							  ErrorMessage += wxString::FromUTF8(_strdup(strStd.c_str() ) );

@@ -11,13 +11,13 @@ struct CDaoTableDefInfo;
 struct CDaoFieldInfo;
 
 #include <vector>
-#include "naujastestas.h"
+#include "OnAction.h"
 
 class CFieldStatements
 {
 public:
 	static void fFields(CDaoDatabase &db, CDaoTableDef &TableDef, CDaoTableDefInfo &tabledefinfo, std::vector<CString> &InsertStatements, std::vector<CString> &UniqueFields, 
-		        CSettings &settings, CString &sStatement, wxTextCtrl *&PrgDlg, const bool &bKeyWordList, CString (&ReservedKeyWords)[124]);
+		        CSettings &settings, CString &sStatement, CString (&ReservedKeyWords)[124], wxTextCtrl *PrgDlg = NULL);
 	static void Records(CDaoTableDef &TableDef, const CDaoTableDefInfo &tabledefinfo, short nFieldCount, CString *&sFieldnames, std::vector<CString> &InsertStatements);
 	static void FieldCollation(CDaoTableDef &TableDef, CDaoTableDefInfo &tabledefinfo, std::vector<CString> &CollateIndexFields, const bool &m_bTrimTextValues);
 	

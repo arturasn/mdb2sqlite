@@ -1,3 +1,4 @@
+#define _AFXDLL
 #include "stdafx.h"
 #include "FieldStatements.h"
 #include <afxdao.h>
@@ -53,7 +54,7 @@ wxString CFieldStatements::CstringToWxString(const CString &ConversionString)
 	return wxString::FromUTF8(_strdup(strStd.c_str() ) );
 }
 void CFieldStatements::fFields(CDaoDatabase &db, CDaoTableDef &TableDef, CDaoTableDefInfo &tabledefinfo, std::vector<CString> &InsertStatements, std::vector<CString> &UniqueFields, 
-	CSettings &settings, CString &sStatement, wxTextCtrl *&PrgDlg, const bool &bKeyWordList, CString (&ReservedKeyWords)[124])
+	CSettings &settings, CString &sStatement,CString (&ReservedKeyWords)[124], wxTextCtrl *PrgDlg /*= NULL*/)
 {
 	   
 		short nFieldCount = TableDef.GetFieldCount();        
@@ -68,19 +69,19 @@ void CFieldStatements::fFields(CDaoDatabase &db, CDaoTableDef &TableDef, CDaoTab
 					sFieldnames[i1] = fieldinfo.m_strName.TrimRight().TrimLeft(); 
 				else 
 					sFieldnames[i1] = fieldinfo.m_strName;
-				sStatement += _T("      `");
+				sStatement += _T("`");
 				if( settings.m_bTrimTextValues )
 					sStatement += fieldinfo.m_strName.TrimLeft().TrimRight();
 				else 
 					sStatement += fieldinfo.m_strName;
-				if( bKeyWordList )
+				if( settings.m_bKeyWordList && PrgDlg != NULL )
 				{
 					for( int i2 = 0; i2 < 124; ++i2 )
 					{
 						if( !(fieldinfo.m_strName.CompareNoCase(ReservedKeyWords[i2])) )
 						{
-							  wxString ErrorMessage = wxT("Error field name cannot be sqlite keyword, found on table: ");
-							  PrgDlg->SetDefaultStyle(wxTextAttr (*wxRED));
+							  wxString ErrorMessage = wxT("WARNING: found field name sqlite keyword this could lead to unexpected behaviour, found on table: ");
+							  PrgDlg->SetDefaultStyle(wxTextAttr (wxNullColour, *wxYELLOW));
 							  ErrorMessage += CstringToWxString(tabledefinfo.m_strName);
 							  ErrorMessage += wxT(" field name: ");
 							  ErrorMessage += CstringToWxString(fieldinfo.m_strName);
@@ -90,13 +91,12 @@ void CFieldStatements::fFields(CDaoDatabase &db, CDaoTableDef &TableDef, CDaoTab
 						}
 					}
 				}
-				sStatement += (_T("`     ")); 
+				sStatement += (_T("` ")); 
 				CDaoRecordset rc;
 				rc.Open(&TableDef);
 				CDaoFieldInfo recordinfo;
 				rc.GetFieldInfo(i1,recordinfo);
-				if( settings.m_bFieldTypeAdd ) 
-				    FieldTypeAdd(TableDef, recordinfo, bIsText, sStatement);
+				FieldTypeAdd(TableDef, recordinfo, bIsText, sStatement);
 				if( settings.m_bNotNullAdd )  
 					NotNullAdd(fieldinfo, sStatement);
 				if( settings.m_bDefaultValueAdd ) 
