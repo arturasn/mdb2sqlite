@@ -1,15 +1,11 @@
 #define _AFXDLL
 #include "stdafx.h"
 #include <wx/wx.h>
-#include "mdb2sqlite.h"
-#include <wx/dialog.h>
-#include <wx/sizer.h>
 #include <wx/statline.h>
-#include <wx/progdlg.h>
-#include <wx/textctrl.h>
 #include "OnAction.h"
 #include <fstream>
 #include "SimpleIni.h"
+#include "mdb2sqlite.h"
 
 IMPLEMENT_APP(MyApp)
 wxBEGIN_EVENT_TABLE ( CustomDialog, wxDialog )
@@ -19,6 +15,7 @@ wxBEGIN_EVENT_TABLE ( CustomDialog, wxDialog )
 	EVT_BUTTON(Convert_button, CustomDialog::OnConvert )
 	EVT_BUTTON(Dump_button, CustomDialog::OnDump )
 wxEND_EVENT_TABLE() 
+
 
 
 bool MyApp::OnInit()
@@ -32,8 +29,11 @@ bool MyApp::OnInit()
 }
  
 CustomDialog::CustomDialog(const wxString &title, const int x, const int y)
-       : wxDialog(NULL, -1, title, wxPoint(x,y), wxSize(270, 235), wxRESIZE_BORDER | wxCAPTION)
+       : wxDialog(NULL, -1, title, wxPoint(x,y), wxSize(270, 235), wxRESIZE_BORDER | wxCAPTION | wxCLOSE_BOX )
 {
+	wxIcon icon;
+	icon.LoadFile("sqliteicon.ico", wxBITMAP_TYPE_ICO);
+	SetIcon(icon);
 	wxSizer * const SourceDestination = new wxStaticBoxSizer(wxVERTICAL, this);
 	wxSizer * const SourceFile = new wxStaticBoxSizer(wxVERTICAL, this, "&Source File:");
 	wxBoxSizer *FilePathLine = new wxBoxSizer(wxHORIZONTAL);
@@ -42,17 +42,17 @@ CustomDialog::CustomDialog(const wxString &title, const int x, const int y)
 	FilePathLine->AddSpacer(15);
 	wxButton *browsebutton = new wxButton(this, DIALOGS_FILE_OPEN, "Browse", wxDefaultPosition, wxSize(60, 22)); 
 	FilePathLine->Add(browsebutton, 0, wxRIGHT | wxTOP, 3);
-	SourceFile->Add(FilePathLine, 1, wxEXPAND, 1);
+	SourceFile->Add(FilePathLine, 0, wxEXPAND, 1);
 
-	SourceDestination ->Add(SourceFile, 1 ,wxEXPAND);
+	SourceDestination ->Add(SourceFile, 0 ,wxEXPAND);
 
 	wxSizer * const DestinationFile = new wxStaticBoxSizer(wxVERTICAL, this, "&Destination:");
 	wxBoxSizer *DestinationFilePathLine = new wxBoxSizer(wxHORIZONTAL);
 	TDestinationPathLine  = new wxTextCtrl(this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize(150,20));
 	DestinationFilePathLine->Add(TDestinationPathLine, 1, wxLEFT | wxTOP | wxEXPAND, 4);
-	DestinationFile->Add(DestinationFilePathLine, 1, wxEXPAND | wxRIGHT, 78);
+	DestinationFile->Add(DestinationFilePathLine, 0, wxEXPAND | wxRIGHT, 78);
 
-	SourceDestination ->Add(DestinationFile, 1 ,wxEXPAND);
+	SourceDestination ->Add(DestinationFile, 0 ,wxEXPAND);
 
 	TopSizer = new wxBoxSizer(wxVERTICAL);
 
@@ -70,13 +70,17 @@ CustomDialog::CustomDialog(const wxString &title, const int x, const int y)
   
 	TopSizer->Add(SourceDestination, 1, wxALL | wxEXPAND, 3);
 	TopSizer->AddSpacer(5);
-	TopSizer->Add(settingsbutton, 0, wxLEFT, 25);
+	TopSizer->Add(settingsbutton, 0, wxLEFT, 15);
 	TopSizer->AddSpacer(5);
 	TopSizer->Add(new wxStaticLine(this), 0, wxEXPAND | wxLEFT | wxRIGHT, 8);
 	TopSizer->AddSpacer(5);
 	TopSizer->Add(BottomSizer, 0, wxLEFT | wxALIGN_RIGHT, 55);
 	SetSizer(TopSizer);
 	ShowModal();
+	delete closebutton;
+	delete settingsbutton;
+	delete dumpbutton;
+	delete Convertbutton;
 	Destroy(); 
 }
 void CustomDialog::OnExit( wxCommandEvent &WXUNUSED(event) )
@@ -121,17 +125,16 @@ void CustomDialog::OnConvert(wxCommandEvent &WXUNUSED(event) )
 			*posy = new int;
 	    GetPosition(posx,posy);
 		SaveWindowPosition(posx, posy);
-		delete posx;
-		delete posy;
-        char Path[100];
-		char dPath[100];
+		GetSize(posx,posy); 
+		char Path[100] = {0};
+		char dPath[100] = {0};
         strcpy(Path, (const char*)TFilePathLine->GetValue().mb_str(wxConvUTF8));
 		strcpy(dPath, (const char*)TDestinationPathLine->GetValue().mb_str(wxConvUTF8));
 		if( TDestinationPathLine->GetValue().SubString( TDestinationPathLine->GetValue().length()-7,TDestinationPathLine->GetValue().length() ) == wxT(".sqlite") )
 		{
-			wxGauge *gauge =  new wxGauge(this, wxID_ANY, 100, wxDefaultPosition, wxSize(270,15));
+			wxGauge *gauge =  new wxGauge(this, wxID_ANY, 100, wxDefaultPosition, wxSize(*posx,15));
 			wxTextCtrl *PrgDlg = new wxTextCtrl(this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize(250,120), wxTE_MULTILINE | wxTE_RICH);
-			TopSizer->Add(PrgDlg, 0, wxEXPAND | wxALL, 5);
+			TopSizer->Add(PrgDlg, 1, wxEXPAND | wxALL, 5);
 			TopSizer->Add(gauge, 0, wxEXPAND | wxALL, 5);
 			Layout();
             Fit();
@@ -148,6 +151,8 @@ void CustomDialog::OnConvert(wxCommandEvent &WXUNUSED(event) )
 			convertdialog.ShowModal();
 			convertdialog.Destroy();
 		}
+		delete posx;
+		delete posy;
 	}
 	
 }
@@ -162,24 +167,21 @@ void CustomDialog::FileOpen(wxCommandEvent &WXUNUSED(event) )
 		FileForExport = wxT("Succesfully exported file: ");
 		FileForExport += wxString::Format(wxT("%s"), dialog.GetFilename().c_str());
 		FileForExport += wxT(" to sqlite");
-		TFilePathLine->AppendText(dialog.GetPath().c_str());
+		TFilePathLine->WriteText(dialog.GetPath().c_str());
 		if( TDestinationPathLine->GetValue().IsEmpty() )
 		{
-			TDestinationPathLine->AppendText(dialog.GetDirectory().c_str());
+			TDestinationPathLine->WriteText(dialog.GetDirectory().c_str());
 			TDestinationPathLine->AppendText(wxT("\\"));
 			TDestinationPathLine->AppendText(dialog.GetFilename().c_str());
 			TDestinationPathLine->Replace(TDestinationPathLine->GetValue().length()-4,TDestinationPathLine->GetValue().length(),wxT(".sqlite"));
 		}
-		info.Printf( wxT("You have selected: %s\n"), dialog.GetFilename().c_str());
-        wxMessageDialog dialog2(this, info, wxT("Selected file"));
-		dialog2.ShowModal();
 	}
 	else
 	{
 		wxMessageDialog dialog2(this, "File not selected", wxT("File not selected"));
 		dialog2.ShowModal();
 	}
-
+	dialog.Destroy();
 }
 void CustomDialog::SettingsChoice(wxCommandEvent& WXUNUSED(event) )
 {
@@ -187,7 +189,7 @@ void CustomDialog::SettingsChoice(wxCommandEvent& WXUNUSED(event) )
 
 	wxCheckBox *RelationshipCheckbox = new wxCheckBox(dlg, wxID_ANY, wxT("Relationship add"), wxDefaultPosition);
 	wxCheckBox *RecordCheckbox = new wxCheckBox(dlg, wxID_ANY, wxT("Record add"), wxDefaultPosition);
-	wxCheckBox *NotNullValueCheckbox = new wxCheckBox(dlg, wxID_ANY, wxT("Not Null value add"), wxDefaultPosition);
+    wxCheckBox *NotNullValueCheckbox = new wxCheckBox(dlg, wxID_ANY, wxT("Not Null value add"), wxDefaultPosition);
 	wxCheckBox *AutoincrementCheckbox = new wxCheckBox(dlg, wxID_ANY, wxT("AutoIncrement value add"), wxDefaultPosition);
 	wxCheckBox *DefaultValueCheckbox = new wxCheckBox(dlg, wxID_ANY, wxT("Default value add"), wxDefaultPosition);
 	wxCheckBox *IndexCheckbox = new wxCheckBox(dlg, wxID_ANY, wxT("Index add"), wxDefaultPosition);
@@ -197,6 +199,8 @@ void CustomDialog::SettingsChoice(wxCommandEvent& WXUNUSED(event) )
 	wxCheckBox *TrimCheckbox = new wxCheckBox(dlg, wxID_ANY, wxT("Trim text values"), wxDefaultPosition);
 	wxCheckBox *DescriptionCheckbox = new wxCheckBox(dlg, wxID_ANY, wxT("Add field comments"), wxDefaultPosition);
 	wxCheckBox *ReservedKeywordCheckbox = new wxCheckBox(dlg, wxID_ANY, wxT("Reserved keyword list add"), wxDefaultPosition);
+	ReadFromIni(RelationshipCheckbox, RecordCheckbox, NotNullValueCheckbox, AutoincrementCheckbox, DefaultValueCheckbox, IndexCheckbox, UniqueFieldsCheckbox, 
+			    CollateNcIndexCheckbox, CollateNcFieldsCheckbox, TrimCheckbox, DescriptionCheckbox, ReservedKeywordCheckbox);
 
 	wxSizer *settingsizer = new wxBoxSizer(wxVERTICAL);
 
@@ -241,71 +245,105 @@ void CustomDialog::SettingsChoice(wxCommandEvent& WXUNUSED(event) )
 
 	settingsizer->Add(new wxStaticLine(dlg), 0, wxEXPAND | wxLEFT | wxRIGHT, 5);
 	wxBoxSizer *hbox = new wxBoxSizer(wxHORIZONTAL);
-	hbox->Add(new wxButton(dlg, wxID_OK, "OK", wxDefaultPosition, wxSize(70,25)), 0, wxLEFT, 5);
+	hbox->Add(new wxButton(dlg, wxID_OK, "OK", wxDefaultPosition, wxSize(70,25)), 0);
 	hbox->Add(new wxButton(dlg, wxID_CANCEL, "Cancel", wxDefaultPosition, wxSize(70,25)), 0, wxLEFT, 5);
-	settingsizer->Add(hbox, 0, wxLEFT | wxTOP, 5);
+	settingsizer->AddSpacer(5);
+	settingsizer->Add(hbox, 0, wxLEFT | wxRIGHT, 37);
 	dlg->SetSizer(settingsizer);
 	if( dlg->ShowModal() == wxID_OK )
 	{
-		SaveToIni(RelationshipCheckbox,RecordCheckbox, NotNullValueCheckbox, AutoincrementCheckbox, DefaultValueCheckbox, IndexCheckbox, UniqueFieldsCheckbox, CollateNcFieldsCheckbox, 
-			CollateNcIndexCheckbox,TrimCheckbox,DescriptionCheckbox,ReservedKeywordCheckbox);
+		SaveToIni(RelationshipCheckbox, RecordCheckbox, NotNullValueCheckbox, AutoincrementCheckbox, DefaultValueCheckbox, IndexCheckbox, UniqueFieldsCheckbox, 
+			CollateNcIndexCheckbox, CollateNcFieldsCheckbox, TrimCheckbox, DescriptionCheckbox, ReservedKeywordCheckbox);
 	}
 	dlg->Destroy();
 }
-void CustomDialog::SaveToIni(wxCheckBox *&Rlc, wxCheckBox *&Rcc, wxCheckBox *&NnVc, wxCheckBox *&Aic, wxCheckBox *&Dvc, wxCheckBox *&indc, wxCheckBox *&Ufc, wxCheckBox *&CNcFc, wxCheckBox *&CNcIc,
-	wxCheckBox *&Tc, wxCheckBox *&Dscrc, wxCheckBox *&RKc)
+void CustomDialog::SaveToIni(wxCheckBox *&RelationshipCheckbox, wxCheckBox *&RecordCheckbox, wxCheckBox *&NotNullValueCheckbox, wxCheckBox *&AutoincrementCheckbox, wxCheckBox *&DefaultValueCheckbox,
+	                         wxCheckBox *&IndexCheckbox, wxCheckBox *&UniqueFieldsCheckbox, wxCheckBox *&CollateNcIndexCheckbox, wxCheckBox *&CollateNcFieldsCheckbox, wxCheckBox *&TrimCheckbox,
+							 wxCheckBox *&DescriptionCheckbox, wxCheckBox *&ReservedKeywordCheckbox)
 {
 	std::ofstream settingfile("Settings.ini");
 	settingfile << "[Settings]" << std::endl;
 	settingfile << "RelationshipAdd = "; 
-	                             if( Rlc->IsChecked() )  
+	                             if( RelationshipCheckbox->IsChecked() )  
 									settingfile << "true" << std::endl; 
 								 else settingfile << "false" << std::endl;
 	settingfile << "RecordAdd = "; 
-	                             if( Rcc->IsChecked() ) 
+	                             if( RecordCheckbox->IsChecked() ) 
 									settingfile << "true" << std::endl; 
 								 else settingfile << "false" << std::endl;
     settingfile << "NotNullAdd = "; 
-	                             if( NnVc->IsChecked() ) 
+	                             if( NotNullValueCheckbox->IsChecked() ) 
 									settingfile << "true" << std::endl; 
 								 else settingfile << "false" << std::endl;
 	settingfile << "AutoIncrementAdd = "; 
-	                             if( Aic->IsChecked() ) 
+	                             if( AutoincrementCheckbox->IsChecked() ) 
 									settingfile << "true" << std::endl; 
 								 else settingfile << "false" << std::endl;
     settingfile << "DefaultValueAdd = "; 
-	                             if( Dvc->IsChecked() ) 
+	                             if( DefaultValueCheckbox->IsChecked() ) 
 									settingfile << "true" << std::endl; 
 								 else settingfile << "false" << std::endl;
 	settingfile << "IndexAdd = "; 
-	                             if( indc->IsChecked() ) 
+	                             if( IndexCheckbox->IsChecked() ) 
 									settingfile << "true" << std::endl; 
 								 else settingfile << "false" << std::endl;
 	settingfile << "UniqueFieldAdd = "; 
-	                             if( Ufc->IsChecked() ) 
+	                             if( UniqueFieldsCheckbox->IsChecked() ) 
 									settingfile << "true" << std::endl; 
 								 else settingfile << "false" << std::endl;
 	settingfile << "CollateNoCaseForIndex = "; 
-	                             if( CNcFc->IsChecked() ) 
+	                             if( CollateNcIndexCheckbox->IsChecked() ) 
 									settingfile << "true" << std::endl; 
 								 else settingfile << "false" << std::endl;
     settingfile << "CollateNoCaseForFields = "; 
-	                             if( CNcIc->IsChecked() ) 
+	                             if( CollateNcFieldsCheckbox->IsChecked() ) 
 									settingfile << "true" << std::endl; 
 								 else settingfile << "false" << std::endl;
 	settingfile << "TrimTextValues = "; 
-	                             if( Tc->IsChecked() ) 
+	                             if( TrimCheckbox->IsChecked() ) 
 									settingfile << "true" << std::endl; 
 								 else settingfile << "false" << std::endl;
 	settingfile << "AddComments = "; 
-	                             if( Dscrc->IsChecked() ) 
+	                             if( DescriptionCheckbox->IsChecked() ) 
 									settingfile << "true" << std::endl; 
 								 else settingfile << "false" << std::endl;
 	settingfile << "KeyWordList = ";
-	                             if( RKc->IsChecked() )
+	                             if( ReservedKeywordCheckbox->IsChecked() )
 									 settingfile << "true" << std::endl;
 								 else settingfile << "false" << std::endl;
 	settingfile.close();
+	delete RelationshipCheckbox;
+	delete RecordCheckbox; 
+	delete NotNullValueCheckbox; 
+	delete AutoincrementCheckbox;
+	delete DefaultValueCheckbox; 
+	delete IndexCheckbox; 
+	delete UniqueFieldsCheckbox; 
+    delete CollateNcIndexCheckbox;
+	delete CollateNcFieldsCheckbox; 
+	delete TrimCheckbox; 
+	delete DescriptionCheckbox;
+	delete ReservedKeywordCheckbox;
+}
+void CustomDialog::ReadFromIni(wxCheckBox *&RelationshipCheckbox, wxCheckBox *&RecordCheckbox, wxCheckBox *&NotNullValueCheckbox, wxCheckBox *&AutoincrementCheckbox, wxCheckBox *&DefaultValueCheckbox,
+	                         wxCheckBox *&IndexCheckbox, wxCheckBox *&UniqueFieldsCheckbox, wxCheckBox *&CollateNcIndexCheckbox, wxCheckBox *&CollateNcFieldsCheckbox, wxCheckBox *&TrimCheckbox,
+							 wxCheckBox *&DescriptionCheckbox, wxCheckBox *&ReservedKeywordCheckbox)
+{
+	CSimpleIni ini;
+    ini.SetUnicode();
+	ini.LoadFile("Settings.ini");
+	RelationshipCheckbox->SetValue(ini.GetBoolValue(_T("Settings"),_T("RelationshipAdd"),true));
+	RecordCheckbox->SetValue(ini.GetBoolValue(_T("Settings"),_T("RecordAdd"),true));
+	NotNullValueCheckbox->SetValue(ini.GetBoolValue(_T("Settings"),_T("NotNullAdd"),true));
+	AutoincrementCheckbox->SetValue(ini.GetBoolValue(_T("Settings"),_T("AutoIncrementAdd"),true));
+	DefaultValueCheckbox->SetValue(ini.GetBoolValue(_T("Settings"),_T("DefaultValueAdd"),true));
+	IndexCheckbox->SetValue(ini.GetBoolValue(_T("Settings"),_T("IndexAdd"),true));
+	UniqueFieldsCheckbox->SetValue(ini.GetBoolValue(_T("Settings"),_T("UniqueFieldAdd"),true));
+	CollateNcIndexCheckbox->SetValue(ini.GetBoolValue(_T("Settings"),_T("CollateNoCaseForIndex"),true));
+	CollateNcFieldsCheckbox->SetValue(ini.GetBoolValue(_T("Settings"),_T("CollateNoCaseForFields"),true));
+	TrimCheckbox->SetValue(ini.GetBoolValue(_T("Settings"),_T("TrimTextValues"),true));
+	DescriptionCheckbox-> SetValue(ini.GetBoolValue(_T("Settings"),_T("AddComments"),true));
+	ReservedKeywordCheckbox-> SetValue(ini.GetBoolValue(_T("Settings"),_T("KeyWordList"),true));
 }
 void CustomDialog::SaveWindowPosition(int *& posx, int *& posy)
 {

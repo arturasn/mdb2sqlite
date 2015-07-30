@@ -24,9 +24,7 @@ void CSettingsReader::ReadFromCSimpleIni(CSettings &settings)
 {
 	CSimpleIni ini;
     ini.SetUnicode();
-    SI_Error rc = ini.LoadFile("Settings.ini");
-   /* if (rc < 0) 
-		std::cout << "ERROR LOADING FROM FILE" << std::endl;*/
+    ini.LoadFile("Settings.ini");
 	settings.m_bRelationshipAdd = ini.GetBoolValue(_T("Settings"),_T("RelationshipAdd"),true);
 	settings.m_bRecordAdd = ini.GetBoolValue(_T("Settings"),_T("RecordAdd"),true);
 	settings.m_bNotNullAdd = ini.GetBoolValue(_T("Settings"),_T("NotNullAdd"),true);
@@ -66,7 +64,7 @@ void CSettingsReader::Dumping(std::vector<CString> &statements, std::vector<CStr
 		dumpfile << (LPCTSTR)*it << std::endl;
 	dumpfile.close();
 }
-void CSettingsReader::Control(const char *Path,const char *dPath, wxGauge *gauge /*= NULL*/, wxTextCtrl *PrgDlg /*= NULL*/)
+void CSettingsReader::Control(const char *Path, const char *dPath, wxGauge *gauge /*= NULL*/, wxTextCtrl *PrgDlg /*= NULL*/)
 {
 	AfxDaoInit();
 	CSettings settings;
@@ -110,9 +108,11 @@ void CSettingsReader::Control(const char *Path,const char *dPath, wxGauge *gauge
 		db.GetTableDefInfo(i,tabledefinfo);                      
 		if( tabledefinfo.m_lAttributes == 0 )                      // We choose only the elements that we need as the database adds some system files
 	   	{  
-				short nRelationCount = db.GetRelationCount();
 				if( !i && settings.m_bRelationshipAdd )
+				{
+					short nRelationCount = db.GetRelationCount();
 					CRelationships::Relationhips(db, RelationFields, nRelationCount); 
+				}
 				CDaoTableDef TableDef(&db);
 				sStatement = _T("CREATE TABLE `");  
 				if( settings.m_bKeyWordList && PrgDlg != NULL)

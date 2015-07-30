@@ -10,10 +10,13 @@ public:
 	 wxTextCtrl *TDestinationPathLine;
 	 wxString FileForExport;
 	 wxBoxSizer *TopSizer;
-	 
 	 void ProgressBar(char *Path, char *dPath);
-	 void CustomDialog::SaveToIni(wxCheckBox *&Rlc, wxCheckBox *&Rcc, wxCheckBox *&NnVc, wxCheckBox *&Aic, wxCheckBox *&Dvc, wxCheckBox *&indc, wxCheckBox *&Ufc, wxCheckBox *&CNcFc, 
-	                              wxCheckBox *&CNcIc, wxCheckBox *&Tc, wxCheckBox *&Dscrc, wxCheckBox *&RKc);
+	 void CustomDialog::SaveToIni(wxCheckBox *&RelationshipCheckbox, wxCheckBox *&RecordCheckbox, wxCheckBox *&NotNullValueCheckbox, wxCheckBox *&AutoincrementCheckbox, wxCheckBox *&DefaultValueCheckbox,
+	                         wxCheckBox *&IndexCheckbox, wxCheckBox *&UniqueFieldsCheckbox, wxCheckBox *&CollateNcIndexCheckbox, wxCheckBox *&CollateNcFieldsCheckbox, wxCheckBox *&TrimCheckbox,
+							 wxCheckBox *&DescriptionCheckbox, wxCheckBox *&ReservedKeywordCheckbox);
+	 void ReadFromIni(wxCheckBox *&RelationshipCheckbox, wxCheckBox *&RecordCheckbox, wxCheckBox *&NotNullValueCheckbox, wxCheckBox *&AutoincrementCheckbox, wxCheckBox *&DefaultValueCheckbox,
+	                         wxCheckBox *&IndexCheckbox, wxCheckBox *&UniqueFieldsCheckbox, wxCheckBox *&CollateNcIndexCheckbox, wxCheckBox *&CollateNcFieldsCheckbox, wxCheckBox *&TrimCheckbox,
+							 wxCheckBox *&DescriptionCheckbox, wxCheckBox *&ReservedKeywordCheckbox);
 	 void SaveWindowPosition(int *& posx, int *& posy);
 	 static void GetWindowPosition(int &posx, int &posy);
 private:
