@@ -82,7 +82,7 @@ void CSQLiteConversion::SqliteStatementExecution(std::vector<CString> &statement
 		 }
    }
 void CSQLiteConversion::SqliteConversion(std::vector<CString> &statements, std::vector<CString> &InsertStatements, std::vector<CString> &IndexStatements, 
-	                                     std:: vector<CString> &RelationFields , const char *dPath, wxGauge *&gauge, wxTextCtrl *&PrgDlg, CString *&sTableNames)
+	                                     std:: vector<CString> &RelationFields , const char *dPath, wxGauge *&gauge, wxTextCtrl *&PrgDlg, CString *&sTableNames, const bool &m_bForeignKeySupport)
  {
 	char *zErrMsg = 0;
 	unsigned nErrorCount = 0;
@@ -106,6 +106,8 @@ void CSQLiteConversion::SqliteConversion(std::vector<CString> &statements, std::
          //  fprintf(stdout, "Opened database successfully\n");
 		 sqlite3_exec(sqlitedatabase, "PRAGMA synchronous = OFF", NULL, NULL, &zErrMsg);
 		 sqlite3_exec(sqlitedatabase, "PRAGMA journal_mode = MEMORY", NULL, NULL, &zErrMsg);
+		 if( m_bForeignKeySupport )
+			 sqlite3_exec(sqlitedatabase, "PRAGMA foreign_keys = ON", NULL, NULL, &zErrMsg);
 		 SqliteStatementExecution(statements, sqlitedatabase, rcc, gauge, nValue, PrgDlg, nErrorCount, sTableNames);
 		 sTableNames = NULL;
 		 SqliteStatementExecution(InsertStatements, sqlitedatabase, rcc, gauge, nValue, PrgDlg, nErrorCount, sTableNames);

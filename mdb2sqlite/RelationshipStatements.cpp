@@ -1,6 +1,8 @@
 #define _AFXDLL
 #include "stdafx.h"
+#include <wx/textctrl.h>
 #include "RelationshipStatements.h"
+#include "FieldStatements.h"
 #include <afxdao.h>
 
 #ifdef _DEBUG
@@ -76,4 +78,58 @@ void CRelationships::Relationhips(CDaoDatabase &db, std::vector<CString> &Relati
 					RelationFields.push_back(sStatement);
 				}
 		}		  
+}
+void CRelationships::ForeignKeySupport(CDaoDatabase &db, const unsigned &nRelationCount, std::vector<CString> (&TableField)[2], std::vector<CString> &RelationFields, wxTextCtrl *PrgDlg /*NULL*/)
+{
+	CString temp;
+	CDaoRelationInfo relationinfo;
+	for( unsigned i = 0; i < nRelationCount; ++i )
+	{
+		db.GetRelationInfo(i,relationinfo,AFX_DAO_ALL_INFO);
+		if(relationinfo.m_lAttributes & dbRelationDontEnforce)
+			continue;
+		temp = relationinfo.m_strTable;
+		temp += _T("FOREIGN KEY(");
+		unsigned nRelationFields = relationinfo.m_nFields;
+		for( unsigned i1 = 0; i1 < nRelationFields; ++i1)
+		{
+			temp += relationinfo.m_pFieldInfos[i1].m_strName;
+			if( i1 != nRelationFields-1 )
+				temp += _T(",");
+			else temp += ")";
+		}
+		temp += _T(" REFERENCES ");
+		temp += relationinfo.m_strForeignTable;
+		temp += _T("(");
+		for( unsigned i1 = 0; i1 < nRelationFields; ++i1 )
+		{
+			temp += relationinfo.m_pFieldInfos[i1].m_strForeignName;
+			if( i1 != nRelationFields-1 )
+				temp += _T(",");
+			else temp += ")";
+			if(PrgDlg != NULL)
+			{
+				CString temp2 = relationinfo.m_strForeignTable;
+				temp2 += relationinfo.m_pFieldInfos[i1].m_strForeignName;
+				unsigned nVectorLength = TableField[0].size();
+				for(unsigned i2 = 0; i2 < nVectorLength; ++i2)
+				{
+					if(!(TableField[0][i2].Compare(temp2)))
+					{
+						wxString WarningMessage = wxT("WARNING: Foreign key of table: ");
+						WarningMessage += CFieldStatements::CstringToWxString(relationinfo.m_strName);
+						WarningMessage += wxT(" References table: ");
+						WarningMessage += CFieldStatements::CstringToWxString(relationinfo.m_strForeignTable);
+						WarningMessage += wxT(" field: ");
+						WarningMessage += CFieldStatements::CstringToWxString(relationinfo.m_pFieldInfos[i1].m_strForeignName);
+						WarningMessage += wxT(" which is not a PRIMARY KEY.\n");
+						PrgDlg->SetDefaultStyle(wxTextAttr (wxNullColour, *wxYELLOW));
+						PrgDlg->WriteText(WarningMessage);
+						PrgDlg->SetDefaultStyle(wxTextAttr (wxNullColour));
+					}
+				}
+			}
+		}  
+		RelationFields.push_back(temp);
+	}
 }

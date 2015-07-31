@@ -21,7 +21,6 @@
 *.a
 
 # Executables
-*.exe
 *.out
 *.app
 
@@ -31,4 +30,9 @@
 *.filters 
 *.zip
 *.filters
+*.ilk
+*.pdb
+*.ipch
 /wxwidgets
+*.bkl
+*.dsp

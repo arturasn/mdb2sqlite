@@ -1,5 +1,5 @@
-#ifndef __INCLUDED_NAUJASTESTAS_H__
-#define __INCLUDED_NAUJASTESTAS_H__
+#ifndef __INCLUDED_ONACTION_H__
+#define __INCLUDED_ONACTION_H__
 #pragma once
 
 class wxGauge;
@@ -22,6 +22,7 @@ class CSettings
 		bool m_bTrimTextValues;
 		bool m_bAddComments;
 		bool m_bKeyWordList;
+		bool m_bForeignkeySupport;
  };
 class CSettingsReader
 {
