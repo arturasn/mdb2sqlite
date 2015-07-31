@@ -155,10 +155,10 @@ if( settings.m_bForeignkeySupport )
 		else CRelationships::ForeignKeySupport(db, nRelationCount, TableField, ForeignKeySupportinfo);
 		unsigned nVectorLength = statements.size();
 		unsigned nForeignKeySupportCount = ForeignKeySupportinfo.size();
-		for( int i = 0; i < nVectorLength; ++i )
+		for( unsigned i = 0; i < nVectorLength; ++i )
 		{
 			sTableNames[i] += _T("FOREIGN KEY");
-			for( int i3 = 0; i3 < nForeignKeySupportCount; ++i3 )
+			for( unsigned i3 = 0; i3 < nForeignKeySupportCount; ++i3 )
 			{
 				if( !( sTableNames[i].Compare(ForeignKeySupportinfo[i3].Left(sTableNames[i].GetLength())) ) )
 				{
