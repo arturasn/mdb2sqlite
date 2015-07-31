@@ -196,7 +196,7 @@
     <ClCompile>
       <AdditionalOptions>/MP %(AdditionalOptions)</AdditionalOptions>
       <Optimization>MaxSpeed</Optimization>
-      <AdditionalIncludeDirectories>.\..\..\lib\vc_lib\mswu;.\..\..\include;.;.\..\..\samples;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\wxwidgets\lib\vc_lib\mswu;..\wxwidgets\include;.;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_CRT_SECURE_NO_DEPRECATE=1;_CRT_NON_CONFORMING_SWPRINTFS=1;_SCL_SECURE_NO_WARNINGS=1;__WXMSW__;NDEBUG;_UNICODE;_WINDOWS;NOPCH;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ExceptionHandling>Sync</ExceptionHandling>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
@@ -217,7 +217,7 @@
       <AdditionalDependencies>wxmsw30u_core.lib;wxbase30u.lib;wxtiff.lib;wxjpeg.lib;wxpng.lib;wxzlib.lib;wxregexu.lib;wxexpat.lib;kernel32.lib;user32.lib;gdi32.lib;comdlg32.lib;winspool.lib;winmm.lib;shell32.lib;comctl32.lib;ole32.lib;oleaut32.lib;uuid.lib;rpcrt4.lib;advapi32.lib;wsock32.lib;wininet.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>vc_mswu\mdb2sqlite.exe</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
-      <AdditionalLibraryDirectories>.\..\..\lib\vc_lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\wxwidgets\lib\vc_lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ProgramDatabaseFile>vc_mswu\mdb2sqlite.pdb</ProgramDatabaseFile>
       <SubSystem>Windows</SubSystem>
@@ -280,7 +280,7 @@
     <ClCompile>
       <AdditionalOptions>/MP %(AdditionalOptions)</AdditionalOptions>
       <Optimization>MaxSpeed</Optimization>
-      <AdditionalIncludeDirectories>.\..\..\lib\vc_dll\mswu;.\..\..\include;.;.\..\..\samples;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\wxwidgets\lib\vc_dll\mswu;..\wxwidgets\include;.;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_CRT_SECURE_NO_DEPRECATE=1;_CRT_NON_CONFORMING_SWPRINTFS=1;_SCL_SECURE_NO_WARNINGS=1;__WXMSW__;NDEBUG;_UNICODE;WXUSINGDLL;_WINDOWS;NOPCH;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ExceptionHandling>Sync</ExceptionHandling>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
@@ -301,7 +301,7 @@
       <AdditionalDependencies>wxmsw30u_core.lib;wxbase30u.lib;wxtiff.lib;wxjpeg.lib;wxpng.lib;wxzlib.lib;wxregexu.lib;wxexpat.lib;kernel32.lib;user32.lib;gdi32.lib;comdlg32.lib;winspool.lib;winmm.lib;shell32.lib;comctl32.lib;ole32.lib;oleaut32.lib;uuid.lib;rpcrt4.lib;advapi32.lib;wsock32.lib;wininet.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>vc_mswudll\mdb2sqlite.exe</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
-      <AdditionalLibraryDirectories>.\..\..\lib\vc_dll;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\wxwidgets\lib\vc_dll;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ProgramDatabaseFile>vc_mswudll\mdb2sqlite.pdb</ProgramDatabaseFile>
       <SubSystem>Windows</SubSystem>
@@ -486,7 +486,7 @@
     <ClCompile Include="FieldStatements.cpp" />
     <ClCompile Include="IndexStatements.cpp" />
     <ClCompile Include="mdb2sqlite.cpp" />
-    <ClCompile Include="naujastestas.cpp" />
+    <ClCompile Include="OnAction.cpp" />
     <ClCompile Include="RelationshipStatements.cpp" />
     <ClCompile Include="sqlitestatementexecution.cpp" />
     <ClCompile Include="stdafx.cpp">
@@ -497,7 +497,7 @@
     <ClInclude Include="FieldStatements.h" />
     <ClInclude Include="IndexStatements.h" />
     <ClInclude Include="mdb2sqlite.h" />
-    <ClInclude Include="naujastestas.h" />
+    <ClInclude Include="OnAction.h" />
     <ClInclude Include="RelationshipStatements.h" />
     <ClInclude Include="SimpleIni.h" />
     <ClInclude Include="sqlite3.h" />
@@ -506,6 +506,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="sqlite3.dll" />
+    <None Include="sqliteicon.ico" />
   </ItemGroup>
   <ItemGroup>
     <Library Include="sqlite3.lib" />

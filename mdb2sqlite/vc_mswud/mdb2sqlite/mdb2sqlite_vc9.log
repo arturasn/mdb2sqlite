@@ -1,10 +1,13 @@
-﻿Build started 7/3/2015 3:43:22 PM.
+﻿Build started 7/31/2015 4:11:55 PM.
      1>Project "C:\Users\arturasN\Documents\ExecutionToSqlite\mdb2sqlite\mdb2sqlite_vc9.vcxproj" on node 2 (build target(s)).
      1>InitializeBuildStatus:
-         Touching "vc_mswud\mdb2sqlite\mdb2sqlite.unsuccessfulbuild".
+         Creating "vc_mswud\mdb2sqlite\mdb2sqlite.unsuccessfulbuild" because "AlwaysCreate" was specified.
        ClCompile:
          All outputs are up-to-date.
-         All outputs are up-to-date.
+         C:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\bin\CL.exe /c /I..\wxwidgets\lib\vc_lib\mswud /I..\wxwidgets\include /I. /Zi /nologo /W4 /WX- /Od /Oy- /D WIN32 /D _DEBUG /D _CRT_SECURE_NO_DEPRECATE=1 /D _CRT_NON_CONFORMING_SWPRINTFS=1 /D _SCL_SECURE_NO_WARNINGS=1 /D __WXMSW__ /D _UNICODE /D _WINDOWS /D NOPCH /D _UNICODE /D UNICODE /Gm- /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /GR /Yu"stdafx.h" /Fp"vc_mswud\mdb2sqlite\mdb2sqlite.pch" /Fo"vc_mswud\mdb2sqlite\\" /Fd"vc_mswud\mdb2sqlite.pdb" /Gd /TP /analyze- /errorReport:prompt OnAction.cpp /MP 
+         OnAction.cpp
+     1>OnAction.cpp(158): warning C4018: '<' : signed/unsigned mismatch
+     1>OnAction.cpp(161): warning C4018: '<' : signed/unsigned mismatch
        ManifestResourceCompile:
          All outputs are up-to-date.
        Link:
@@ -12,7 +15,7 @@
          vc_mswud\mdb2sqlite\FieldStatements.obj
          vc_mswud\mdb2sqlite\IndexStatements.obj
          vc_mswud\mdb2sqlite\mdb2sqlite.obj
-         vc_mswud\mdb2sqlite\naujastestas.obj
+         vc_mswud\mdb2sqlite\OnAction.obj
          vc_mswud\mdb2sqlite\RelationshipStatements.obj
          vc_mswud\mdb2sqlite\sqlitestatementexecution.obj
          vc_mswud\mdb2sqlite\stdafx.obj
@@ -36,4 +39,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:19.65
+Time Elapsed 00:00:14.03
