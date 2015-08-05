@@ -23,6 +23,7 @@ class CSettings
 		bool m_bAddComments;
 		bool m_bKeyWordList;
 		bool m_bForeignkeySupport;
+		bool m_PrimaryKeySupport;
  };
 class CSettingsReader
 {

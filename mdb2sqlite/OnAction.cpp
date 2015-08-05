@@ -35,9 +35,10 @@ void CSettingsReader::ReadFromCSimpleIni(CSettings &settings)
 	settings.m_bCollateNoCaseIndexAdd = ini.GetBoolValue(_T("Settings"),_T("CollateNoCaseForIndex"),true);
 	settings.m_bCollateNoCaseFieldsAdd = ini.GetBoolValue(_T("Settings"),_T("CollateNoCaseForFields"),true);
 	settings.m_bTrimTextValues = ini.GetBoolValue(_T("Settings"),_T("TrimTextValues"),true);
-	settings.m_bAddComments = ini.GetBoolValue(_T("Settings"),_T("AddComents"),true);
+	settings.m_bAddComments = ini.GetBoolValue(_T("Settings"),_T("AddComments"),true);
 	settings.m_bKeyWordList = ini.GetBoolValue(_T("Settings"),_T("KeyWordList"),true);
 	settings.m_bForeignkeySupport = ini.GetBoolValue(_T("Settings"),_T("ForeignKeySupport"),true);
+	settings.m_PrimaryKeySupport = ini.GetBoolValue(_T("Settings"),_T("PrimaryKeySupport"),true);
 }
 void CSettingsReader::Dumping(std::vector<CString> &statements, std::vector<CString> &InsertStatements, std::vector<CString> &RelationFields, std::vector<CString> &IndexStatements, 
 	                          const char *&dPath)
@@ -75,8 +76,9 @@ void CSettingsReader::Control(const char *Path, const char *dPath, wxGauge *gaug
 	std::vector<CString> IndexStatements;
 	std::vector<CString> UniqueFields;
 	std::vector<CString> CollateIndexFields;
-	std::vector<CString> TableField[2];
+	std::vector<CString> TableField;
 	std::vector<CString> ForeignKeySupportinfo;
+	std::vector<CString> IndexInfo;
 	CString ReservedKeyWords[] = {"ABORT", "ACTION", "ADD", "AFTER", "ALL", "ALTER", "ANALYZE", "AND", "AS", "ASC", "ATTACH", "AUTOINCREMENT", "BEFORE", "BEGIN", "BETWEEN", "BY", "CASCADE", "CASE", 
 		"CAST", "CHECK", "COLLATE", "COLUMN", "COMMIT", "CONFLICT", "CONSTRAINT", "CREATE", "CROSS", "CURRENT_DATE", "CURRENT_TIME", "CURRENT_TIMESTAMP", "DATABASE", "DEFAULT", "DEFERRABLE",
         "DEFERRED", "DELETE", "DESC", "DETACH", "DISTINCT", "DROP", "EACH", "ELSE", "END", "ESCAPE", "EXCEPT", "EXCLUSIVE", "EXISTS", "EXPLAIN", "FAIL", "FOR", "FOREIGN", "FROM", "FULL",
@@ -140,36 +142,54 @@ void CSettingsReader::Control(const char *Path, const char *dPath, wxGauge *gaug
 				sStatement += (_T("` ("));
 				TableDef.Open(tabledefinfo.m_strName);   
 				if( settings.m_bIndexAdd ) 
-					CIndexStatements::Indexes(TableDef, IndexStatements, tabledefinfo, sTableNames, nNonSystemTableCount, UniqueFields, CollateIndexFields, settings.m_bCollateNoCaseIndexAdd, settings.m_bTrimTextValues, PrgDlg, settings.m_bKeyWordList, ReservedKeyWords);
+					CIndexStatements::Indexes(TableDef, IndexStatements, tabledefinfo, sTableNames, nNonSystemTableCount, UniqueFields, CollateIndexFields, 
+					settings.m_bCollateNoCaseIndexAdd, settings.m_bTrimTextValues, PrgDlg, settings.m_bKeyWordList, ReservedKeyWords, IndexInfo);
 				if(PrgDlg != NULL)
-					CFieldStatements::fFields(db, TableDef, tabledefinfo, InsertStatements, UniqueFields, settings, sStatement, ReservedKeyWords, TableField, PrgDlg); 
-				else CFieldStatements::fFields(db, TableDef, tabledefinfo, InsertStatements, UniqueFields, settings, sStatement, ReservedKeyWords, TableField);
+					CFieldStatements::fFields(db, TableDef, tabledefinfo, InsertStatements, UniqueFields, settings, sStatement, ReservedKeyWords, TableField, IndexInfo, PrgDlg); 
+				else CFieldStatements::fFields(db, TableDef, tabledefinfo, InsertStatements, UniqueFields, settings, sStatement, ReservedKeyWords, TableField, IndexInfo);
 				statements.push_back(sStatement);
 		} 
 	} 
 if( settings.m_bForeignkeySupport )
 	{
 		unsigned nRelationCount = db.GetRelationCount();
-		if(PrgDlg != NULL)
-			CRelationships::ForeignKeySupport(db, nRelationCount, TableField, ForeignKeySupportinfo,PrgDlg);
-		else CRelationships::ForeignKeySupport(db, nRelationCount, TableField, ForeignKeySupportinfo);
-		unsigned nVectorLength = statements.size();
-		unsigned nForeignKeySupportCount = ForeignKeySupportinfo.size();
-		for( unsigned i = 0; i < nVectorLength; ++i )
+
+		unsigned nInsertLength = InsertStatements.size();
+		std::vector<int> beginning;
+		std::vector<int> end;
+		for(unsigned i = 0; i < nInsertLength; ++i)
 		{
-			sTableNames[i] += _T("FOREIGN KEY");
-			for( unsigned i3 = 0; i3 < nForeignKeySupportCount; ++i3 )
+			if(InsertStatements[i] == "BEGIN TRANSACTION")
+				beginning.push_back(i);
+			if(InsertStatements[i] == "END TRANSACTION")
+				end.push_back(i);
+		}
+		bool isPossibleToAddForeignKeys = true;
+		if(PrgDlg != NULL)
+			CRelationships::ForeignKeySupport(db, nRelationCount, TableField, ForeignKeySupportinfo, sTableNames, statements, beginning, end, InsertStatements, isPossibleToAddForeignKeys, PrgDlg);
+		else CRelationships::ForeignKeySupport(db, nRelationCount, TableField, ForeignKeySupportinfo, sTableNames, statements, beginning, end, InsertStatements, isPossibleToAddForeignKeys);
+		if( isPossibleToAddForeignKeys )
+		{   
+			unsigned nVectorLength = statements.size();
+			unsigned nForeignKeySupportCount = ForeignKeySupportinfo.size();
+			for( unsigned i = 0; i < nVectorLength; ++i )
 			{
-				if( !( sTableNames[i].Compare(ForeignKeySupportinfo[i3].Left(sTableNames[i].GetLength())) ) )
+				sTableNames[i] += _T("FOREIGN KEY");
+				for( unsigned i3 = 0; i3 < nForeignKeySupportCount; ++i3 )
 				{
-					statements[i] = statements[i].Left(statements[i].GetLength()-2);
-					CString temp = _T(", ");
-					ForeignKeySupportinfo[i3] = ForeignKeySupportinfo[i3].Right(ForeignKeySupportinfo[i3].GetLength()-sTableNames[i].GetLength() + 11);
-					temp += ForeignKeySupportinfo[i3];
-					temp += _T(");");
-					statements[i] += temp;
+					if( !( sTableNames[i].Compare(ForeignKeySupportinfo[i3].Left(sTableNames[i].GetLength())) ) )
+					{
+						statements[i] = statements[i].Left(statements[i].GetLength()-2);
+						CString temp = _T(", ");
+						ForeignKeySupportinfo[i3] = ForeignKeySupportinfo[i3].Right(ForeignKeySupportinfo[i3].GetLength()-sTableNames[i].GetLength() + 11);
+						temp += ForeignKeySupportinfo[i3];
+						temp += _T(");");
+						statements[i] += temp;
+					}
 				}
 			}
+			for( unsigned i = 0; i < nVectorLength; ++i )
+				sTableNames[i] = sTableNames[i].Left(sTableNames[i].GetLength() - 11);
 		}
 	}
 	db.Close();

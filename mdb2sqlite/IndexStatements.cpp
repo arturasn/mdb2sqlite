@@ -12,7 +12,7 @@ static char THIS_FILE[]=__FILE__;
 
 void CIndexStatements::Indexes(CDaoTableDef &TableDef, std::vector<CString> &IndexStatements, const CDaoTableDefInfo &tabledefinfo, CString *&sTableNames, const short &nTableCount, 
 	                           std::vector<CString> &UniqueFields, std::vector<CString> &CollateIndexFields, const bool &m_bCollateNoCaseIndexAdd, const bool &m_bTrimTextValues,  
-							   wxTextCtrl *&PrgDlg, const bool &bKeyWordList, CString (&ReservedKeyWords)[124])
+							   wxTextCtrl *&PrgDlg, const bool &bKeyWordList, CString (&ReservedKeyWords)[124], std::vector<CString> &IndexInfo)
 {
 	CString sParrent;
 	CString sStatement;
@@ -24,6 +24,12 @@ void CIndexStatements::Indexes(CDaoTableDef &TableDef, std::vector<CString> &Ind
 			TableDef.GetIndexInfo(i1,indexinfo,AFX_DAO_ALL_INFO);
 			if( indexinfo.m_strName.Find('{') != -1 || indexinfo.m_strName.Find('}') != -1 || IndexFilter(tabledefinfo,indexinfo,sTableNames,nTableCount) )
 				continue;
+			if( indexinfo.m_bPrimary )
+			{
+				CString temp = tabledefinfo.m_strName;
+				temp += indexinfo.m_pFieldInfos[0].m_strName;
+				IndexInfo.push_back(temp);
+			}
 			if( indexinfo.m_bUnique == TRUE )
 				sStatement = _T("CREATE UNIQUE INDEX ");
 			else 

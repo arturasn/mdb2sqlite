@@ -35,7 +35,7 @@ std::string CSQLiteConversion::ConvertToUTF8(const wchar_t *wstr)
         return strTo;
     }
 void CSQLiteConversion::SqliteStatementExecution(std::vector<CString> &statements, sqlite3 *&sqlitedatabase, int rc , wxGauge *&gauge, unsigned &nValue, wxTextCtrl *&PrgDlg, 
-	                                             unsigned &nErrorCount, CString *&sTableNames)
+	                                             unsigned &nErrorCount, CString *sTableNames /*NULL*/)
 	{
 	 char *zErrMsg = 0;
 	 auto end_it = statements.end();
@@ -54,6 +54,10 @@ void CSQLiteConversion::SqliteStatementExecution(std::vector<CString> &statement
 				  wxString ErrorMessage = wxT("");
 				  ErrorMessage += wxString::FromUTF8(zErrMsg);
 				  ErrorMessage += " \n";
+				  PrgDlg->WriteText(ErrorMessage);
+				  CT2CA pszConvertedAnsiString (*it);
+	              std::string strStd (pszConvertedAnsiString);
+				  ErrorMessage = wxString::FromUTF8(_strdup(strStd.c_str() ) ) + "\n";
 				  PrgDlg->WriteText(ErrorMessage);
 				  if(sTableNames != NULL)
 				  {
@@ -77,12 +81,20 @@ void CSQLiteConversion::SqliteStatementExecution(std::vector<CString> &statement
 					sMessage += wxT(" created succesfully \n");
 					PrgDlg->WriteText(sMessage);
 				}
-				else PrgDlg->WriteText(wxT("Statement executed succesfully \n") );
+				else 
+					{
+						PrgDlg->WriteText(wxT("Statement executed successfully: \n") );
+						/*wxString sMessage = wxT("");
+						sB = ConvertToUTF8(*it);
+						sMessage += wxString::FromUTF8(_strdup(sB.c_str() ) );
+						PrgDlg->WriteText(sMessage);*/
+				    }
 			}
 		 }
    }
 void CSQLiteConversion::SqliteConversion(std::vector<CString> &statements, std::vector<CString> &InsertStatements, std::vector<CString> &IndexStatements, 
-	                                     std:: vector<CString> &RelationFields , const char *dPath, wxGauge *&gauge, wxTextCtrl *&PrgDlg, CString *&sTableNames, const bool &m_bForeignKeySupport)
+	                                     std:: vector<CString> &RelationFields , const char *dPath, wxGauge *&gauge, wxTextCtrl *&PrgDlg, CString *&sTableNames, 
+										 const bool &m_bForeignKeySupport)
  {
 	char *zErrMsg = 0;
 	unsigned nErrorCount = 0;
@@ -109,12 +121,11 @@ void CSQLiteConversion::SqliteConversion(std::vector<CString> &statements, std::
 		 if( m_bForeignKeySupport )
 			 sqlite3_exec(sqlitedatabase, "PRAGMA foreign_keys = ON", NULL, NULL, &zErrMsg);
 		 SqliteStatementExecution(statements, sqlitedatabase, rcc, gauge, nValue, PrgDlg, nErrorCount, sTableNames);
-		 sTableNames = NULL;
-		 SqliteStatementExecution(InsertStatements, sqlitedatabase, rcc, gauge, nValue, PrgDlg, nErrorCount, sTableNames);
-		 SqliteStatementExecution(RelationFields, sqlitedatabase, rcc, gauge, nValue, PrgDlg,  nErrorCount, sTableNames);
-	     SqliteStatementExecution(IndexStatements, sqlitedatabase, rcc, gauge, nValue, PrgDlg, nErrorCount, sTableNames);
+		 SqliteStatementExecution(InsertStatements, sqlitedatabase, rcc, gauge, nValue, PrgDlg, nErrorCount);
+		 SqliteStatementExecution(RelationFields, sqlitedatabase, rcc, gauge, nValue, PrgDlg,  nErrorCount);
+	     SqliteStatementExecution(IndexStatements, sqlitedatabase, rcc, gauge, nValue, PrgDlg, nErrorCount);
 	  }
-	 wxString ConclusionMessage = wxT("Statements executed succesfully: ");
+	 wxString ConclusionMessage = wxT("Statements executed successfully: ");
 	 ConclusionMessage << nValue-nErrorCount;
 	 PrgDlg->SetDefaultStyle(wxTextAttr (*wxBLUE));
 	 PrgDlg->WriteText(ConclusionMessage);

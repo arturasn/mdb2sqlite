@@ -14,6 +14,7 @@ wxBEGIN_EVENT_TABLE ( CustomDialog, wxDialog )
 	EVT_BUTTON(Settings_button, CustomDialog::SettingsChoice )
 	EVT_BUTTON(Convert_button, CustomDialog::OnConvert )
 	EVT_BUTTON(Dump_button, CustomDialog::OnDump )
+	EVT_CLOSE(CustomDialog::OnClose )
 wxEND_EVENT_TABLE() 
 
 
@@ -87,8 +88,25 @@ CustomDialog::CustomDialog(const wxString &title, const int x, const int y)
 }
 void CustomDialog::OnExit( wxCommandEvent &WXUNUSED(event) )
   {
+	int *posx = new int, 
+		*posy = new int;
+	 GetPosition(posx,posy);
+	 SaveWindowPosition(posx, posy);
+	 delete posx;
+	 delete posy;
+	EndModal( wxID_CANCEL );
     Close(TRUE);
   }
+void CustomDialog::OnClose( wxCloseEvent &WXUNUSED(event) )
+{
+	int *posx = new int, 
+		*posy = new int;
+	 GetPosition(posx,posy);
+	 SaveWindowPosition(posx, posy);
+	 delete posx;
+	 delete posy;
+	 EndModal( wxID_CANCEL );
+}
 void CustomDialog::OnDump( wxCommandEvent &WXUNUSED(event) )
 {
 	wxFileDialog dumpdialog(this, wxT("Save file"), wxEmptyString, wxT("dump.txt"), wxT("Text files (*.txt)|*.txt"), wxFD_SAVE | wxFD_OVERWRITE_PROMPT);
@@ -125,8 +143,6 @@ void CustomDialog::OnConvert(wxCommandEvent &WXUNUSED(event) )
 	{
 		int *posx = new int, 
 			*posy = new int;
-	    GetPosition(posx,posy);
-		SaveWindowPosition(posx, posy);
 		GetSize(posx,posy);
 		SetMaxSize(wxSize(wxDefaultCoord,wxDefaultCoord));
 		char Path[100] = {0};
@@ -144,7 +160,7 @@ void CustomDialog::OnConvert(wxCommandEvent &WXUNUSED(event) )
 			Refresh();
 			Update();
 			GetSize(posx,posy);
-            SetMinSize(wxSize(*posx,*posy));
+            SetMinSize(wxSize(wxDefaultCoord,wxDefaultCoord));
 			CSettingsReader::Control(Path, dPath, gauge, PrgDlg);
 		    wxMessageDialog convertdialog(this, FileForExport, wxT("Succesfully exported to sqlite"));
 		    convertdialog.ShowModal();
@@ -191,7 +207,7 @@ void CustomDialog::FileOpen(wxCommandEvent &WXUNUSED(event) )
 }
 void CustomDialog::SettingsChoice(wxCommandEvent& WXUNUSED(event) )
 {
-    wxDialog *dlg = new wxDialog(this, wxID_ANY, wxT("Values to export"), wxDefaultPosition, wxSize(220,330));
+    wxDialog *dlg = new wxDialog(this, wxID_ANY, wxT("Values to export"), wxDefaultPosition, wxSize(220,350));
 
 	wxCheckBox *RelationshipCheckbox = new wxCheckBox(dlg, wxID_ANY, wxT("Relationship add"), wxDefaultPosition);
 	wxCheckBox *RecordCheckbox = new wxCheckBox(dlg, wxID_ANY, wxT("Record add"), wxDefaultPosition);
@@ -206,8 +222,9 @@ void CustomDialog::SettingsChoice(wxCommandEvent& WXUNUSED(event) )
 	wxCheckBox *DescriptionCheckbox = new wxCheckBox(dlg, wxID_ANY, wxT("Add field comments"), wxDefaultPosition);
 	wxCheckBox *ReservedKeywordCheckbox = new wxCheckBox(dlg, wxID_ANY, wxT("Reserved keyword list add"), wxDefaultPosition);
 	wxCheckBox *ForeignKeySupportCheckbox = new wxCheckBox(dlg, wxID_ANY, wxT("Foreign key support"), wxDefaultPosition);
+	wxCheckBox *PrimaryKeyCheckbox = new wxCheckBox(dlg, wxID_ANY, wxT("Primary key support"), wxDefaultPosition);
 	ReadFromIni(RelationshipCheckbox, RecordCheckbox, NotNullValueCheckbox, AutoincrementCheckbox, DefaultValueCheckbox, IndexCheckbox, UniqueFieldsCheckbox, 
-			    CollateNcIndexCheckbox, CollateNcFieldsCheckbox, TrimCheckbox, DescriptionCheckbox, ReservedKeywordCheckbox, ForeignKeySupportCheckbox);
+			    CollateNcIndexCheckbox, CollateNcFieldsCheckbox, TrimCheckbox, DescriptionCheckbox, ReservedKeywordCheckbox, ForeignKeySupportCheckbox, PrimaryKeyCheckbox);
 
 	wxSizer *settingsizer = new wxBoxSizer(wxVERTICAL);
 
@@ -238,6 +255,8 @@ void CustomDialog::SettingsChoice(wxCommandEvent& WXUNUSED(event) )
 	settingsizer->AddSpacer(5);
 	settingsizer->Add(ForeignKeySupportCheckbox, 0, wxLEFT | wxRIGHT, 8);
 	settingsizer->AddSpacer(5);
+	settingsizer->Add(PrimaryKeyCheckbox, 0, wxLEFT | wxRIGHT, 8);
+	settingsizer->AddSpacer(5);
 
 	RelationshipCheckbox->SetToolTip(wxT("Adds relationships between tables, update and delete sqlite statements are executed."));
 	RecordCheckbox->SetToolTip(wxT("Adds the information that is in the records."));
@@ -251,7 +270,8 @@ void CustomDialog::SettingsChoice(wxCommandEvent& WXUNUSED(event) )
 	TrimCheckbox->SetToolTip(wxT("Trims the front and back of a field and index if there are some blank spaces."));
 	DescriptionCheckbox->SetToolTip(wxT("Adds comments about fields."));
 	ReservedKeywordCheckbox->SetToolTip(wxT("If we find some sqlite keywords in tables, indexes or fields error message is shown."));
-	ForeignKeySupportCheckbox->SetToolTip(wxT("Adds foreign key support"));
+	ForeignKeySupportCheckbox->SetToolTip(wxT("Adds foreign key support, NOTE:foreign keys only work when there are no loops between table references"));
+	PrimaryKeyCheckbox->SetToolTip(wxT("Adds a contraint PRIMARY KEY to a field, all of this fields values ar unique"));
 
 	settingsizer->Add(new wxStaticLine(dlg), 0, wxEXPAND | wxLEFT | wxRIGHT, 5);
 	wxBoxSizer *hbox = new wxBoxSizer(wxHORIZONTAL);
@@ -263,13 +283,13 @@ void CustomDialog::SettingsChoice(wxCommandEvent& WXUNUSED(event) )
 	if( dlg->ShowModal() == wxID_OK )
 	{
 		SaveToIni(RelationshipCheckbox, RecordCheckbox, NotNullValueCheckbox, AutoincrementCheckbox, DefaultValueCheckbox, IndexCheckbox, UniqueFieldsCheckbox, 
-			CollateNcIndexCheckbox, CollateNcFieldsCheckbox, TrimCheckbox, DescriptionCheckbox, ReservedKeywordCheckbox, ForeignKeySupportCheckbox);
+			CollateNcIndexCheckbox, CollateNcFieldsCheckbox, TrimCheckbox, DescriptionCheckbox, ReservedKeywordCheckbox, ForeignKeySupportCheckbox, PrimaryKeyCheckbox);
 	}
 	dlg->Destroy();
 }
 void CustomDialog::SaveToIni(wxCheckBox *&RelationshipCheckbox, wxCheckBox *&RecordCheckbox, wxCheckBox *&NotNullValueCheckbox, wxCheckBox *&AutoincrementCheckbox, wxCheckBox *&DefaultValueCheckbox,
 	                         wxCheckBox *&IndexCheckbox, wxCheckBox *&UniqueFieldsCheckbox, wxCheckBox *&CollateNcIndexCheckbox, wxCheckBox *&CollateNcFieldsCheckbox, wxCheckBox *&TrimCheckbox,
-							 wxCheckBox *&DescriptionCheckbox, wxCheckBox *&ReservedKeywordCheckbox, wxCheckBox *&ForeignKeySupportCheckbox)
+							 wxCheckBox *&DescriptionCheckbox, wxCheckBox *&ReservedKeywordCheckbox, wxCheckBox *&ForeignKeySupportCheckbox, wxCheckBox *&PrimaryKeyCheckbox)
 {
 	std::ofstream settingfile("Settings.ini");
 	settingfile << "[Settings]" << std::endl;
@@ -325,6 +345,10 @@ void CustomDialog::SaveToIni(wxCheckBox *&RelationshipCheckbox, wxCheckBox *&Rec
 	                             if( ForeignKeySupportCheckbox->IsChecked() )
 									 settingfile << "true" << std::endl;
 								 else settingfile << "false" << std::endl;
+	settingfile << "PrimaryKeySupport = ";
+								if( PrimaryKeyCheckbox->IsChecked() )
+									settingfile << "true" << std::endl;
+								else settingfile << "false" << std::endl;
 	settingfile.close();
 	delete RelationshipCheckbox;
 	delete RecordCheckbox; 
@@ -339,10 +363,11 @@ void CustomDialog::SaveToIni(wxCheckBox *&RelationshipCheckbox, wxCheckBox *&Rec
 	delete DescriptionCheckbox;
 	delete ReservedKeywordCheckbox;
 	delete ForeignKeySupportCheckbox;
+	delete PrimaryKeyCheckbox;
 }
 void CustomDialog::ReadFromIni(wxCheckBox *&RelationshipCheckbox, wxCheckBox *&RecordCheckbox, wxCheckBox *&NotNullValueCheckbox, wxCheckBox *&AutoincrementCheckbox, wxCheckBox *&DefaultValueCheckbox,
 	                         wxCheckBox *&IndexCheckbox, wxCheckBox *&UniqueFieldsCheckbox, wxCheckBox *&CollateNcIndexCheckbox, wxCheckBox *&CollateNcFieldsCheckbox, wxCheckBox *&TrimCheckbox,
-							 wxCheckBox *&DescriptionCheckbox, wxCheckBox *&ReservedKeywordCheckbox, wxCheckBox *&ForeignKeySupportCheckbox)
+							 wxCheckBox *&DescriptionCheckbox, wxCheckBox *&ReservedKeywordCheckbox, wxCheckBox *&ForeignKeySupportCheckbox, wxCheckBox *&PrimaryKeyCheckbox)
 {
 	CSimpleIni ini;
     ini.SetUnicode();
@@ -360,6 +385,7 @@ void CustomDialog::ReadFromIni(wxCheckBox *&RelationshipCheckbox, wxCheckBox *&R
 	DescriptionCheckbox-> SetValue(ini.GetBoolValue(_T("Settings"),_T("AddComments"),true));
 	ReservedKeywordCheckbox-> SetValue(ini.GetBoolValue(_T("Settings"),_T("KeyWordList"),true));
 	ForeignKeySupportCheckbox->SetValue(ini.GetBoolValue(_T("Settings"),_T("ForeignKeySupport"),true));
+	PrimaryKeyCheckbox->SetValue(ini.GetBoolValue(_T("Settings"),_T("PrimaryKeySupport"),true));
 }
 void CustomDialog::SaveWindowPosition(int *& posx, int *& posy)
 {
