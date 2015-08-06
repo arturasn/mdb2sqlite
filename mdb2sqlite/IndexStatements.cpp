@@ -12,7 +12,7 @@ static char THIS_FILE[]=__FILE__;
 
 void CIndexStatements::Indexes(CDaoTableDef &TableDef, std::vector<CString> &IndexStatements, const CDaoTableDefInfo &tabledefinfo, CString *&sTableNames, const short &nTableCount, 
 	                           std::vector<CString> &UniqueFields, std::vector<CString> &CollateIndexFields, const bool &m_bCollateNoCaseIndexAdd, const bool &m_bTrimTextValues,  
-							   wxTextCtrl *&PrgDlg, const bool &bKeyWordList, CString (&ReservedKeyWords)[124], std::vector<CString> &IndexInfo)
+							   const bool &bKeyWordList, CString (&ReservedKeyWords)[124], std::vector<CString> &IndexInfo, unsigned &nWarningCount, wxTextCtrl *PrgDlg /*NULL*/)
 {
 	CString sParrent;
 	CString sStatement;
@@ -34,12 +34,13 @@ void CIndexStatements::Indexes(CDaoTableDef &TableDef, std::vector<CString> &Ind
 				sStatement = _T("CREATE UNIQUE INDEX ");
 			else 
 				sStatement = _T("CREATE INDEX ");
-			if ( bKeyWordList )
+			if ( bKeyWordList && PrgDlg != NULL)
 			{
 				for( int i2 = 0; i2 < 124; ++i2 )
 				{
 					if( !(indexinfo.m_strName.CompareNoCase(ReservedKeyWords[i1])) )
 						  {
+							  ++nWarningCount;
 							  wxString ErrorMessage = wxT("WARNING: index found as sqlite keyword this could lead to unexpected behaviour, index name found: ");
 							  PrgDlg->SetDefaultStyle(wxTextAttr (wxNullColour, *wxYELLOW));
 							  CT2CA pszConvertedAnsiString (indexinfo.m_strName);

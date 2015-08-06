@@ -15,10 +15,10 @@ class CSQLiteConversion
 public: 
 	static void SqliteConversion(std::vector<CString> &statements, std::vector<CString> &InsertStatements, std::vector<CString> &IndexStatements,  
 	                             std:: vector<CString> &RelationFields , const char* dPath, wxGauge *&gauge, wxTextCtrl *&PrgDlg, CString *&sTableNames, 
-								 const bool &m_bForeignKeySupport);
+								 const bool &m_bForeignKeySupport, unsigned &nWarningCount, int *&IndexTable, CString *&sTableNames2);
 private:		
 	static void SqliteStatementExecution(std::vector<CString> &statements, sqlite3 *&sqlitedatabase, int rc , wxGauge *&gauge, unsigned &nValue, wxTextCtrl *&PrgDlg, 
-		                                 unsigned &nErrorCount, CString *sTableNames = NULL);
+		                                 unsigned &nErrorCount, CString *sTableNames, unsigned &flag, int *IndexTable = NULL, CString *sTableNames2 = NULL);
 	static std::string ConvertToUTF8(const wchar_t *wstr);
 	static inline bool exists_test1 (const std::string &name);
 };

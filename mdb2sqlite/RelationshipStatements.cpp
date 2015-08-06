@@ -85,7 +85,7 @@ void CRelationships::Relationhips(CDaoDatabase &db, std::vector<CString> &Relati
 }
 void CRelationships::ForeignKeySupport(CDaoDatabase &db, const unsigned &nRelationCount, std::vector<CString> &TableField, std::vector<CString> &ForeignKeySupportinfo, 
 	                                   CString *&sTableNames, std::vector<CString> &statements, std::vector<int> &beginning, std::vector<int> &end, std::vector<CString> &InsertStatements,
-									   bool &isPossibleToAddForeignKeys, wxTextCtrl *PrgDlg /*NULL*/)
+									   bool &isPossibleToAddForeignKeys, unsigned &nWarningCount, wxTextCtrl *PrgDlg /*NULL*/)
 {
 	CString temp;
 	CDaoRelationInfo relationinfo;
@@ -129,6 +129,7 @@ void CRelationships::ForeignKeySupport(CDaoDatabase &db, const unsigned &nRelati
 				{
 					if(!(TableField[i2].Compare(temp2)))
 					{
+						++nWarningCount;
 						wxString WarningMessage = wxT("WARNING: Foreign key of table: ");
 						WarningMessage += CFieldStatements::CstringToWxString(relationinfo.m_strForeignTable);
 						WarningMessage += wxT(" References table: ");
@@ -152,7 +153,7 @@ void CRelationships::ForeignKeySupport(CDaoDatabase &db, const unsigned &nRelati
     delete [] tree;
 	if(priority.size() != nTreeSize)
 	{
-		wxString WarningMessage = wxT("ERROR: Sqlite foreing key support cannot be added for the current database as there is a loop between the table references");
+		wxString WarningMessage = wxT("WARNING: Sqlite foreing key support cannot be added for the current database as there is a loop between the table references");
 		WarningMessage += wxT("\n");
 		PrgDlg->SetDefaultStyle(wxTextAttr (wxNullColour, *wxRED));
 		PrgDlg->WriteText(WarningMessage);

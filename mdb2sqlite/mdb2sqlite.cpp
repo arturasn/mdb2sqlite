@@ -22,15 +22,17 @@ wxEND_EVENT_TABLE()
 bool MyApp::OnInit()
 {
 	remove("Settings.ini");
-	int posx, posy;
-	CustomDialog::GetWindowPosition(posx, posy);
-    CustomDialog *custom = new CustomDialog(wxT("mdb2Sqlite"), posx, posy);
+	int posx, 
+		posy, 
+		sizex;
+	CustomDialog::GetWindowInformation(posx, posy, sizex);
+    CustomDialog *custom = new CustomDialog(wxT("mdb2Sqlite"), posx, posy, sizex);
     custom->Show(true);
     return true;
 }
  
-CustomDialog::CustomDialog(const wxString &title, const int x, const int y)
-       : wxDialog(NULL, -1, title, wxPoint(x,y), wxSize(270, 235), wxRESIZE_BORDER | wxCAPTION | wxCLOSE_BOX )
+CustomDialog::CustomDialog(const wxString &title, const int x, const int y, const int sizex)
+       : wxDialog(NULL, -1, title, wxPoint(x,y), wxSize(sizex, 235), wxRESIZE_BORDER | wxCAPTION | wxCLOSE_BOX )
 {
 	wxIcon icon;
 	icon.LoadFile("sqliteicon.ico", wxBITMAP_TYPE_ICO);
@@ -69,17 +71,22 @@ CustomDialog::CustomDialog(const wxString &title, const int x, const int y)
 	wxButton *Convertbutton = new wxButton(this, Convert_button, "Convert", wxDefaultPosition, wxSize(60,25)); 
 	BottomSizer->Add(Convertbutton , 1, wxBOTTOM | wxRIGHT, 5);
   
-	TopSizer->Add(SourceDestination, 1, wxALL | wxEXPAND, 3);
+	TopSizer->Add(SourceDestination, 0, wxALL | wxEXPAND, 3);
 	TopSizer->AddSpacer(5);
 	TopSizer->Add(settingsbutton, 0, wxLEFT, 15);
 	TopSizer->AddSpacer(5);
 	TopSizer->Add(new wxStaticLine(this), 0, wxEXPAND | wxLEFT | wxRIGHT, 8);
 	TopSizer->AddSpacer(5);
 	TopSizer->Add(BottomSizer, 0, wxLEFT | wxALIGN_RIGHT, 55);
-	SetMinSize(wxSize(GetSize()));
+	int *width = new int,
+		*height = new int;
+	GetSize(width,height);
+	SetMinSize(wxSize(wxDefaultCoord, *height));
 	SetMaxSize(wxSize(wxDefaultCoord, GetMinSize().y));
 	SetSizer(TopSizer);
 	ShowModal();
+	delete width;
+	delete height;
 	delete closebutton;
 	delete settingsbutton;
 	delete dumpbutton;
@@ -89,22 +96,32 @@ CustomDialog::CustomDialog(const wxString &title, const int x, const int y)
 void CustomDialog::OnExit( wxCommandEvent &WXUNUSED(event) )
   {
 	int *posx = new int, 
-		*posy = new int;
+		*posy = new int,
+	    *sizex = new int,
+		*sizey = new int;
 	 GetPosition(posx,posy);
-	 SaveWindowPosition(posx, posy);
+	 GetSize(sizex, sizey);
+	 SaveWindowInformation(posx, posy, sizex);
 	 delete posx;
 	 delete posy;
+	 delete sizex;
+	 delete sizey;
 	EndModal( wxID_CANCEL );
     Close(TRUE);
   }
 void CustomDialog::OnClose( wxCloseEvent &WXUNUSED(event) )
 {
 	int *posx = new int, 
-		*posy = new int;
+		*posy = new int,
+		*sizex = new int,
+	    *sizey = new int;
 	 GetPosition(posx,posy);
-	 SaveWindowPosition(posx, posy);
+	 GetSize(sizex, sizey);
+	 SaveWindowInformation(posx, posy, sizex);
 	 delete posx;
 	 delete posy;
+	 delete sizex;
+	 delete sizey;
 	 EndModal( wxID_CANCEL );
 }
 void CustomDialog::OnDump( wxCommandEvent &WXUNUSED(event) )
@@ -144,7 +161,7 @@ void CustomDialog::OnConvert(wxCommandEvent &WXUNUSED(event) )
 		int *posx = new int, 
 			*posy = new int;
 		GetSize(posx,posy);
-		SetMaxSize(wxSize(wxDefaultCoord,wxDefaultCoord));
+		SetMaxSize(wxSize(*posx,wxDefaultCoord));
 		char Path[100] = {0};
 		char dPath[100] = {0};
         strcpy(Path, (const char*)TFilePathLine->GetValue().mb_str(wxConvUTF8));
@@ -159,7 +176,7 @@ void CustomDialog::OnConvert(wxCommandEvent &WXUNUSED(event) )
             Fit();
 			Refresh();
 			Update();
-			GetSize(posx,posy);
+			SetMaxSize(wxSize(wxDefaultCoord,wxDefaultCoord));
             SetMinSize(wxSize(wxDefaultCoord,wxDefaultCoord));
 			CSettingsReader::Control(Path, dPath, gauge, PrgDlg);
 		    wxMessageDialog convertdialog(this, FileForExport, wxT("Succesfully exported to sqlite"));
@@ -172,7 +189,6 @@ void CustomDialog::OnConvert(wxCommandEvent &WXUNUSED(event) )
 			convertdialog.ShowModal();
 			convertdialog.Destroy();
 		}
-		SetMaxSize(wxSize(wxDefaultCoord,GetMinSize().y));
 		delete posx;
 		delete posy;
 	}
@@ -387,19 +403,22 @@ void CustomDialog::ReadFromIni(wxCheckBox *&RelationshipCheckbox, wxCheckBox *&R
 	ForeignKeySupportCheckbox->SetValue(ini.GetBoolValue(_T("Settings"),_T("ForeignKeySupport"),true));
 	PrimaryKeyCheckbox->SetValue(ini.GetBoolValue(_T("Settings"),_T("PrimaryKeySupport"),true));
 }
-void CustomDialog::SaveWindowPosition(int *& posx, int *& posy)
+void CustomDialog::SaveWindowInformation(int *& posx, int *& posy, int *& sizex)
 {
-	std::ofstream WindowPositionFile("WindowPosition.ini");
+	std::ofstream WindowPositionFile("WindowInformation.ini");
 	WindowPositionFile << "[WindowPosition]" << std::endl;
 	WindowPositionFile << "x = " << *posx << std::endl;
 	WindowPositionFile << "y = " << *posy << std::endl;
+	WindowPositionFile << "[WindowSize]" << std::endl;
+	WindowPositionFile << "width = " << *sizex << std::endl;
 	WindowPositionFile.close();
 }
-void CustomDialog::GetWindowPosition(int &posx, int &posy)
+void CustomDialog::GetWindowInformation(int &posx, int &posy, int &sizex)
 {
 	CSimpleIni ini;
     ini.SetUnicode();
-    ini.LoadFile("WindowPosition.ini");
+    ini.LoadFile("WindowInformation.ini");
 	posx = ini.GetLongValue(_T("WindowPosition"),_T("x"),550);
 	posy = ini.GetLongValue(_T("WindowPosition"),_T("y"),200);
+	sizex = ini.GetLongValue(_T("WindowSize"),_T("width"),270);
 }

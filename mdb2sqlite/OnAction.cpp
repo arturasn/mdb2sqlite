@@ -79,6 +79,7 @@ void CSettingsReader::Control(const char *Path, const char *dPath, wxGauge *gaug
 	std::vector<CString> TableField;
 	std::vector<CString> ForeignKeySupportinfo;
 	std::vector<CString> IndexInfo;
+	unsigned nWarningCount = 0;
 	CString ReservedKeyWords[] = {"ABORT", "ACTION", "ADD", "AFTER", "ALL", "ALTER", "ANALYZE", "AND", "AS", "ASC", "ATTACH", "AUTOINCREMENT", "BEFORE", "BEGIN", "BETWEEN", "BY", "CASCADE", "CASE", 
 		"CAST", "CHECK", "COLLATE", "COLUMN", "COMMIT", "CONFLICT", "CONSTRAINT", "CREATE", "CROSS", "CURRENT_DATE", "CURRENT_TIME", "CURRENT_TIMESTAMP", "DATABASE", "DEFAULT", "DEFERRABLE",
         "DEFERRED", "DELETE", "DESC", "DETACH", "DISTINCT", "DROP", "EACH", "ELSE", "END", "ESCAPE", "EXCEPT", "EXCLUSIVE", "EXISTS", "EXPLAIN", "FAIL", "FOR", "FOREIGN", "FROM", "FULL",
@@ -92,7 +93,9 @@ void CSettingsReader::Control(const char *Path, const char *dPath, wxGauge *gaug
 	CDaoDatabase db;                                            
 	db.Open(widepath);                                          
 	short nTableCount = db.GetTableDefCount();                 
-	CString *sTableNames = new CString[nTableCount];      
+	CString *sTableNames = new CString[nTableCount]; 
+	CString *sTableNames2 = new CString[nTableCount]; 
+	int *IndexTable = new int[nTableCount];
 	short nNonSystemTableCount=0;
 	for( int i = 0; i < nTableCount; ++i )
 	{
@@ -102,6 +105,9 @@ void CSettingsReader::Control(const char *Path, const char *dPath, wxGauge *gaug
 	   	{  
 			CDaoTableDef TableDef(&db);
 			sTableNames[nNonSystemTableCount] = tabledefinfo.m_strName;
+			TableDef.Open(tabledefinfo.m_strName);
+			sTableNames2[nNonSystemTableCount] = tabledefinfo.m_strName;
+			IndexTable[nNonSystemTableCount] = TableDef.GetIndexCount();
 			nNonSystemTableCount++;
 			if( settings.m_bCollateNoCaseIndexAdd ) 
 				CFieldStatements::FieldCollation(TableDef, tabledefinfo, CollateIndexFields, settings.m_bTrimTextValues);
@@ -126,6 +132,7 @@ void CSettingsReader::Control(const char *Path, const char *dPath, wxGauge *gaug
 					{
 						if( !(tabledefinfo.m_strName.CompareNoCase(ReservedKeyWords[i1])) )
 						{
+							++nWarningCount;
 							wxString ErrorMessage = wxT("WARNING: table name found as sqlite keyword this could lead to unexpected behaviour, table name found: ");
 							PrgDlg->SetDefaultStyle(wxTextAttr (wxNullColour, *wxYELLOW));
 							CT2CA pszConvertedAnsiString (tabledefinfo.m_strName);
@@ -142,11 +149,17 @@ void CSettingsReader::Control(const char *Path, const char *dPath, wxGauge *gaug
 				sStatement += (_T("` ("));
 				TableDef.Open(tabledefinfo.m_strName);   
 				if( settings.m_bIndexAdd ) 
-					CIndexStatements::Indexes(TableDef, IndexStatements, tabledefinfo, sTableNames, nNonSystemTableCount, UniqueFields, CollateIndexFields, 
-					settings.m_bCollateNoCaseIndexAdd, settings.m_bTrimTextValues, PrgDlg, settings.m_bKeyWordList, ReservedKeyWords, IndexInfo);
+				{
+
+					if(PrgDlg != NULL)
+					   CIndexStatements::Indexes(TableDef, IndexStatements, tabledefinfo, sTableNames, nNonSystemTableCount, UniqueFields, CollateIndexFields, 
+					                             settings.m_bCollateNoCaseIndexAdd, settings.m_bTrimTextValues, settings.m_bKeyWordList, ReservedKeyWords, IndexInfo, nWarningCount, PrgDlg);
+					else CIndexStatements::Indexes(TableDef, IndexStatements, tabledefinfo, sTableNames, nNonSystemTableCount, UniqueFields, CollateIndexFields, 
+					                             settings.m_bCollateNoCaseIndexAdd, settings.m_bTrimTextValues, settings.m_bKeyWordList, ReservedKeyWords, IndexInfo, nWarningCount);
+				}
 				if(PrgDlg != NULL)
-					CFieldStatements::fFields(db, TableDef, tabledefinfo, InsertStatements, UniqueFields, settings, sStatement, ReservedKeyWords, TableField, IndexInfo, PrgDlg); 
-				else CFieldStatements::fFields(db, TableDef, tabledefinfo, InsertStatements, UniqueFields, settings, sStatement, ReservedKeyWords, TableField, IndexInfo);
+					CFieldStatements::fFields(db, TableDef, tabledefinfo, InsertStatements, UniqueFields, settings, sStatement, ReservedKeyWords, TableField, IndexInfo, nWarningCount, PrgDlg); 
+				else CFieldStatements::fFields(db, TableDef, tabledefinfo, InsertStatements, UniqueFields, settings, sStatement, ReservedKeyWords, TableField, IndexInfo, nWarningCount);
 				statements.push_back(sStatement);
 		} 
 	} 
@@ -166,8 +179,8 @@ if( settings.m_bForeignkeySupport )
 		}
 		bool isPossibleToAddForeignKeys = true;
 		if(PrgDlg != NULL)
-			CRelationships::ForeignKeySupport(db, nRelationCount, TableField, ForeignKeySupportinfo, sTableNames, statements, beginning, end, InsertStatements, isPossibleToAddForeignKeys, PrgDlg);
-		else CRelationships::ForeignKeySupport(db, nRelationCount, TableField, ForeignKeySupportinfo, sTableNames, statements, beginning, end, InsertStatements, isPossibleToAddForeignKeys);
+			CRelationships::ForeignKeySupport(db, nRelationCount, TableField, ForeignKeySupportinfo, sTableNames, statements, beginning, end, InsertStatements, isPossibleToAddForeignKeys, nWarningCount, PrgDlg);
+		else CRelationships::ForeignKeySupport(db, nRelationCount, TableField, ForeignKeySupportinfo, sTableNames, statements, beginning, end, InsertStatements, isPossibleToAddForeignKeys, nWarningCount);
 		if( isPossibleToAddForeignKeys )
 		{   
 			unsigned nVectorLength = statements.size();
@@ -203,7 +216,8 @@ if( settings.m_bForeignkeySupport )
 	else
 	{
 	  gauge -> SetRange(statements.size() + InsertStatements.size() + RelationFields.size() + IndexStatements.size());
-	  CSQLiteConversion::SqliteConversion(statements, InsertStatements, IndexStatements, RelationFields, dPath, gauge, PrgDlg, sTableNames, settings.m_bForeignkeySupport);
+	  CSQLiteConversion::SqliteConversion(statements, InsertStatements, IndexStatements, RelationFields, dPath, gauge, PrgDlg, sTableNames, settings.m_bForeignkeySupport, nWarningCount, 
+		                                  IndexTable, sTableNames2);
 	  delete [] sTableNames;
 	  AfxDaoTerm();
 	}

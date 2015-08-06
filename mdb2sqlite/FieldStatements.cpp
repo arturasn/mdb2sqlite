@@ -66,7 +66,7 @@ wxString CFieldStatements::CstringToWxString(const CString &ConversionString)
 	return wxString::FromUTF8(_strdup(strStd.c_str() ) );
 }
 void CFieldStatements::fFields(CDaoDatabase &db, CDaoTableDef &TableDef, CDaoTableDefInfo &tabledefinfo, std::vector<CString> &InsertStatements, std::vector<CString> &UniqueFields, 
-	CSettings &settings, CString &sStatement,CString (&ReservedKeyWords)[124], std::vector<CString> &TableField, std::vector<CString> &IndexInfo, wxTextCtrl *PrgDlg /*= NULL*/)
+	CSettings &settings, CString &sStatement,CString (&ReservedKeyWords)[124], std::vector<CString> &TableField, std::vector<CString> &IndexInfo, unsigned &nWarningCount, wxTextCtrl *PrgDlg /*= NULL*/)
 {
 	   
 		short nFieldCount = TableDef.GetFieldCount();        
@@ -99,6 +99,7 @@ void CFieldStatements::fFields(CDaoDatabase &db, CDaoTableDef &TableDef, CDaoTab
 					{
 						if( !(fieldinfo.m_strName.CompareNoCase(ReservedKeyWords[i2])) )
 						{
+							  ++nWarningCount;
 							  wxString ErrorMessage = wxT("WARNING: found field name sqlite keyword this could lead to unexpected behaviour, found on table: ");
 							  PrgDlg->SetDefaultStyle(wxTextAttr (wxNullColour, *wxYELLOW));
 							  ErrorMessage += CstringToWxString(tabledefinfo.m_strName);
@@ -119,7 +120,11 @@ void CFieldStatements::fFields(CDaoDatabase &db, CDaoTableDef &TableDef, CDaoTab
 				if( settings.m_bNotNullAdd )  
 					NotNullAdd(fieldinfo, sStatement);
 				if( settings.m_bDefaultValueAdd ) 
-					DefaultValueAdd(fieldinfo, tabledefinfo, sStatement, recordinfo, PrgDlg);
+				{
+					if( PrgDlg != NULL )
+						DefaultValueAdd(fieldinfo, tabledefinfo, sStatement, recordinfo, nWarningCount, PrgDlg);
+					else DefaultValueAdd(fieldinfo, tabledefinfo, sStatement, recordinfo, nWarningCount);
+				}
 				if( settings.m_bAutoIncrementAdd )
 					AutoIncrementAdd(fieldinfo, sStatement);
 				else if( isPrimary && settings.m_PrimaryKeySupport)
@@ -153,7 +158,8 @@ void CFieldStatements::AutoIncrementAdd(const CDaoFieldInfo &fieldinfo, CString 
 	if( fieldinfo.m_lAttributes & dbAutoIncrField ) 
 		sStatement += _T(" PRIMARY KEY AUTOINCREMENT");
 }
-void CFieldStatements::DefaultValueAdd( const CDaoFieldInfo &fieldinfo, CDaoTableDefInfo &tabledefinfo, CString &sStatement, CDaoFieldInfo &recordinfo, wxTextCtrl *&PrgDlg)
+void CFieldStatements::DefaultValueAdd( const CDaoFieldInfo &fieldinfo, CDaoTableDefInfo &tabledefinfo, CString &sStatement, CDaoFieldInfo &recordinfo, unsigned &nWarningCount, 
+	                                    wxTextCtrl *PrgDlg /*NULL*/)
 {
 	if( !(fieldinfo.m_strDefaultValue.IsEmpty()) )
 		{
@@ -189,17 +195,20 @@ void CFieldStatements::DefaultValueAdd( const CDaoFieldInfo &fieldinfo, CDaoTabl
 					sStatement += _T(" DEFAULT 0");
 					return;
 				}
-				//std::wcout << "Unable to recognize default value:" << (LPCTSTR)fieldinfo.m_strDefaultValue << " on Table:" << (LPCTSTR)tabledefinfo.m_strName << " Column:" << (LPCTSTR)fieldinfo.m_strName << std::endl;
-				PrgDlg->SetDefaultStyle(wxTextAttr (*wxRED));
-				wxString ErrorMessage = wxT("Unable to recognize default value: ");
-				ErrorMessage += CstringToWxString(fieldinfo.m_strDefaultValue);
-				ErrorMessage += wxT(" on table: ");
-				ErrorMessage += CstringToWxString(tabledefinfo.m_strName);
-				ErrorMessage += wxT(" column: ");
-				ErrorMessage += CstringToWxString(fieldinfo.m_strName);
-				ErrorMessage += wxT("\n");
-				PrgDlg->WriteText(ErrorMessage);
-				PrgDlg->SetDefaultStyle(wxTextAttr (wxNullColour));
+				if(PrgDlg != NULL)
+				{
+					++nWarningCount;
+					PrgDlg->SetDefaultStyle(wxTextAttr (*wxRED));
+					wxString ErrorMessage = wxT("Unable to recognize default value: ");
+					ErrorMessage += CstringToWxString(fieldinfo.m_strDefaultValue);
+					ErrorMessage += wxT(" on table: ");
+					ErrorMessage += CstringToWxString(tabledefinfo.m_strName);
+					ErrorMessage += wxT(" column: ");
+					ErrorMessage += CstringToWxString(fieldinfo.m_strName);
+					ErrorMessage += wxT("\n");
+					PrgDlg->WriteText(ErrorMessage);
+					PrgDlg->SetDefaultStyle(wxTextAttr (wxNullColour));
+				}
 			}
 			else 
 			{
@@ -355,7 +364,6 @@ void CFieldStatements::Records(CDaoTableDef &TableDef, const CDaoTableDefInfo &t
 }
 void CFieldStatements::FieldCollation(CDaoTableDef &TableDef, CDaoTableDefInfo &tabledefinfo, std::vector<CString> &CollateIndexFields, const bool &m_bTrimTextValues)
 {
-	TableDef.Open(tabledefinfo.m_strName);
 	short nFieldCount = TableDef.GetFieldCount(); 
 	CString sStatement;
 	for( int i1 = 0; i1 < nFieldCount; ++i1 )

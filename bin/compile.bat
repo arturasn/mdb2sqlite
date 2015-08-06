@@ -1,1 +1,1 @@
-devenv "C:\Users\arturasN\Documents\ExecutionToSqlite\bin\mdb2sqlite.sln" /rebuild Release
+devenv "%CD%\mdb2sqlite.sln" /rebuild Release
