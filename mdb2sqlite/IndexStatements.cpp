@@ -12,18 +12,24 @@ static char THIS_FILE[]=__FILE__;
 
 void CIndexStatements::Indexes(CDaoTableDef &TableDef, std::vector<CString> &IndexStatements, const CDaoTableDefInfo &tabledefinfo, CString *&sTableNames, const short &nTableCount, 
 	                           std::vector<CString> &UniqueFields, std::vector<CString> &CollateIndexFields, const bool &m_bCollateNoCaseIndexAdd, const bool &m_bTrimTextValues,  
-							   const bool &bKeyWordList, CString (&ReservedKeyWords)[124], std::vector<CString> &IndexInfo, unsigned &nWarningCount, wxTextCtrl *PrgDlg /*NULL*/)
+							   const bool &bKeyWordList, CString (&ReservedKeyWords)[124], std::vector<CString> &IndexInfo, unsigned &nWarningCount, CString *&sTableNames2,
+							   int *&IndexTable, int &index, wxTextCtrl *PrgDlg /*NULL*/)
 {
 	CString sParrent;
 	CString sStatement;
 	CString sStatement2;
 	short nIndexCount = TableDef.GetIndexCount();
+	sTableNames2[index] = tabledefinfo.m_strName;
+	IndexTable[index] = nIndexCount;
 	for( int i1 = 0; i1 < nIndexCount; ++i1 )
 		{
 			CDaoIndexInfo indexinfo;
 			TableDef.GetIndexInfo(i1,indexinfo,AFX_DAO_ALL_INFO);
 			if( indexinfo.m_strName.Find('{') != -1 || indexinfo.m_strName.Find('}') != -1 || IndexFilter(tabledefinfo,indexinfo,sTableNames,nTableCount) )
+			{
+				--IndexTable[index];
 				continue;
+			}
 			if( indexinfo.m_bPrimary )
 			{
 				CString temp = tabledefinfo.m_strName;

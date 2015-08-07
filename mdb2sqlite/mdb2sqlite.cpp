@@ -223,7 +223,7 @@ void CustomDialog::FileOpen(wxCommandEvent &WXUNUSED(event) )
 }
 void CustomDialog::SettingsChoice(wxCommandEvent& WXUNUSED(event) )
 {
-    wxDialog *dlg = new wxDialog(this, wxID_ANY, wxT("Values to export"), wxDefaultPosition, wxSize(220,350));
+    wxDialog *dlg = new wxDialog(this, wxID_ANY, wxT("Values to export"), wxDefaultPosition, wxSize(220,370));
 
 	wxCheckBox *RelationshipCheckbox = new wxCheckBox(dlg, wxID_ANY, wxT("Relationship add"), wxDefaultPosition);
 	wxCheckBox *RecordCheckbox = new wxCheckBox(dlg, wxID_ANY, wxT("Record add"), wxDefaultPosition);
@@ -239,8 +239,10 @@ void CustomDialog::SettingsChoice(wxCommandEvent& WXUNUSED(event) )
 	wxCheckBox *ReservedKeywordCheckbox = new wxCheckBox(dlg, wxID_ANY, wxT("Reserved keyword list add"), wxDefaultPosition);
 	wxCheckBox *ForeignKeySupportCheckbox = new wxCheckBox(dlg, wxID_ANY, wxT("Foreign key support"), wxDefaultPosition);
 	wxCheckBox *PrimaryKeyCheckbox = new wxCheckBox(dlg, wxID_ANY, wxT("Primary key support"), wxDefaultPosition);
+	wxCheckBox *ForeignKeyPrimaryCheckbox = new wxCheckBox(dlg, wxID_ANY, wxT("Foreign key both primary fields"), wxDefaultPosition);
+
 	ReadFromIni(RelationshipCheckbox, RecordCheckbox, NotNullValueCheckbox, AutoincrementCheckbox, DefaultValueCheckbox, IndexCheckbox, UniqueFieldsCheckbox, 
-			    CollateNcIndexCheckbox, CollateNcFieldsCheckbox, TrimCheckbox, DescriptionCheckbox, ReservedKeywordCheckbox, ForeignKeySupportCheckbox, PrimaryKeyCheckbox);
+			    CollateNcIndexCheckbox, CollateNcFieldsCheckbox, TrimCheckbox, DescriptionCheckbox, ReservedKeywordCheckbox, ForeignKeySupportCheckbox, PrimaryKeyCheckbox, ForeignKeyPrimaryCheckbox);
 
 	wxSizer *settingsizer = new wxBoxSizer(wxVERTICAL);
 
@@ -273,6 +275,8 @@ void CustomDialog::SettingsChoice(wxCommandEvent& WXUNUSED(event) )
 	settingsizer->AddSpacer(5);
 	settingsizer->Add(PrimaryKeyCheckbox, 0, wxLEFT | wxRIGHT, 8);
 	settingsizer->AddSpacer(5);
+	settingsizer->Add(ForeignKeyPrimaryCheckbox, 0, wxLEFT | wxRIGHT, 8);
+	settingsizer->AddSpacer(5);
 
 	RelationshipCheckbox->SetToolTip(wxT("Adds relationships between tables, update and delete sqlite statements are executed."));
 	RecordCheckbox->SetToolTip(wxT("Adds the information that is in the records."));
@@ -288,6 +292,7 @@ void CustomDialog::SettingsChoice(wxCommandEvent& WXUNUSED(event) )
 	ReservedKeywordCheckbox->SetToolTip(wxT("If we find some sqlite keywords in tables, indexes or fields error message is shown."));
 	ForeignKeySupportCheckbox->SetToolTip(wxT("Adds foreign key support, NOTE:foreign keys only work when there are no loops between table references"));
 	PrimaryKeyCheckbox->SetToolTip(wxT("Adds a contraint PRIMARY KEY to a field, all of this fields values ar unique"));
+	ForeignKeyPrimaryCheckbox->SetToolTip(wxT("Do not create a relationship enforced by a foreign key where both fields are primary key (where the relationship is 1-1)") );
 
 	settingsizer->Add(new wxStaticLine(dlg), 0, wxEXPAND | wxLEFT | wxRIGHT, 5);
 	wxBoxSizer *hbox = new wxBoxSizer(wxHORIZONTAL);
@@ -299,13 +304,13 @@ void CustomDialog::SettingsChoice(wxCommandEvent& WXUNUSED(event) )
 	if( dlg->ShowModal() == wxID_OK )
 	{
 		SaveToIni(RelationshipCheckbox, RecordCheckbox, NotNullValueCheckbox, AutoincrementCheckbox, DefaultValueCheckbox, IndexCheckbox, UniqueFieldsCheckbox, 
-			CollateNcIndexCheckbox, CollateNcFieldsCheckbox, TrimCheckbox, DescriptionCheckbox, ReservedKeywordCheckbox, ForeignKeySupportCheckbox, PrimaryKeyCheckbox);
+			CollateNcIndexCheckbox, CollateNcFieldsCheckbox, TrimCheckbox, DescriptionCheckbox, ReservedKeywordCheckbox, ForeignKeySupportCheckbox, PrimaryKeyCheckbox, ForeignKeyPrimaryCheckbox);
 	}
 	dlg->Destroy();
 }
 void CustomDialog::SaveToIni(wxCheckBox *&RelationshipCheckbox, wxCheckBox *&RecordCheckbox, wxCheckBox *&NotNullValueCheckbox, wxCheckBox *&AutoincrementCheckbox, wxCheckBox *&DefaultValueCheckbox,
 	                         wxCheckBox *&IndexCheckbox, wxCheckBox *&UniqueFieldsCheckbox, wxCheckBox *&CollateNcIndexCheckbox, wxCheckBox *&CollateNcFieldsCheckbox, wxCheckBox *&TrimCheckbox,
-							 wxCheckBox *&DescriptionCheckbox, wxCheckBox *&ReservedKeywordCheckbox, wxCheckBox *&ForeignKeySupportCheckbox, wxCheckBox *&PrimaryKeyCheckbox)
+							 wxCheckBox *&DescriptionCheckbox, wxCheckBox *&ReservedKeywordCheckbox, wxCheckBox *&ForeignKeySupportCheckbox, wxCheckBox *&PrimaryKeyCheckbox, wxCheckBox *&ForeignKeyPrimaryCheckbox)
 {
 	std::ofstream settingfile("Settings.ini");
 	settingfile << "[Settings]" << std::endl;
@@ -365,7 +370,12 @@ void CustomDialog::SaveToIni(wxCheckBox *&RelationshipCheckbox, wxCheckBox *&Rec
 								if( PrimaryKeyCheckbox->IsChecked() )
 									settingfile << "true" << std::endl;
 								else settingfile << "false" << std::endl;
+	settingfile << "ForeignKeyPrimary = ";
+	                            if( ForeignKeyPrimaryCheckbox -> IsChecked() )
+									settingfile << "true" << std::endl;
+								else settingfile << "false" << std::endl;
 	settingfile.close();
+
 	delete RelationshipCheckbox;
 	delete RecordCheckbox; 
 	delete NotNullValueCheckbox; 
@@ -380,10 +390,11 @@ void CustomDialog::SaveToIni(wxCheckBox *&RelationshipCheckbox, wxCheckBox *&Rec
 	delete ReservedKeywordCheckbox;
 	delete ForeignKeySupportCheckbox;
 	delete PrimaryKeyCheckbox;
+	delete ForeignKeyPrimaryCheckbox;
 }
 void CustomDialog::ReadFromIni(wxCheckBox *&RelationshipCheckbox, wxCheckBox *&RecordCheckbox, wxCheckBox *&NotNullValueCheckbox, wxCheckBox *&AutoincrementCheckbox, wxCheckBox *&DefaultValueCheckbox,
 	                         wxCheckBox *&IndexCheckbox, wxCheckBox *&UniqueFieldsCheckbox, wxCheckBox *&CollateNcIndexCheckbox, wxCheckBox *&CollateNcFieldsCheckbox, wxCheckBox *&TrimCheckbox,
-							 wxCheckBox *&DescriptionCheckbox, wxCheckBox *&ReservedKeywordCheckbox, wxCheckBox *&ForeignKeySupportCheckbox, wxCheckBox *&PrimaryKeyCheckbox)
+							 wxCheckBox *&DescriptionCheckbox, wxCheckBox *&ReservedKeywordCheckbox, wxCheckBox *&ForeignKeySupportCheckbox, wxCheckBox *&PrimaryKeyCheckbox, wxCheckBox *&ForeignKeyPrimaryCheckbox)
 {
 	CSimpleIni ini;
     ini.SetUnicode();
@@ -402,6 +413,7 @@ void CustomDialog::ReadFromIni(wxCheckBox *&RelationshipCheckbox, wxCheckBox *&R
 	ReservedKeywordCheckbox-> SetValue(ini.GetBoolValue(_T("Settings"),_T("KeyWordList"),true));
 	ForeignKeySupportCheckbox->SetValue(ini.GetBoolValue(_T("Settings"),_T("ForeignKeySupport"),true));
 	PrimaryKeyCheckbox->SetValue(ini.GetBoolValue(_T("Settings"),_T("PrimaryKeySupport"),true));
+	ForeignKeyPrimaryCheckbox->SetValue(ini.GetBoolValue(_T("Settings"),_T("ForeignKeyPrimary"),true));
 }
 void CustomDialog::SaveWindowInformation(int *& posx, int *& posy, int *& sizex)
 {

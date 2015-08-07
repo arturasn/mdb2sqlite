@@ -39,6 +39,7 @@ void CSettingsReader::ReadFromCSimpleIni(CSettings &settings)
 	settings.m_bKeyWordList = ini.GetBoolValue(_T("Settings"),_T("KeyWordList"),true);
 	settings.m_bForeignkeySupport = ini.GetBoolValue(_T("Settings"),_T("ForeignKeySupport"),true);
 	settings.m_PrimaryKeySupport = ini.GetBoolValue(_T("Settings"),_T("PrimaryKeySupport"),true);
+	settings.m_ForeignKeyPrimary = ini.GetBoolValue(_T("Settings"),_T("ForeignKeyPrimary"),true);
 }
 void CSettingsReader::Dumping(std::vector<CString> &statements, std::vector<CString> &InsertStatements, std::vector<CString> &RelationFields, std::vector<CString> &IndexStatements, 
 	                          const char *&dPath)
@@ -96,6 +97,7 @@ void CSettingsReader::Control(const char *Path, const char *dPath, wxGauge *gaug
 	CString *sTableNames = new CString[nTableCount]; 
 	CString *sTableNames2 = new CString[nTableCount]; 
 	int *IndexTable = new int[nTableCount];
+	int index = 0;
 	short nNonSystemTableCount=0;
 	for( int i = 0; i < nTableCount; ++i )
 	{
@@ -106,8 +108,6 @@ void CSettingsReader::Control(const char *Path, const char *dPath, wxGauge *gaug
 			CDaoTableDef TableDef(&db);
 			sTableNames[nNonSystemTableCount] = tabledefinfo.m_strName;
 			TableDef.Open(tabledefinfo.m_strName);
-			sTableNames2[nNonSystemTableCount] = tabledefinfo.m_strName;
-			IndexTable[nNonSystemTableCount] = TableDef.GetIndexCount();
 			nNonSystemTableCount++;
 			if( settings.m_bCollateNoCaseIndexAdd ) 
 				CFieldStatements::FieldCollation(TableDef, tabledefinfo, CollateIndexFields, settings.m_bTrimTextValues);
@@ -153,10 +153,13 @@ void CSettingsReader::Control(const char *Path, const char *dPath, wxGauge *gaug
 
 					if(PrgDlg != NULL)
 					   CIndexStatements::Indexes(TableDef, IndexStatements, tabledefinfo, sTableNames, nNonSystemTableCount, UniqueFields, CollateIndexFields, 
-					                             settings.m_bCollateNoCaseIndexAdd, settings.m_bTrimTextValues, settings.m_bKeyWordList, ReservedKeyWords, IndexInfo, nWarningCount, PrgDlg);
+					                             settings.m_bCollateNoCaseIndexAdd, settings.m_bTrimTextValues, settings.m_bKeyWordList, ReservedKeyWords, IndexInfo, nWarningCount, sTableNames2, 
+												 IndexTable, index, PrgDlg);
 					else CIndexStatements::Indexes(TableDef, IndexStatements, tabledefinfo, sTableNames, nNonSystemTableCount, UniqueFields, CollateIndexFields, 
-					                             settings.m_bCollateNoCaseIndexAdd, settings.m_bTrimTextValues, settings.m_bKeyWordList, ReservedKeyWords, IndexInfo, nWarningCount);
+					                             settings.m_bCollateNoCaseIndexAdd, settings.m_bTrimTextValues, settings.m_bKeyWordList, ReservedKeyWords, IndexInfo, nWarningCount, sTableNames2, 
+												 IndexTable, index);
 				}
+				++index;
 				if(PrgDlg != NULL)
 					CFieldStatements::fFields(db, TableDef, tabledefinfo, InsertStatements, UniqueFields, settings, sStatement, ReservedKeyWords, TableField, IndexInfo, nWarningCount, PrgDlg); 
 				else CFieldStatements::fFields(db, TableDef, tabledefinfo, InsertStatements, UniqueFields, settings, sStatement, ReservedKeyWords, TableField, IndexInfo, nWarningCount);
@@ -179,8 +182,10 @@ if( settings.m_bForeignkeySupport )
 		}
 		bool isPossibleToAddForeignKeys = true;
 		if(PrgDlg != NULL)
-			CRelationships::ForeignKeySupport(db, nRelationCount, TableField, ForeignKeySupportinfo, sTableNames, statements, beginning, end, InsertStatements, isPossibleToAddForeignKeys, nWarningCount, PrgDlg);
-		else CRelationships::ForeignKeySupport(db, nRelationCount, TableField, ForeignKeySupportinfo, sTableNames, statements, beginning, end, InsertStatements, isPossibleToAddForeignKeys, nWarningCount);
+			CRelationships::ForeignKeySupport(db, nRelationCount, TableField, ForeignKeySupportinfo, sTableNames, statements, beginning, end, InsertStatements, 
+			                                  isPossibleToAddForeignKeys, nWarningCount, settings.m_ForeignKeyPrimary, PrgDlg);
+		else CRelationships::ForeignKeySupport(db, nRelationCount, TableField, ForeignKeySupportinfo, sTableNames, statements, beginning, end, InsertStatements, 
+			                                   isPossibleToAddForeignKeys, nWarningCount, settings.m_ForeignKeyPrimary);
 		if( isPossibleToAddForeignKeys )
 		{   
 			unsigned nVectorLength = statements.size();
@@ -219,6 +224,8 @@ if( settings.m_bForeignkeySupport )
 	  CSQLiteConversion::SqliteConversion(statements, InsertStatements, IndexStatements, RelationFields, dPath, gauge, PrgDlg, sTableNames, settings.m_bForeignkeySupport, nWarningCount, 
 		                                  IndexTable, sTableNames2);
 	  delete [] sTableNames;
+	  delete [] sTableNames2;
+	  delete [] IndexTable;
 	  AfxDaoTerm();
 	}
 	

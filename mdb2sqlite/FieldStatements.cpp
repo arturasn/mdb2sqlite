@@ -3,7 +3,6 @@
 #include "FieldStatements.h"
 #include <afxdao.h>
 #include <wx/textctrl.h>
-//#include <iostream>
 
 #ifdef _DEBUG
 #undef THIS_FILE

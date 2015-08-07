@@ -24,6 +24,7 @@ class CSettings
 		bool m_bKeyWordList;
 		bool m_bForeignkeySupport;
 		bool m_PrimaryKeySupport;
+		bool m_ForeignKeyPrimary;
  };
 class CSettingsReader
 {

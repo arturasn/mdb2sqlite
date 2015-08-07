@@ -85,7 +85,7 @@ void CRelationships::Relationhips(CDaoDatabase &db, std::vector<CString> &Relati
 }
 void CRelationships::ForeignKeySupport(CDaoDatabase &db, const unsigned &nRelationCount, std::vector<CString> &TableField, std::vector<CString> &ForeignKeySupportinfo, 
 	                                   CString *&sTableNames, std::vector<CString> &statements, std::vector<int> &beginning, std::vector<int> &end, std::vector<CString> &InsertStatements,
-									   bool &isPossibleToAddForeignKeys, unsigned &nWarningCount, wxTextCtrl *PrgDlg /*NULL*/)
+									   bool &isPossibleToAddForeignKeys, unsigned &nWarningCount, const bool &m_bForeignKeyPrimary, wxTextCtrl *PrgDlg /*NULL*/)
 {
 	CString temp;
 	CDaoRelationInfo relationinfo;
@@ -100,9 +100,35 @@ void CRelationships::ForeignKeySupport(CDaoDatabase &db, const unsigned &nRelati
 		db.GetRelationInfo(i,relationinfo,AFX_DAO_ALL_INFO);
 		if(relationinfo.m_lAttributes & dbRelationDontEnforce)
 			continue;
+		if( m_bForeignKeyPrimary )
+		{
+			unsigned nVectorLength = TableField.size();
+			CString temp2 = relationinfo.m_strTable;
+					temp2 += relationinfo.m_pFieldInfos[0].m_strName;
+			CString temp3 = relationinfo.m_strForeignTable;
+					temp3 += relationinfo.m_pFieldInfos[0].m_strForeignName;
+
+			bool FirstField = true;
+			bool SecondField = true;
+
+			for( unsigned i2 = 0; i2 < nVectorLength; ++i2 )
+			{
+				if( !(TableField[i2].Compare(temp2)) )
+							FirstField = false;
+			}
+
+			for( unsigned i2 = 0; i2 < nVectorLength; ++i2 )
+			{
+				if( !(TableField[i2].Compare(temp3)) )
+							SecondField = false;
+			}
+			if(FirstField && SecondField)
+				continue;
+		}
 		temp = relationinfo.m_strForeignTable;
 		temp += _T("FOREIGN KEY(");
 		unsigned nRelationFields = relationinfo.m_nFields;
+
 		for( unsigned i1 = 0; i1 < nRelationFields; ++i1)
 		{
 			temp += relationinfo.m_pFieldInfos[i1].m_strForeignName;
@@ -110,10 +136,12 @@ void CRelationships::ForeignKeySupport(CDaoDatabase &db, const unsigned &nRelati
 				temp += _T(",");
 			else temp += ")";
 		}
+
 		temp += _T(" REFERENCES ");
 		temp += relationinfo.m_strTable;
 		++tree[CRelationships::Findind(sTableNames,relationinfo.m_strForeignTable,nTreeSize)][CRelationships::Findind(sTableNames,relationinfo.m_strTable,nTreeSize)];
 		temp += _T("(");
+
 		for( unsigned i1 = 0; i1 < nRelationFields; ++i1 )
 		{
 			temp += relationinfo.m_pFieldInfos[i1].m_strName;
@@ -145,12 +173,15 @@ void CRelationships::ForeignKeySupport(CDaoDatabase &db, const unsigned &nRelati
 				}
 			}
 		}  
+
 		ForeignKeySupportinfo.push_back(temp);
 	}
 	CRelationships::ForeignKeyPriority(nTreeSize, tree, priority);
+
 	for(unsigned i = 0; i < nTreeSize; ++i)
       delete [] tree[i];
     delete [] tree;
+
 	if(priority.size() != nTreeSize)
 	{
 		wxString WarningMessage = wxT("WARNING: Sqlite foreing key support cannot be added for the current database as there is a loop between the table references");
@@ -161,6 +192,7 @@ void CRelationships::ForeignKeySupport(CDaoDatabase &db, const unsigned &nRelati
 		isPossibleToAddForeignKeys = false;
 		return;
 	}
+
 	CRelationships::CreatePriority(statements,priority,sTableNames,beginning,end,InsertStatements);
 }
 void CRelationships::ForeignKeyPriority(const unsigned &nTreeSize, int **&tree, std::vector<int> &priority)

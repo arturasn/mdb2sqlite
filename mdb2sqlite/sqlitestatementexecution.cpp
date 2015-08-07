@@ -15,6 +15,13 @@ static char THIS_FILE[]=__FILE__;
 #endif
 
   #pragma comment (lib, "sqlite3.lib")
+enum
+{
+	ExecuteTables = 1 << 0,
+	ExecuteInserts = 1 << 1,
+	ExecuteIndexes = 1 << 2,
+	ExecuteTriggers = 1 << 3
+};
 
 inline bool FileExists(const std::string &name) 
 {
@@ -37,12 +44,12 @@ std::string CSQLiteConversion::ConvertToUTF8(const wchar_t *wstr)
         return strTo;
     }
 void CSQLiteConversion::SqliteStatementExecution(std::vector<CString> &statements, sqlite3 *&sqlitedatabase, int rc , wxGauge *&gauge, unsigned &nValue, wxTextCtrl *&PrgDlg, 
-	                                             unsigned &nErrorCount, CString *sTableNames, unsigned &flag, int *IndexTable, CString *sTableNames2)
+	                                             unsigned &nErrorCount, CString *sTableNames, unsigned &flag, unsigned &nTableCount, int *IndexTable, CString *sTableNames2)
 	{
 	 char *zErrMsg = 0;
 	 unsigned index = 0;
 	 auto end_it = statements.end();
-     for ( auto it = statements.begin(); it != end_it; ++it )
+     for( auto it = statements.begin(); it != end_it; ++it )
 		{
 			++nValue;
 			gauge ->SetValue(nValue);
@@ -74,15 +81,15 @@ void CSQLiteConversion::SqliteStatementExecution(std::vector<CString> &statement
 			  }
 			else
 			{
-				if(flag & 1)
-				{
+				if(flag & ExecuteTables)
+				{ 
 					wxString sMessage = wxT("Table: ");
 					sB = ConvertToUTF8(sTableNames[nValue-1]);
 					sMessage += wxString::FromUTF8(_strdup(sB.c_str() ) );
 					sMessage += wxT(" created succesfully \n");
 					PrgDlg->WriteText(sMessage);
 				}
-				else if(flag & 2)
+				else if(flag & ExecuteInserts)
 				{
 					if(*it == "END TRANSACTION")
 					{
@@ -95,30 +102,49 @@ void CSQLiteConversion::SqliteStatementExecution(std::vector<CString> &statement
 						PrgDlg->WriteText(sMessage);
 					}
 				}
-				else if(flag & 4)
+				else if(flag & ExecuteIndexes)
 				{   
-					while( !IndexTable[index] )
-					{	
-						wxString sMessage = wxT("indexes of table: ");
-						sB = ConvertToUTF8(sTableNames2[index]);
-						sMessage += wxString::FromUTF8(_strdup(sB.c_str() ) );
-						sMessage += wxT(" created \n");
-						PrgDlg->WriteText(sMessage);
-						++index;
-					}
+					if( index < nTableCount )
+						{
+							while( !IndexTable[index] )
+								{	
+									wxString sMessage = wxT("indexes of table: ");
+									sB = ConvertToUTF8(sTableNames2[index]);
+									sMessage += wxString::FromUTF8(_strdup(sB.c_str() ) );
+									sMessage += wxT(" created \n");
+									PrgDlg->WriteText(sMessage);
+									++index;
+								}
+						}
 					IndexTable[index]--;
-					if( !IndexTable[index] )
-					{
-						wxString sMessage = wxT("indexes of table: ");
-						sB = ConvertToUTF8(sTableNames2[index]);
-						sMessage += wxString::FromUTF8(_strdup(sB.c_str() ) );
-						sMessage += wxT(" created \n");
-						PrgDlg->WriteText(sMessage);
-						++index;
-					}
+					if( index < nTableCount )
+						{
+							if( !IndexTable[index] )
+							{
+								wxString sMessage = wxT("indexes of table: ");
+								sB = ConvertToUTF8(sTableNames2[index]);
+								sMessage += wxString::FromUTF8(_strdup(sB.c_str() ) );
+								sMessage += wxT(" created \n");
+								PrgDlg->WriteText(sMessage);
+								++index;
+							}
+						}
+					if(index < nTableCount )
+						{
+							while( !IndexTable[index] )
+								{	
+						
+									wxString sMessage = wxT("indexes of table: ");
+									sB = ConvertToUTF8(sTableNames2[index]);
+									sMessage += wxString::FromUTF8(_strdup(sB.c_str() ) );
+									sMessage += wxT(" created \n");
+									PrgDlg->WriteText(sMessage);
+									++index;
+								}
+						}
 					
 				}
-				else if(flag & 8)
+				else if(flag & ExecuteTriggers)
 				{
 					wxString sMessage = wxT("Trigger created successfully \n");
 					PrgDlg->WriteText(sMessage);
@@ -133,7 +159,8 @@ void CSQLiteConversion::SqliteConversion(std::vector<CString> &statements, std::
 	char *zErrMsg = 0;
 	unsigned nErrorCount = 0;
 	unsigned nValue = 0;
-	unsigned flag;
+	unsigned flag = ExecuteTables;
+	unsigned nTableCount = statements.size();
     sqlite3 *sqlitedatabase;
     int  rcc;
 	if( FileExists(dPath) )
@@ -151,16 +178,15 @@ void CSQLiteConversion::SqliteConversion(std::vector<CString> &statements, std::
 		 sqlite3_exec(sqlitedatabase, "PRAGMA journal_mode = MEMORY", NULL, NULL, &zErrMsg);
 		 if( m_bForeignKeySupport )
 			 sqlite3_exec(sqlitedatabase, "PRAGMA foreign_keys = ON", NULL, NULL, &zErrMsg);
-		 flag = 1;
-		 SqliteStatementExecution(statements, sqlitedatabase, rcc, gauge, nValue, PrgDlg, nErrorCount, sTableNames, flag);
-		 flag = 2;
-		 SqliteStatementExecution(InsertStatements, sqlitedatabase, rcc, gauge, nValue, PrgDlg, nErrorCount, sTableNames, flag);
-		 flag = 8;
-		 SqliteStatementExecution(RelationFields, sqlitedatabase, rcc, gauge, nValue, PrgDlg,  nErrorCount, sTableNames, flag);
+		 SqliteStatementExecution(statements, sqlitedatabase, rcc, gauge, nValue, PrgDlg, nErrorCount, sTableNames, flag, nTableCount);
+		 flag = ExecuteInserts;
+		 SqliteStatementExecution(InsertStatements, sqlitedatabase, rcc, gauge, nValue, PrgDlg, nErrorCount, sTableNames, flag, nTableCount);
+		 flag = ExecuteTriggers;
+		 SqliteStatementExecution(RelationFields, sqlitedatabase, rcc, gauge, nValue, PrgDlg,  nErrorCount, sTableNames, flag, nTableCount);
 		 wxString sMessage = wxT("All triggers created \n");
 		 PrgDlg->WriteText(sMessage);
-		 flag = 4;
-	     SqliteStatementExecution(IndexStatements, sqlitedatabase, rcc, gauge, nValue, PrgDlg, nErrorCount, sTableNames, flag, IndexTable, sTableNames2);
+		 flag = ExecuteIndexes;
+	     SqliteStatementExecution(IndexStatements, sqlitedatabase, rcc, gauge, nValue, PrgDlg, nErrorCount, sTableNames, flag, nTableCount, IndexTable, sTableNames2);
 	  }
 	 wxString ConclusionMessage = wxT("Statements executed successfully: ");
 	 ConclusionMessage << nValue-nErrorCount;
