@@ -10,7 +10,6 @@ class wxString;
 struct CDaoTableDefInfo;
 struct CDaoFieldInfo;
 
-#include <vector>
 #include "OnAction.h"
 
 class CFieldStatements

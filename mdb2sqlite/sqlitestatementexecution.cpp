@@ -144,11 +144,6 @@ void CSQLiteConversion::SqliteStatementExecution(std::vector<CString> &statement
 						}
 					
 				}
-				else if(flag & ExecuteTriggers)
-				{
-					wxString sMessage = wxT("Trigger created successfully \n");
-					PrgDlg->WriteText(sMessage);
-				}
 			}
 		 }
    }
@@ -182,9 +177,9 @@ void CSQLiteConversion::SqliteConversion(std::vector<CString> &statements, std::
 		 flag = ExecuteInserts;
 		 SqliteStatementExecution(InsertStatements, sqlitedatabase, rcc, gauge, nValue, PrgDlg, nErrorCount, sTableNames, flag, nTableCount);
 		 flag = ExecuteTriggers;
+		 PrgDlg->WriteText(wxT("Starting trigger creation \n"));
 		 SqliteStatementExecution(RelationFields, sqlitedatabase, rcc, gauge, nValue, PrgDlg,  nErrorCount, sTableNames, flag, nTableCount);
-		 wxString sMessage = wxT("All triggers created \n");
-		 PrgDlg->WriteText(sMessage);
+		 PrgDlg->WriteText(wxT("All triggers created \n"));
 		 flag = ExecuteIndexes;
 	     SqliteStatementExecution(IndexStatements, sqlitedatabase, rcc, gauge, nValue, PrgDlg, nErrorCount, sTableNames, flag, nTableCount, IndexTable, sTableNames2);
 	  }
