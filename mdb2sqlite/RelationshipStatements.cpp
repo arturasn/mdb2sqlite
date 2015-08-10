@@ -103,27 +103,31 @@ void CRelationships::ForeignKeySupport(CDaoDatabase &db, const unsigned &nRelati
 		if( m_bForeignKeyPrimary )
 		{
 			unsigned nVectorLength = TableField.size();
-			CString temp2 = relationinfo.m_strTable;
-					temp2 += relationinfo.m_pFieldInfos[0].m_strName;
-			CString temp3 = relationinfo.m_strForeignTable;
-					temp3 += relationinfo.m_pFieldInfos[0].m_strForeignName;
-
-			bool FirstField = true;
-			bool SecondField = true;
-
-			for( unsigned i2 = 0; i2 < nVectorLength; ++i2 )
+			unsigned nRelationFields = relationinfo.m_nFields;
+			for(int i3 = 0; i3 < nRelationFields; ++i3)
 			{
-				if( !(TableField[i2].Compare(temp2)) )
-							FirstField = false;
-			}
+				CString temp2 = relationinfo.m_strTable;
+						temp2 += relationinfo.m_pFieldInfos[i3].m_strName;
+				CString temp3 = relationinfo.m_strForeignTable;
+						temp3 += relationinfo.m_pFieldInfos[i3].m_strForeignName;
 
-			for( unsigned i2 = 0; i2 < nVectorLength; ++i2 )
-			{
-				if( !(TableField[i2].Compare(temp3)) )
-							SecondField = false;
+				bool FirstField = true;
+				bool SecondField = true;
+
+				for( unsigned i2 = 0; i2 < nVectorLength; ++i2 )
+				{
+					if( !(TableField[i2].Compare(temp2)) )
+								FirstField = false;
+				}
+
+				for( unsigned i2 = 0; i2 < nVectorLength; ++i2 )
+				{
+					if( !(TableField[i2].Compare(temp3)) )
+								SecondField = false;
+				}
+				if(FirstField && SecondField)
+					continue;
 			}
-			if(FirstField && SecondField)
-				continue;
 		}
 		temp = relationinfo.m_strForeignTable;
 		temp += _T("FOREIGN KEY(");

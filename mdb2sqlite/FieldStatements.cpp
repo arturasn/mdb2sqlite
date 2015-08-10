@@ -126,7 +126,7 @@ void CFieldStatements::fFields(CDaoDatabase &db, CDaoTableDef &TableDef, CDaoTab
 				}
 				if( settings.m_bAutoIncrementAdd )
 					AutoIncrementAdd(fieldinfo, sStatement);
-				else if( isPrimary && settings.m_PrimaryKeySupport)
+				if( (!settings.m_bAutoIncrementAdd && isPrimary && settings.m_PrimaryKeySupport) || (isPrimary && settings.m_PrimaryKeySupport && !(fieldinfo.m_lAttributes & dbAutoIncrField)) )
 					sStatement += _T(" PRIMARY KEY");
 				if( settings.m_bUniqueFieldAdd ) 
 					UniqueFieldAdd(fieldinfo, tabledefinfo, UniqueFields, sStatement);

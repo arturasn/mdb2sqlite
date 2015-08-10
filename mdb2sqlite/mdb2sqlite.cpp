@@ -21,7 +21,7 @@ wxEND_EVENT_TABLE()
 
 bool MyApp::OnInit()
 {
-	remove("Settings.ini");
+	/*remove("Settings.ini");*/
 	int posx, 
 		posy, 
 		sizex;
