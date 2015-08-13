@@ -21,7 +21,6 @@ wxEND_EVENT_TABLE()
 
 bool MyApp::OnInit()
 {
-	/*remove("Settings.ini");*/
 	int posx, 
 		posy, 
 		sizex;
@@ -201,7 +200,6 @@ void CustomDialog::FileOpen(wxCommandEvent &WXUNUSED(event) )
 	dialog.SetDirectory(wxGetHomeDir());
 	if ( dialog.ShowModal() == wxID_OK )
 	{
-		wxString info;
 		FileForExport = wxT("Succesfully exported file: ");
 		FileForExport += wxString::Format(wxT("%s"), dialog.GetFilename().c_str());
 		FileForExport += wxT(" to sqlite");

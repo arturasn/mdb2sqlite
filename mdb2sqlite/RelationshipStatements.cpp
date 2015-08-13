@@ -90,6 +90,7 @@ void CRelationships::ForeignKeySupport(CDaoDatabase &db, const unsigned &nRelati
 	CString temp;
 	CDaoRelationInfo relationinfo;
 	std::vector <int> priority;
+	bool DoContinue;
 	unsigned nTreeSize = statements.size();
 	int** tree = new int*[nTreeSize];
     for(unsigned i = 0; i < nTreeSize; ++i)
@@ -100,6 +101,7 @@ void CRelationships::ForeignKeySupport(CDaoDatabase &db, const unsigned &nRelati
 		db.GetRelationInfo(i,relationinfo,AFX_DAO_ALL_INFO);
 		if(relationinfo.m_lAttributes & dbRelationDontEnforce)
 			continue;
+	    DoContinue = false;
 		if( m_bForeignKeyPrimary )
 		{
 			unsigned nVectorLength = TableField.size();
@@ -126,9 +128,14 @@ void CRelationships::ForeignKeySupport(CDaoDatabase &db, const unsigned &nRelati
 								SecondField = false;
 				}
 				if(FirstField && SecondField)
+				{
+					DoContinue = true;
 					continue;
+				}
 			}
 		}
+		if ( DoContinue )
+			continue;
 		temp = relationinfo.m_strForeignTable;
 		temp += _T("FOREIGN KEY(");
 		unsigned nRelationFields = relationinfo.m_nFields;

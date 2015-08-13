@@ -1,7 +1,4 @@
 #define _AFXDLL
-
-
-
 #include "stdafx.h"
 #include "sqlitestatementexecution.h"
 #include "sqlite3.h"
@@ -56,6 +53,11 @@ void CSQLiteConversion::SqliteStatementExecution(std::vector<CString> &statement
 			std::string sB = ConvertToUTF8(*it);
 		    const char* pszC = _strdup(sB.c_str());		
             rc = sqlite3_exec(sqlitedatabase, pszC, NULL, 0, &zErrMsg);
+			/*const char* test = pszC;
+			sqlite3_stmt **testas = NULL;
+			const char **pzTail = ;
+			sqlite3_prepare(sqlitedatabase, test, CHAR_MAX, testas, pzTail);
+			sqlite3_finalize(*testas);*/
             if( rc != SQLITE_OK )
 	          {
 				  ++nErrorCount;
