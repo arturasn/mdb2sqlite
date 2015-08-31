@@ -71,6 +71,7 @@ void CFieldStatements::fFields(CDaoDatabase &db, CDaoTableDef &TableDef, CDaoTab
 		short nFieldCount = TableDef.GetFieldCount();        
 		CString *sFieldnames = new CString[nFieldCount];  
 		bool bIsText;
+		CString Temp2;
 		for( int i1 = 0; i1 < nFieldCount; ++i1 )
 			{
 				bIsText = false;
@@ -134,9 +135,13 @@ void CFieldStatements::fFields(CDaoDatabase &db, CDaoTableDef &TableDef, CDaoTab
 					sStatement += _T(" COLLATE NOCASE");
 				 if( settings.m_bAddComments )
 				{
-					sStatement += _T(" /*");
-					sStatement += GetDaoFieldDescription(fieldinfo.m_strName, tabledefinfo.m_strName, db);
-				    sStatement += _T(" */");
+					Temp2 = GetDaoFieldDescription(fieldinfo.m_strName, tabledefinfo.m_strName, db);
+					if( !Temp2.IsEmpty() )
+					{
+						sStatement += _T(" /*");
+						sStatement += Temp2;
+						sStatement += _T(" */");
+					}
 				}
 				if( i1 != nFieldCount-1 )
 					sStatement += (_T(","));
