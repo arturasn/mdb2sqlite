@@ -197,9 +197,12 @@ void CRelationships::ForeignKeySupport(CDaoDatabase &db, const unsigned &nRelati
 	{
 		wxString WarningMessage = wxT("WARNING: Sqlite foreing key support cannot be added for the current database as there is a loop between the table references");
 		WarningMessage += wxT("\n");
-		PrgDlg->SetDefaultStyle(wxTextAttr (wxNullColour, *wxRED));
-		PrgDlg->WriteText(WarningMessage);
-	    PrgDlg->SetDefaultStyle(wxTextAttr (wxNullColour));
+		if( PrgDlg != NULL)
+		{
+			PrgDlg->SetDefaultStyle(wxTextAttr (wxNullColour, *wxRED));
+			PrgDlg->WriteText(WarningMessage);
+			PrgDlg->SetDefaultStyle(wxTextAttr (wxNullColour));
+		}
 		isPossibleToAddForeignKeys = false;
 		return;
 	}
