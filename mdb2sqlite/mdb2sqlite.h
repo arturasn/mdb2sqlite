@@ -2,23 +2,29 @@
 #define __MDB2SQLITE_H__ 
 #pragma once
 
+#ifndef _WX_DIALOG_H_
+	#include "wx/dialog.h"
+#endif
+
+#ifndef _WX_APP_H_BASE_
+	#include "wx/app.h"
+#endif
+
+class wxTextCtrl;
+class wxBoxSizer;
+class wxCheckBox;
+
 class CustomDialog : public wxDialog
 {
 public:
-	 CustomDialog(const wxString& title, const int x, const int y, const int sizex);
-	 wxTextCtrl *TFilePathLine;
-	 wxTextCtrl *TDestinationPathLine;
-	 wxString FileForExport;
-	 wxBoxSizer *TopSizer;
-	 void ProgressBar(char *Path, char *dPath);
+	 CustomDialog(const wxString sTitle, const int x, const int y, const int sizex);
 	 static void SaveToIni(wxCheckBox *&RelationshipCheckbox, wxCheckBox *&RecordCheckbox, wxCheckBox *&NotNullValueCheckbox, wxCheckBox *&AutoincrementCheckbox, wxCheckBox *&DefaultValueCheckbox,
 	                         wxCheckBox *&IndexCheckbox, wxCheckBox *&UniqueFieldsCheckbox, wxCheckBox *&CollateNcIndexCheckbox, wxCheckBox *&CollateNcFieldsCheckbox, wxCheckBox *&TrimCheckbox,
 							 wxCheckBox *&DescriptionCheckbox, wxCheckBox *&ReservedKeywordCheckbox, wxCheckBox *&ForeignKeySupportCheckbox, wxCheckBox *&PrimaryKeyCheckbox, wxCheckBox *&ForeignKeyPrimaryCheckbox);
 	 static void ReadFromIni(wxCheckBox *&RelationshipCheckbox, wxCheckBox *&RecordCheckbox, wxCheckBox *&NotNullValueCheckbox, wxCheckBox *&AutoincrementCheckbox, wxCheckBox *&DefaultValueCheckbox,
 	                         wxCheckBox *&IndexCheckbox, wxCheckBox *&UniqueFieldsCheckbox, wxCheckBox *&CollateNcIndexCheckbox, wxCheckBox *&CollateNcFieldsCheckbox, wxCheckBox *&TrimCheckbox,
 							 wxCheckBox *&DescriptionCheckbox, wxCheckBox *&ReservedKeywordCheckbox, wxCheckBox *&ForeignKeySupportCheckbox, wxCheckBox *&PrimaryKeyCheckbox, wxCheckBox *&ForeignKeyPrimaryCheckbox);
-	 static void SaveWindowInformation(int *& posx, int *& posy, int *& sizex);
-	 static void GetWindowInformation(int &posx, int &posy, int &sizex);
+//Events
 private:
 	 void OnClose( wxCloseEvent &WXUNUSED(event) );
 	 void OnExit( wxCommandEvent &WXUNUSED(event) );
@@ -27,6 +33,18 @@ private:
 	 void SettingsChoice(wxCommandEvent& WXUNUSED(event) );
 	 void OnDump(wxCommandEvent& WXUNUSED(event) );
 	 wxDECLARE_EVENT_TABLE();
+
+//Operations
+private:
+	void OnSaveWndInfo();
+
+//Attributes
+private:
+	wxTextCtrl *m_pSrcFilePath;
+	wxTextCtrl *m_pDestinationPath;
+	wxBoxSizer *m_pTopSizer;
+
+	wxString m_FileForExport;
 };
 
 class MyApp : public wxApp

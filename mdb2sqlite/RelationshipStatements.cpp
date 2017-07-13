@@ -247,6 +247,9 @@ int CRelationships::Findind(CString *&sTableNames, CString &sSearchedTable, cons
 		if( !(sTableNames[i3].Compare(sSearchedTable)) )
 			return i3;
 	}
+	
+	ASSERT(FALSE);
+	return -1;
 }
 void CRelationships::Preparation(int **&tree, const unsigned &nTreeSize)
 {

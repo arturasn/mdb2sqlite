@@ -2,23 +2,14 @@
 #include "stdafx.h"
 #include "SimpleIni.h"
 #include <afxdao.h>
-#ifndef __INCLUDED_INDEXSTATEMENTS_H__
- #include "IndexStatements.h"
-#endif
-#ifndef __INCLUDED_SQLITESTATEMENTEXECUTION_H__
-	#include "sqlitestatementexecution.h"
-#endif
-#ifndef __INCLUDED_RELATIONSHIPSTATEMENTS_H__
-	#include "Relationshipstatements.h"
-#endif
-#ifndef __INCLUDED_FIELDSTATEMENTS_H__
-  #include "FieldStatements.h"
-#endif
+#include "IndexStatements.h"
+#include "sqlitestatementexecution.h"
+#include "Relationshipstatements.h"
+#include "FieldStatements.h"
 #include <wx/gauge.h>
 #include <wx/textctrl.h>
 #include <fstream>
 #include <codecvt>
-
 
 void CSettingsReader::ReadFromCSimpleIni(CSettings &settings)
 {
