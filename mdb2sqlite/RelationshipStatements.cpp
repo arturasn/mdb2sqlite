@@ -11,7 +11,6 @@ static char THIS_FILE[]=__FILE__;
 #define new DEBUG_NEW
 #endif
 
-
 void CRelationships::Relationhips(CDaoDatabase &db, std::vector<CString> &RelationFields, const short nRelationCount)
 {
 		CString sStatement;

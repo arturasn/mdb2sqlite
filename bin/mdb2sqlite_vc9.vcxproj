@@ -53,11 +53,13 @@
     <ConfigurationType>Application</ConfigurationType>
     <UseOfMfc>false</UseOfMfc>
     <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v110</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseOfMfc>false</UseOfMfc>
     <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v110</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DLL Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
@@ -484,10 +486,12 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\mdb2sqlite\FieldStatements.cpp" />
+    <ClCompile Include="..\mdb2sqlite\FileUtils.cpp" />
     <ClCompile Include="..\mdb2sqlite\IndexStatements.cpp" />
     <ClCompile Include="..\mdb2sqlite\mdb2sqlite.cpp" />
     <ClCompile Include="..\mdb2sqlite\OnAction.cpp" />
     <ClCompile Include="..\mdb2sqlite\RelationshipStatements.cpp" />
+    <ClCompile Include="..\mdb2sqlite\SettingsDlg.cpp" />
     <ClCompile Include="..\mdb2sqlite\sqlitestatementexecution.cpp" />
     <ClCompile Include="..\mdb2sqlite\stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -495,10 +499,13 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\mdb2sqlite\FieldStatements.h" />
+    <ClInclude Include="..\mdb2sqlite\FileUtils.h" />
     <ClInclude Include="..\mdb2sqlite\IndexStatements.h" />
     <ClInclude Include="..\mdb2sqlite\mdb2sqlite.h" />
     <ClInclude Include="..\mdb2sqlite\OnAction.h" />
     <ClInclude Include="..\mdb2sqlite\RelationshipStatements.h" />
+    <ClInclude Include="..\mdb2sqlite\Settings.h" />
+    <ClInclude Include="..\mdb2sqlite\SettingsDlg.h" />
     <ClInclude Include="..\mdb2sqlite\SimpleIni.h" />
     <ClInclude Include="..\mdb2sqlite\sqlite3.h" />
     <ClInclude Include="..\mdb2sqlite\sqlitestatementexecution.h" />

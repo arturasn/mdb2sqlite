@@ -1,6 +1,7 @@
 #define _AFXDLL
 #include "StdAfx.h"
 #include "FileUtils.h"
+#include "Settings.h"
 
 #include <fstream>
 #include "SimpleIni.h"
@@ -32,5 +33,32 @@ namespace file_utils
 		posx = ini.GetLongValue(_T("WindowPosition"), _T("x"), 550);
 		posy = ini.GetLongValue(_T("WindowPosition"), _T("y"), 200);
 		sizex = ini.GetLongValue(_T("WindowSize"), _T("width"), 270);
+	}
+
+	void SaveSettings(const std::vector<std::pair<bool, std::wstring>> settings)
+	{
+		std::wofstream settingfile("Settings.ini");
+		settingfile << "[Settings]" << '\n';
+
+		for(auto it : settings)
+		{
+			settingfile << it.second.c_str() << _T(" = ");
+			if( it.first ) settingfile << _T("true");
+			else settingfile << _T("false");
+			settingfile << '\n';
+		}
+
+		settingfile.close();
+	}
+
+	void GetSettings(std::vector<std::pair<bool, std::wstring>> &settings)
+	{
+		CSimpleIni ini;
+		ini.SetUnicode();
+		ini.LoadFile("Settings.ini");
+		LPCTSTR sKey = L"Settings";
+		for(int i = 0; i < ESettings::eSize; ++i) {
+			settings[i].first = ini.GetBoolValue(sKey, settings[i].second.c_str(), true);
+		}
 	}
 }

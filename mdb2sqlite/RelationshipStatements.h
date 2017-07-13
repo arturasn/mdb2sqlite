@@ -1,6 +1,5 @@
 #ifndef __INCLUDED_RELATIONSHIPSTATEMENTS_H__
 #define __INCLUDED_RELATIONSHIPSTATEMENTS_H__
-
 #pragma once
 
 class CDaoDatabase;
