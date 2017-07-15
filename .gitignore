@@ -26,13 +26,20 @@
 
 /mdb2sqlite/*.filters 
 /mdb2sqlite/Debug
+/bin/vc_mswu
+/bin/vc_mswud
 *.tlog
-*.filters 
 *.zip
-*.filters
 *.ilk
 *.pdb
 *.ipch
 /wxwidgets
 *.bkl
 *.dsp
+*.ini
+*.opensdf
+*.suo
+*.sdf
+*.iss
+*.vcproj
+*.vcxproj.user
