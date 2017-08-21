@@ -243,7 +243,7 @@ void CFieldStatements::FieldTypeAdd(CDaoTableDef &TableDef, const CDaoFieldInfo 
 						sStatement += (_T("INTEGER")); 
 						break;
 				case dbSingle: 
-						sStatement += (_T("INTEGER")); 
+						sStatement += (_T("REAL")); 
 						break;
 				case dbDouble: 
 						sStatement += (_T("REAL")); 
