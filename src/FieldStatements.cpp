@@ -171,7 +171,7 @@ void CFieldStatements::DefaultValueAdd( const CDaoFieldInfo &fieldinfo, CDaoTabl
 			{
 				if( !(fieldinfo.m_strDefaultValue.CompareNoCase(_T("Yes"))) )
 				{
-					sStatement += _T(" DEFAULT -1");
+					sStatement += _T(" DEFAULT 1");
 					return;
 				}
 				if( !(fieldinfo.m_strDefaultValue.CompareNoCase(_T("No"))) )
@@ -181,7 +181,7 @@ void CFieldStatements::DefaultValueAdd( const CDaoFieldInfo &fieldinfo, CDaoTabl
 				}
 				if( !(fieldinfo.m_strDefaultValue.CompareNoCase(_T("true"))) )
 				{
-					sStatement += _T(" DEFAULT -1");
+					sStatement += _T(" DEFAULT 1");
 					return;
 				}
 				if( !(fieldinfo.m_strDefaultValue.CollateNoCase(_T("false"))) )
@@ -191,7 +191,7 @@ void CFieldStatements::DefaultValueAdd( const CDaoFieldInfo &fieldinfo, CDaoTabl
 				}
 				if( !(fieldinfo.m_strDefaultValue.CollateNoCase(_T("1"))) )
 				{
-					sStatement += _T(" DEFAULT -1");
+					sStatement += _T(" DEFAULT 1");
 					return;
 				}
 				if( !(fieldinfo.m_strDefaultValue.CollateNoCase(_T("0"))) )
