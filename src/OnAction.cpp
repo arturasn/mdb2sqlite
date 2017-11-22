@@ -107,7 +107,7 @@ void CSettingsReader::Control(const char *Path, const char *dPath, wxGauge *gaug
 	for( int i = 0; i < nTableCount; ++i )
 	{
 		CDaoTableDefInfo tabledefinfo;                           
-		db.GetTableDefInfo(i,tabledefinfo);                      
+		db.GetTableDefInfo(i,tabledefinfo);      
 		if( tabledefinfo.m_lAttributes == 0 )                      // We choose only the elements that we need as the database adds some system files
 	   	{  
 				if( !i && settings.m_bRelationshipAdd )

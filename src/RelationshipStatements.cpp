@@ -97,9 +97,10 @@ void CRelationships::ForeignKeySupport(CDaoDatabase &db, const unsigned &nRelati
 	Preparation(tree,nTreeSize);
 	for( unsigned i = 0; i < nRelationCount; ++i )
 	{
-		db.GetRelationInfo(i,relationinfo,AFX_DAO_ALL_INFO);
-		if(relationinfo.m_lAttributes & dbRelationDontEnforce)
+		db.GetRelationInfo(i, relationinfo, AFX_DAO_ALL_INFO);
+		if (relationinfo.m_lAttributes & dbRelationDontEnforce) {
 			continue;
+		}
 	    DoContinue = false;
 		if( m_bForeignKeyPrimary )
 		{
@@ -133,8 +134,16 @@ void CRelationships::ForeignKeySupport(CDaoDatabase &db, const unsigned &nRelati
 				}
 			}
 		}
-		if ( DoContinue )
+		
+		if (DoContinue) {
 			continue;
+		}
+
+		int idx1 = CRelationships::Findind(sTableNames, relationinfo.m_strForeignTable, nTreeSize);
+		int idx2 = CRelationships::Findind(sTableNames, relationinfo.m_strTable, nTreeSize);
+
+		if (idx1 == -1 || idx2 == -1) continue;
+
 		temp = relationinfo.m_strForeignTable;
 		temp += _T("FOREIGN KEY(");
 		unsigned nRelationFields = relationinfo.m_nFields;
@@ -149,7 +158,7 @@ void CRelationships::ForeignKeySupport(CDaoDatabase &db, const unsigned &nRelati
 
 		temp += _T(" REFERENCES ");
 		temp += relationinfo.m_strTable;
-		++tree[CRelationships::Findind(sTableNames,relationinfo.m_strForeignTable,nTreeSize)][CRelationships::Findind(sTableNames,relationinfo.m_strTable,nTreeSize)];
+		++tree[idx1][idx2];
 		temp += _T("(");
 
 		for( unsigned i1 = 0; i1 < nRelationFields; ++i1 )
@@ -247,9 +256,10 @@ int CRelationships::Findind(CString *&sTableNames, CString &sSearchedTable, cons
 			return i3;
 	}
 	
-	ASSERT(FALSE);
+	//MS added system tables
 	return -1;
 }
+
 void CRelationships::Preparation(int **&tree, const unsigned &nTreeSize)
 {
 	for( unsigned i = 0; i < nTreeSize; ++i )
