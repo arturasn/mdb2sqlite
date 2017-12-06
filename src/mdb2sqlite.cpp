@@ -9,9 +9,6 @@
 #include <wx/statline.h>
 #include <wx/filename.h>
 
-#include <fstream>
-#include "SimpleIni.h"
-
 IMPLEMENT_APP(MyApp)
 wxBEGIN_EVENT_TABLE ( CMainDlg, wxDialog )
     EVT_BUTTON (Close_button, CMainDlg::OnExit ) 
@@ -158,7 +155,6 @@ void CMainDlg::OnConvert(wxCommandEvent &WXUNUSED(event) )
 {
 	wxString sPathMDB		= m_pSrcFilePath->GetValue();
 	wxString sPathSQLite	= m_pDestinationPath->GetValue();
-	int nSize				= sPathSQLite.length();
 
 	if( sPathMDB.IsEmpty() || sPathSQLite.IsEmpty() ) {
 		internal::ShowMessageDlg(this, wxT("Destination or Source Path is missing"), wxT("Error"));
@@ -173,22 +169,15 @@ void CMainDlg::OnConvert(wxCommandEvent &WXUNUSED(event) )
 
 		const char *pSrcPath		= sPathMDB.mb_str();
 		const char *pDPath			= sPathSQLite.mb_str();
-		if( sPathSQLite.SubString(nSize - 7, nSize) == wxT(".sqlite") )
-		{
-			wxGauge *pGauge		=  new wxGauge(this, wxID_ANY, 100, wxDefaultPosition, wxSize(nPosX, 15));
-			wxTextCtrl *pPrgDlg	= new wxTextCtrl(this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize(250, 120), wxTE_MULTILINE|wxTE_RICH);
-			m_pTopSizer->Add(pPrgDlg, 1, wxEXPAND|wxALL, 5);
-			m_pTopSizer->Add(pGauge, 0, wxEXPAND|wxALL, 5);
-			Layout(); Fit(); Refresh(); Update();
-			SetMaxSize(wxSize(wxDefaultCoord, wxDefaultCoord));
-            SetMinSize(wxSize(wxDefaultCoord, wxDefaultCoord));
-			CSettingsReader::Control(pSrcPath, pDPath, pGauge, pPrgDlg);
-			internal::ShowMessageDlg(this, wxString::Format(wxT("Succesfully exported %s to SQLite"), sFilename), 
-									 wxT("Succesfully exported to SQLite"));
-		}
-		else {
-			internal::ShowMessageDlg(this, wxT("SQLite database path should be provided."), wxT("Error"));
-		}
+		wxGauge *pGauge		=  new wxGauge(this, wxID_ANY, 100, wxDefaultPosition, wxSize(nPosX, 15));
+		wxTextCtrl *pPrgDlg	= new wxTextCtrl(this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize(250, 120), wxTE_MULTILINE|wxTE_RICH);
+		m_pTopSizer->Add(pPrgDlg, 1, wxEXPAND|wxALL, 5);
+		m_pTopSizer->Add(pGauge, 0, wxEXPAND|wxALL, 5);
+		Layout(); Fit(); Refresh(); Update();
+		SetMaxSize(wxSize(wxDefaultCoord, wxDefaultCoord));
+        SetMinSize(wxSize(wxDefaultCoord, wxDefaultCoord));
+		CSettingsReader::Control(pSrcPath, pDPath, pGauge, pPrgDlg);
+		internal::ShowMessageDlg(this, wxString::Format(wxT("Succesfully exported %s to SQLite"), sFilename), wxT("Succesfully exported to SQLite"));
 	}
 }
 
