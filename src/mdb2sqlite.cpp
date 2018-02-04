@@ -86,7 +86,7 @@ CMainDlg::CMainDlg(const wxString sTitle, const int nX, const int nY, const int 
 	m_pTopSizer->AddSpacer(5);
 	m_pTopSizer->Add(new wxStaticLine(this), 0, wxEXPAND|wxLEFT|wxRIGHT, 8);
 	m_pTopSizer->AddSpacer(5);
-	m_pTopSizer->Add(pBottomSzr, 0, wxLEFT|wxALIGN_RIGHT, 55);
+	m_pTopSizer->Add(pBottomSzr, 0, wxALIGN_RIGHT, 5);
 
 	int nWidth, nHeight;
 	GetSize(&nWidth, &nHeight);
@@ -157,7 +157,7 @@ void CMainDlg::OnConvert(wxCommandEvent &WXUNUSED(event) )
 	wxString sPathSQLite	= m_pDestinationPath->GetValue();
 
 	if( sPathMDB.IsEmpty() || sPathSQLite.IsEmpty() ) {
-		internal::ShowMessageDlg(this, wxT("Destination or Source Path is missing"), wxT("Error"));
+		internal::ShowMessageDlg(this, wxT("Destination or source path is missing"), wxT("Error"));
 	}
 	else 
 	{
@@ -169,8 +169,11 @@ void CMainDlg::OnConvert(wxCommandEvent &WXUNUSED(event) )
 
 		const char *pSrcPath		= sPathMDB.mb_str();
 		const char *pDPath			= sPathSQLite.mb_str();
-		wxGauge *pGauge		=  new wxGauge(this, wxID_ANY, 100, wxDefaultPosition, wxSize(nPosX, 15));
-		wxTextCtrl *pPrgDlg	= new wxTextCtrl(this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize(250, 120), wxTE_MULTILINE|wxTE_RICH);
+		wxGauge *pGauge				=  new wxGauge(this, wxID_ANY, 100, wxDefaultPosition, wxSize(nPosX, 15));
+		wxTextCtrl *pPrgDlg			= new wxTextCtrl(this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize(250, 120),
+													 wxTE_MULTILINE|wxTE_RICH);
+
+
 		m_pTopSizer->Add(pPrgDlg, 1, wxEXPAND|wxALL, 5);
 		m_pTopSizer->Add(pGauge, 0, wxEXPAND|wxALL, 5);
 		Layout(); Fit(); Refresh(); Update();
@@ -187,8 +190,9 @@ void CMainDlg::FileOpen(wxCommandEvent &WXUNUSED(event) )
 	dlg.SetDirectory(wxGetHomeDir());
 	if ( dlg.ShowModal() == wxID_OK )
 	{
-		m_pSrcFilePath->WriteText(dlg.GetPath());
-		if( m_pDestinationPath->GetValue().IsEmpty() )
+		m_pSrcFilePath->SetValue(dlg.GetPath());
+		wxString sDest = m_pDestinationPath->GetValue();
+		if( sDest.IsEmpty() )
 		{
 			m_pDestinationPath->WriteText(dlg.GetDirectory());
 			m_pDestinationPath->AppendText(wxT("\\"));

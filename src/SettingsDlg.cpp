@@ -15,23 +15,22 @@ static char THIS_FILE[]=__FILE__;
 #define new DEBUG_NEW
 #endif
 
-CSettingsDlg::CSettingsDlg(wxWindow *pParent) 
-	: wxDialog(pParent, wxID_ANY, wxT("Values to export"), wxDefaultPosition, wxSize(220, 370))
+CSettingsDlg::CSettingsDlg(wxWindow *pParent) : wxDialog(pParent, wxID_ANY, wxT("Values to export"))
 {
-	m_RelationshipCheckbox = new wxCheckBox(this, wxID_ANY, wxT("Relationship add"), wxDefaultPosition);
-	m_RecordCheckbox = new wxCheckBox(this, wxID_ANY, wxT("Record add"), wxDefaultPosition);
-    m_NotNullValueCheckbox = new wxCheckBox(this, wxID_ANY, wxT("Not Null value add"), wxDefaultPosition);
-	m_AutoincrementCheckbox = new wxCheckBox(this, wxID_ANY, wxT("AutoIncrement value add"), wxDefaultPosition);
-	m_DefaultValueCheckbox = new wxCheckBox(this, wxID_ANY, wxT("Default value add"), wxDefaultPosition);
-	m_IndexCheckbox = new wxCheckBox(this, wxID_ANY, wxT("Index add"), wxDefaultPosition);
-	m_UniqueFieldsCheckbox = new wxCheckBox(this, wxID_ANY, wxT("Unique fields add"), wxDefaultPosition);
-	m_CollateNcIndexCheckbox = new wxCheckBox(this, wxID_ANY, wxT("Collate nocase for index add"), wxDefaultPosition);
-	m_CollateNcFieldsCheckbox = new wxCheckBox(this, wxID_ANY, wxT("Collatee nocase for fields add"), wxDefaultPosition);
-	m_TrimCheckbox = new wxCheckBox(this, wxID_ANY, wxT("Trim text values"), wxDefaultPosition);
-	m_DescriptionCheckbox = new wxCheckBox(this, wxID_ANY, wxT("Add field comments"), wxDefaultPosition);
-	m_ReservedKeywordCheckbox = new wxCheckBox(this, wxID_ANY, wxT("Reserved keyword list add"), wxDefaultPosition);
+	m_RelationshipCheckbox		= new wxCheckBox(this, wxID_ANY, wxT("Relationship add"), wxDefaultPosition);
+	m_RecordCheckbox			= new wxCheckBox(this, wxID_ANY, wxT("Record add"), wxDefaultPosition);
+    m_NotNullValueCheckbox		= new wxCheckBox(this, wxID_ANY, wxT("Not Null value add"), wxDefaultPosition);
+	m_AutoincrementCheckbox		= new wxCheckBox(this, wxID_ANY, wxT("AutoIncrement value add"), wxDefaultPosition);
+	m_DefaultValueCheckbox		= new wxCheckBox(this, wxID_ANY, wxT("Default value add"), wxDefaultPosition);
+	m_IndexCheckbox				= new wxCheckBox(this, wxID_ANY, wxT("Index add"), wxDefaultPosition);
+	m_UniqueFieldsCheckbox		= new wxCheckBox(this, wxID_ANY, wxT("Unique fields add"), wxDefaultPosition);
+	m_CollateNcIndexCheckbox	= new wxCheckBox(this, wxID_ANY, wxT("Collate nocase for index add"), wxDefaultPosition);
+	m_CollateNcFieldsCheckbox	= new wxCheckBox(this, wxID_ANY, wxT("Collatee nocase for fields add"), wxDefaultPosition);
+	m_TrimCheckbox				= new wxCheckBox(this, wxID_ANY, wxT("Trim text values"), wxDefaultPosition);
+	m_DescriptionCheckbox		= new wxCheckBox(this, wxID_ANY, wxT("Add field comments"), wxDefaultPosition);
+	m_ReservedKeywordCheckbox	= new wxCheckBox(this, wxID_ANY, wxT("Reserved keyword list add"), wxDefaultPosition);
 	m_ForeignKeySupportCheckbox = new wxCheckBox(this, wxID_ANY, wxT("Foreign key support"), wxDefaultPosition);
-	m_PrimaryKeyCheckbox = new wxCheckBox(this, wxID_ANY, wxT("Primary key support"), wxDefaultPosition);
+	m_PrimaryKeyCheckbox		= new wxCheckBox(this, wxID_ANY, wxT("Primary key support"), wxDefaultPosition);
 	m_ForeignKeyPrimaryCheckbox = new wxCheckBox(this, wxID_ANY, wxT("Foreign key both primary fields"), wxDefaultPosition);
 
 	RefreshSettings();
@@ -56,35 +55,35 @@ CSettingsDlg::CSettingsDlg(wxWindow *pParent)
 	wxSizer *pSettingSzr = new wxBoxSizer(wxVERTICAL);
 
 	pSettingSzr->AddSpacer(5);
-	pSettingSzr->Add(m_RelationshipCheckbox, 0, wxLEFT | wxRIGHT, 8);
+	pSettingSzr->Add(m_RelationshipCheckbox, 0, wxLEFT|wxRIGHT, 8);
 	pSettingSzr->AddSpacer(5);
-	pSettingSzr->Add(m_RecordCheckbox, 0,  wxLEFT | wxRIGHT, 8);
+	pSettingSzr->Add(m_RecordCheckbox, 0,  wxLEFT|wxRIGHT, 8);
 	pSettingSzr->AddSpacer(5);
-	pSettingSzr->Add(m_NotNullValueCheckbox, 0,  wxLEFT | wxRIGHT, 8);
+	pSettingSzr->Add(m_NotNullValueCheckbox, 0,  wxLEFT|wxRIGHT, 8);
 	pSettingSzr->AddSpacer(5);
-	pSettingSzr->Add(m_AutoincrementCheckbox, 0,  wxLEFT | wxRIGHT, 8);
+	pSettingSzr->Add(m_AutoincrementCheckbox, 0,  wxLEFT|wxRIGHT, 8);
 	pSettingSzr->AddSpacer(5);
-	pSettingSzr->Add(m_DefaultValueCheckbox, 0,  wxLEFT | wxRIGHT, 8);
+	pSettingSzr->Add(m_DefaultValueCheckbox, 0,  wxLEFT|wxRIGHT, 8);
 	pSettingSzr->AddSpacer(5);
-	pSettingSzr->Add(m_IndexCheckbox, 0,  wxLEFT | wxRIGHT, 8);
+	pSettingSzr->Add(m_IndexCheckbox, 0,  wxLEFT|wxRIGHT, 8);
 	pSettingSzr->AddSpacer(5);
-	pSettingSzr->Add(m_UniqueFieldsCheckbox, 0,  wxLEFT | wxRIGHT, 8);
+	pSettingSzr->Add(m_UniqueFieldsCheckbox, 0,  wxLEFT|wxRIGHT, 8);
 	pSettingSzr->AddSpacer(5);
-	pSettingSzr->Add(m_CollateNcIndexCheckbox, 0,  wxLEFT | wxRIGHT, 8);
+	pSettingSzr->Add(m_CollateNcIndexCheckbox, 0,  wxLEFT|wxRIGHT, 8);
 	pSettingSzr->AddSpacer(5);
-	pSettingSzr->Add(m_CollateNcFieldsCheckbox, 0,  wxLEFT | wxRIGHT, 8);
+	pSettingSzr->Add(m_CollateNcFieldsCheckbox, 0,  wxLEFT|wxRIGHT, 8);
 	pSettingSzr->AddSpacer(5);
-	pSettingSzr->Add(m_TrimCheckbox, 0,  wxLEFT | wxRIGHT, 8);
+	pSettingSzr->Add(m_TrimCheckbox, 0,  wxLEFT|wxRIGHT, 8);
 	pSettingSzr->AddSpacer(5);
-	pSettingSzr->Add(m_DescriptionCheckbox, 0,  wxLEFT | wxRIGHT, 8);
+	pSettingSzr->Add(m_DescriptionCheckbox, 0,  wxLEFT|wxRIGHT, 8);
 	pSettingSzr->AddSpacer(5);
-	pSettingSzr->Add(m_ReservedKeywordCheckbox, 0,  wxLEFT | wxRIGHT, 8);
+	pSettingSzr->Add(m_ReservedKeywordCheckbox, 0,  wxLEFT|wxRIGHT, 8);
 	pSettingSzr->AddSpacer(5);
-	pSettingSzr->Add(m_ForeignKeySupportCheckbox, 0, wxLEFT | wxRIGHT, 8);
+	pSettingSzr->Add(m_ForeignKeySupportCheckbox, 0, wxLEFT|wxRIGHT, 8);
 	pSettingSzr->AddSpacer(5);
-	pSettingSzr->Add(m_PrimaryKeyCheckbox, 0, wxLEFT | wxRIGHT, 8);
+	pSettingSzr->Add(m_PrimaryKeyCheckbox, 0, wxLEFT|wxRIGHT, 8);
 	pSettingSzr->AddSpacer(5);
-	pSettingSzr->Add(m_ForeignKeyPrimaryCheckbox, 0, wxLEFT | wxRIGHT, 8);
+	pSettingSzr->Add(m_ForeignKeyPrimaryCheckbox, 0, wxLEFT|wxRIGHT, 8);
 	pSettingSzr->AddSpacer(5);
 
 	m_RelationshipCheckbox->SetToolTip(wxT("Adds relationships between tables, update and delete sqlite statements are executed."));
@@ -107,10 +106,10 @@ CSettingsDlg::CSettingsDlg(wxWindow *pParent)
 	wxBoxSizer *pHbox = new wxBoxSizer(wxHORIZONTAL);
 	pHbox->Add(new wxButton(this, wxID_OK, "OK"), 0, wxLEFT|wxEXPAND, 5);
 	pHbox->Add(new wxButton(this, wxID_CANCEL, "Cancel"), 0, wxRIGHT|wxEXPAND, 5);
-	pSettingSzr->Add(pHbox, 0, wxALIGN_CENTER|wxBOTTOM, 5);
-	SetSizer(pSettingSzr);
+	pSettingSzr->Add(pHbox, 0, wxALIGN_CENTER|wxBOTTOM|wxTOP, 5);
+	SetSizerAndFit(pSettingSzr);
 
-	Connect(wxID_OK, wxEVT_BUTTON, wxCommandEventHandler(CSettingsDlg::OnOK), nullptr);
+	Connect(wxID_OK, wxEVT_BUTTON, wxCommandEventHandler(CSettingsDlg::OnOK), nullptr, this);
 }
 
 CSettingsDlg::~CSettingsDlg()
@@ -127,21 +126,21 @@ void CSettingsDlg::OnOK(wxCommandEvent &WXUNUSED(event))
 void CSettingsDlg::RefreshSettings()
 {
 	m_settings.resize(ESettings::eSize);
-	m_settings[ESettings::eRelationshipAdd] = std::make_pair(m_RelationshipCheckbox->IsChecked(), _T("RelationshipAdd"));
-	m_settings[ESettings::eRecordAdd] = std::make_pair(m_RecordCheckbox->IsChecked(), _T("RecordAdd"));
-	m_settings[ESettings::eNotNullAdd] = std::make_pair(m_NotNullValueCheckbox->IsChecked(), _T("NotNullAdd"));
-	m_settings[ESettings::eAutoIncAdd] = std::make_pair(m_AutoincrementCheckbox->IsChecked(), _T("AutoIncrementAdd"));
-	m_settings[ESettings::eDefaultValueAdd] = std::make_pair(m_DefaultValueCheckbox->IsChecked(), _T("DefaultValueAdd"));
-	m_settings[ESettings::eIndexAdd] = std::make_pair(m_IndexCheckbox->IsChecked(), _T("IndexAdd"));
-	m_settings[ESettings::eUniqueFieldAdd] = std::make_pair(m_UniqueFieldsCheckbox->IsChecked(), _T("UniqueFieldAdd"));
-	m_settings[ESettings::eCollateNoCaseForIndex] = std::make_pair(m_CollateNcIndexCheckbox->IsChecked(), _T("CollateNoCaseForIndex"));
-	m_settings[ESettings::eCollateNoCaseForFields] = std::make_pair(m_CollateNcFieldsCheckbox->IsChecked(), _T("CollateNoCaseForFields"));
-	m_settings[ESettings::eTrimTextValues] = std::make_pair(m_TrimCheckbox->IsChecked(), _T("TrimTextValues"));
-	m_settings[ESettings::eAddComments] = std::make_pair(m_DescriptionCheckbox->IsChecked(), _T("AddComments"));
-	m_settings[ESettings::eKeyWordList] = std::make_pair(m_ReservedKeywordCheckbox->IsChecked(), _T("KeyWordList"));
-	m_settings[ESettings::eForeignKeySupport] = std::make_pair(m_ForeignKeySupportCheckbox->IsChecked(), _T("ForeignKeySupport"));
-	m_settings[ESettings::ePrimaryKeySupport] = std::make_pair(m_PrimaryKeyCheckbox->IsChecked(), _T("PrimaryKeySupport"));
-	m_settings[ESettings::eForeignKeyPrimary] = std::make_pair(m_ForeignKeyPrimaryCheckbox->IsChecked(), _T("ForeignKeyPrimary"));
+	m_settings[ESettings::eRelationshipAdd]			= std::make_pair(m_RelationshipCheckbox->IsChecked(), _T("RelationshipAdd"));
+	m_settings[ESettings::eRecordAdd]				= std::make_pair(m_RecordCheckbox->IsChecked(), _T("RecordAdd"));
+	m_settings[ESettings::eNotNullAdd]				= std::make_pair(m_NotNullValueCheckbox->IsChecked(), _T("NotNullAdd"));
+	m_settings[ESettings::eAutoIncAdd]				= std::make_pair(m_AutoincrementCheckbox->IsChecked(), _T("AutoIncrementAdd"));
+	m_settings[ESettings::eDefaultValueAdd]			= std::make_pair(m_DefaultValueCheckbox->IsChecked(), _T("DefaultValueAdd"));
+	m_settings[ESettings::eIndexAdd]				= std::make_pair(m_IndexCheckbox->IsChecked(), _T("IndexAdd"));
+	m_settings[ESettings::eUniqueFieldAdd]			= std::make_pair(m_UniqueFieldsCheckbox->IsChecked(), _T("UniqueFieldAdd"));
+	m_settings[ESettings::eCollateNoCaseForIndex]	= std::make_pair(m_CollateNcIndexCheckbox->IsChecked(), _T("CollateNoCaseForIndex"));
+	m_settings[ESettings::eCollateNoCaseForFields]	= std::make_pair(m_CollateNcFieldsCheckbox->IsChecked(), _T("CollateNoCaseForFields"));
+	m_settings[ESettings::eTrimTextValues]			= std::make_pair(m_TrimCheckbox->IsChecked(), _T("TrimTextValues"));
+	m_settings[ESettings::eAddComments]				= std::make_pair(m_DescriptionCheckbox->IsChecked(), _T("AddComments"));
+	m_settings[ESettings::eKeyWordList]				= std::make_pair(m_ReservedKeywordCheckbox->IsChecked(), _T("KeyWordList"));
+	m_settings[ESettings::eForeignKeySupport]		= std::make_pair(m_ForeignKeySupportCheckbox->IsChecked(), _T("ForeignKeySupport"));
+	m_settings[ESettings::ePrimaryKeySupport]		= std::make_pair(m_PrimaryKeyCheckbox->IsChecked(), _T("PrimaryKeySupport"));
+	m_settings[ESettings::eForeignKeyPrimary]		= std::make_pair(m_ForeignKeyPrimaryCheckbox->IsChecked(), _T("ForeignKeyPrimary"));
 }
 
 std::vector<std::pair<bool, std::wstring>> CSettingsDlg::GetSettingsArr() const
