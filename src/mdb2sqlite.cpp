@@ -34,7 +34,7 @@ bool MyApp::OnInit()
 	file_utils::GetWindowInformation(nPosX, nPosY, nSizeX);
 
 	CMainDlg *pDlg = new CMainDlg(wxT("mdb2SQLite"), nPosX, nPosY, nSizeX);
-    pDlg->ShowModal();
+    	pDlg->ShowModal();
 	pDlg->Destroy();
 
     return true;
@@ -49,18 +49,18 @@ CMainDlg::CMainDlg(const wxString sTitle, const int nX, const int nY, const int 
 
 	wxSizer *pSrcDest			= new wxStaticBoxSizer(wxVERTICAL, this);
 	wxSizer *pSrcFile			= new wxStaticBoxSizer(wxVERTICAL, this, "&Source File:");
-	wxBoxSizer *pFilePathSzr	= new wxBoxSizer(wxHORIZONTAL);
-	wxButton *pBrowseBtn		= new wxButton(this, DIALOGS_FILE_OPEN, "Browse", wxDefaultPosition, wxSize(60, 22));
+	wxBoxSizer *pFilePathSzr		= new wxBoxSizer(wxHORIZONTAL);
+	wxButton *pBrowseBtn			= new wxButton(this, DIALOGS_FILE_OPEN, "Browse", wxDefaultPosition, wxSize(60, 22));
 	m_pSrcFilePath				= new wxTextCtrl(this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize(150, 20));
 	wxSizer *pDestFile			= new wxStaticBoxSizer(wxVERTICAL, this, "&Destination:");
-	wxBoxSizer *pDestFilePath	= new wxBoxSizer(wxHORIZONTAL);
+	wxBoxSizer *pDestFilePath		= new wxBoxSizer(wxHORIZONTAL);
 	m_pDestinationPath			= new wxTextCtrl(this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize(150,20));
-	m_pTopSizer					= new wxBoxSizer(wxVERTICAL);
-	wxButton *pSettingsBtn		= new wxButton(this, Settings_button, "settings", wxDefaultPosition, wxSize(60,25));
-	wxBoxSizer *pBottomSzr		= new wxBoxSizer(wxHORIZONTAL);
+	m_pTopSizer				= new wxBoxSizer(wxVERTICAL);
+	wxButton *pSettingsBtn			= new wxButton(this, Settings_button, "settings", wxDefaultPosition, wxSize(60,25));
+	wxBoxSizer *pBottomSzr			= new wxBoxSizer(wxHORIZONTAL);
 	wxButton *pCloseBtn			= new wxButton(this, Close_button, "Close", wxDefaultPosition, wxSize(60,25));
 	wxButton *pDumpBtn			= new wxButton(this, Dump_button, "Dump", wxDefaultPosition, wxSize(60,25));
-	wxButton *pConvertBtn		= new wxButton(this, Convert_button, "Convert", wxDefaultPosition, wxSize(60,25)); 
+	wxButton *pConvertBtn			= new wxButton(this, Convert_button, "Convert", wxDefaultPosition, wxSize(60,25)); 
 
 	pFilePathSzr->Add(m_pSrcFilePath, 1, wxLEFT|wxTOP|wxEXPAND, 4);
 	pFilePathSzr->AddSpacer(15); 
@@ -168,9 +168,9 @@ void CMainDlg::OnConvert(wxCommandEvent &WXUNUSED(event) )
 		SetMaxSize(wxSize(nPosX, wxDefaultCoord));
 
 		const char *pSrcPath		= sPathMDB.mb_str();
-		const char *pDPath			= sPathSQLite.mb_str();
-		wxGauge *pGauge				=  new wxGauge(this, wxID_ANY, 100, wxDefaultPosition, wxSize(nPosX, 15));
-		wxTextCtrl *pPrgDlg			= new wxTextCtrl(this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize(250, 120),
+		const char *pDPath		= sPathSQLite.mb_str();
+		wxGauge *pGauge			=  new wxGauge(this, wxID_ANY, 100, wxDefaultPosition, wxSize(nPosX, 15));
+		wxTextCtrl *pPrgDlg		= new wxTextCtrl(this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize(250, 120),
 													 wxTE_MULTILINE|wxTE_RICH);
 
 
@@ -178,7 +178,7 @@ void CMainDlg::OnConvert(wxCommandEvent &WXUNUSED(event) )
 		m_pTopSizer->Add(pGauge, 0, wxEXPAND|wxALL, 5);
 		Layout(); Fit(); Refresh(); Update();
 		SetMaxSize(wxSize(wxDefaultCoord, wxDefaultCoord));
-        SetMinSize(wxSize(wxDefaultCoord, wxDefaultCoord));
+        	SetMinSize(wxSize(wxDefaultCoord, wxDefaultCoord));
 		CSettingsReader::Control(pSrcPath, pDPath, pGauge, pPrgDlg);
 		internal::ShowMessageDlg(this, wxString::Format(wxT("Succesfully exported %s to SQLite"), sFilename), wxT("Succesfully exported to SQLite"));
 	}
