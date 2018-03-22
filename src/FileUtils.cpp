@@ -40,7 +40,7 @@ namespace file_utils
 		std::wofstream settingfile("Settings.ini");
 		settingfile << "[Settings]" << '\n';
 
-		for(auto it : settings)
+		for(auto &it : settings)
 		{
 			settingfile << it.second.c_str() << _T(" = ");
 			if( it.first ) settingfile << _T("true");

@@ -17,7 +17,8 @@ enum
 	ExecuteTables = 1 << 0,
 	ExecuteInserts = 1 << 1,
 	ExecuteIndexes = 1 << 2,
-	ExecuteTriggers = 1 << 3
+	ExecuteTriggers = 1 << 3,
+	ExecuteQueries = 1 << 4,
 };
 
 inline bool FileExists(const std::string &name) 
@@ -27,27 +28,28 @@ inline bool FileExists(const std::string &name)
         fclose(file);
         return true;
     } 
-	else 
-        return false;   
+
+    return false;   
 }
+
 std::string CSQLiteConversion::ConvertToUTF8(const wchar_t *wstr)
-    {
+{
         const int nLen = wcslen(wstr);
-        if( nLen <= 0  )
-            return std::string();
+        if( nLen <= 0  ) return std::string();
         const int size_needed = WideCharToMultiByte(CP_UTF8, 0, &wstr[0], nLen, NULL, 0, NULL, NULL);
         std::string strTo(size_needed, 0);
         WideCharToMultiByte(CP_UTF8, 0, &wstr[0], nLen, &strTo[0], size_needed, NULL, NULL);
         return strTo;
-    }
+}
+
 void CSQLiteConversion::SqliteStatementExecution(std::vector<CString> &statements, sqlite3 *&sqlitedatabase, int rc , wxGauge *&gauge, unsigned &nValue, wxTextCtrl *&PrgDlg, 
 	                                             unsigned &nErrorCount, CString *sTableNames, unsigned &flag, unsigned &nTableCount, int *IndexTable, CString *sTableNames2)
-	{
+{
 	 char *zErrMsg = 0;
 	 unsigned index = 0;
 	 auto end_it = statements.end();
      for( auto it = statements.begin(); it != end_it; ++it )
-		{
+	{
 			++nValue;
 			gauge ->SetValue(nValue);
 			std::string sB = ConvertToUTF8(*it);
@@ -139,38 +141,43 @@ void CSQLiteConversion::SqliteStatementExecution(std::vector<CString> &statement
 									++index;
 								}
 						}
-					
 				}
-			}
-		 }
-   }
+				else if( ExecuteQueries & flag ) {
+					// Currently no support
+				}
+		}
+	}
+}
 
 void CSQLiteConversion::SqliteConversion(std::vector<CString> &statements, std::vector<CString> &InsertStatements, std::vector<CString> &IndexStatements, 
 	                                     std:: vector<CString> &RelationFields, std::vector<CString> &queries, const char *dPath, wxGauge *&gauge, wxTextCtrl *&PrgDlg, CString *&sTableNames, 
 										 const bool &m_bForeignKeySupport, unsigned &nWarningCount, int *&IndexTable, CString *&sTableNames2)
  {
-	char *zErrMsg = 0;
-	unsigned nErrorCount = 0;
-	unsigned nValue = 0;
-	unsigned flag = ExecuteTables;
-	unsigned nTableCount = statements.size();
+	char *zErrMsg			= 0;
+	unsigned nErrorCount	= 0;
+	unsigned nValue			= 0;
+	unsigned flag			= ExecuteTables;
+	unsigned nTableCount	= statements.size();
     sqlite3 *sqlitedatabase;
-    int  rcc;
-	if( FileExists(dPath) )
-	{
+    int rcc;
+	if( FileExists(dPath) ) {
 		remove(dPath);
 	}
+
     rcc = sqlite3_open(dPath, &sqlitedatabase);
-    if( rcc )
-	  {
-         exit(0);
-      }
+
+    if( rcc ) {
+        exit(0);
+    }
 	else
-	  {
-		 sqlite3_exec(sqlitedatabase, "PRAGMA synchronous = OFF", NULL, NULL, &zErrMsg);
-		 sqlite3_exec(sqlitedatabase, "PRAGMA journal_mode = MEMORY", NULL, NULL, &zErrMsg);
-		 if( m_bForeignKeySupport )
+	{
+		 sqlite3_exec(sqlitedatabase, "PRAGMA synchronous = OFF",		NULL, NULL, &zErrMsg);
+		 sqlite3_exec(sqlitedatabase, "PRAGMA journal_mode = MEMORY",	NULL, NULL, &zErrMsg);
+
+		 if( m_bForeignKeySupport ) {
 			 sqlite3_exec(sqlitedatabase, "PRAGMA foreign_keys = ON", NULL, NULL, &zErrMsg);
+		 }
+
 		 SqliteStatementExecution(statements, sqlitedatabase, rcc, gauge, nValue, PrgDlg, nErrorCount, sTableNames, flag, nTableCount);
 		 flag = ExecuteInserts;
 		 SqliteStatementExecution(InsertStatements, sqlitedatabase, rcc, gauge, nValue, PrgDlg, nErrorCount, sTableNames, flag, nTableCount);
@@ -178,11 +185,14 @@ void CSQLiteConversion::SqliteConversion(std::vector<CString> &statements, std::
 		 PrgDlg->WriteText(wxT("Starting trigger creation \n"));
 		 SqliteStatementExecution(RelationFields, sqlitedatabase, rcc, gauge, nValue, PrgDlg,  nErrorCount, sTableNames, flag, nTableCount);
 		 PrgDlg->WriteText(wxT("All triggers created \n"));
+		 flag = ExecuteQueries;
 		 SqliteStatementExecution(queries, sqlitedatabase, rcc, gauge, nValue, PrgDlg,  nErrorCount, sTableNames, flag, nTableCount);
-
 		 flag = ExecuteIndexes;
+		 PrgDlg->WriteText(wxT("Starting index creation \n"));
 	     SqliteStatementExecution(IndexStatements, sqlitedatabase, rcc, gauge, nValue, PrgDlg, nErrorCount, sTableNames, flag, nTableCount, IndexTable, sTableNames2);
-	  }
+		 PrgDlg->WriteText(wxT("All indexes created \n"));
+	 }
+
 	 wxString ConclusionMessage = wxT("Statements executed successfully: ");
 	 ConclusionMessage << nValue-nErrorCount;
 	 PrgDlg->SetDefaultStyle(wxTextAttr (*wxBLUE));
