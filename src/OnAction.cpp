@@ -157,7 +157,24 @@ void CSettingsReader::Control(const char *Path, const char *dPath, wxGauge *gaug
 				statements.push_back(sStatement);
 		} 
 	} 
-if( settings.m_bForeignkeySupport )
+
+	std::vector<CString> queries;
+	//Currently not supported
+	if( false )
+	{
+		int nQueryCnt = db.GetQueryDefCount();
+		for(int i = 0; i < nQueryCnt; ++i) 
+		{
+			CDaoQueryDefInfo info;
+			db.GetQueryDefInfo(i, info);
+			CDaoQueryDef queryObj(&db);
+			queryObj.Open(info.m_strName);
+			CString SQL = _T("CREATE VIEW ") + info.m_strName + _T(" AS ") + queryObj.GetSQL();
+			queries.push_back(SQL);
+		}
+	}
+
+	if( settings.m_bForeignkeySupport )
 	{
 		unsigned nRelationCount = db.GetRelationCount();
 
@@ -212,7 +229,7 @@ if( settings.m_bForeignkeySupport )
 	else
 	{
 	  gauge -> SetRange(statements.size() + InsertStatements.size() + RelationFields.size() + IndexStatements.size());
-	  CSQLiteConversion::SqliteConversion(statements, InsertStatements, IndexStatements, RelationFields, dPath, gauge, PrgDlg, sTableNames, settings.m_bForeignkeySupport, nWarningCount, 
+	  CSQLiteConversion::SqliteConversion(statements, InsertStatements, IndexStatements, RelationFields, queries, dPath, gauge, PrgDlg, sTableNames, settings.m_bForeignkeySupport, nWarningCount, 
 		                                  IndexTable, sTableNames2);
 	  delete [] sTableNames;
 	  delete [] sTableNames2;

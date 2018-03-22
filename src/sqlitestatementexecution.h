@@ -14,7 +14,7 @@ class CSQLiteConversion
 {
 public: 
 	static void SqliteConversion(std::vector<CString> &statements, std::vector<CString> &InsertStatements, std::vector<CString> &IndexStatements,  
-	                             std:: vector<CString> &RelationFields , const char* dPath, wxGauge *&gauge, wxTextCtrl *&PrgDlg, CString *&sTableNames, 
+	                             std:: vector<CString> &RelationFields , std::vector<CString> &queries, const char* dPath, wxGauge *&gauge, wxTextCtrl *&PrgDlg, CString *&sTableNames, 
 								 const bool &m_bForeignKeySupport, unsigned &nWarningCount, int *&IndexTable, CString *&sTableNames2);
 private:		
 	static void SqliteStatementExecution(std::vector<CString> &statements, sqlite3 *&sqlitedatabase, int rc , wxGauge *&gauge, unsigned &nValue, wxTextCtrl *&PrgDlg, 

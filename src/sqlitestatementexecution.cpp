@@ -144,8 +144,9 @@ void CSQLiteConversion::SqliteStatementExecution(std::vector<CString> &statement
 			}
 		 }
    }
+
 void CSQLiteConversion::SqliteConversion(std::vector<CString> &statements, std::vector<CString> &InsertStatements, std::vector<CString> &IndexStatements, 
-	                                     std:: vector<CString> &RelationFields , const char *dPath, wxGauge *&gauge, wxTextCtrl *&PrgDlg, CString *&sTableNames, 
+	                                     std:: vector<CString> &RelationFields, std::vector<CString> &queries, const char *dPath, wxGauge *&gauge, wxTextCtrl *&PrgDlg, CString *&sTableNames, 
 										 const bool &m_bForeignKeySupport, unsigned &nWarningCount, int *&IndexTable, CString *&sTableNames2)
  {
 	char *zErrMsg = 0;
@@ -177,6 +178,8 @@ void CSQLiteConversion::SqliteConversion(std::vector<CString> &statements, std::
 		 PrgDlg->WriteText(wxT("Starting trigger creation \n"));
 		 SqliteStatementExecution(RelationFields, sqlitedatabase, rcc, gauge, nValue, PrgDlg,  nErrorCount, sTableNames, flag, nTableCount);
 		 PrgDlg->WriteText(wxT("All triggers created \n"));
+		 SqliteStatementExecution(queries, sqlitedatabase, rcc, gauge, nValue, PrgDlg,  nErrorCount, sTableNames, flag, nTableCount);
+
 		 flag = ExecuteIndexes;
 	     SqliteStatementExecution(IndexStatements, sqlitedatabase, rcc, gauge, nValue, PrgDlg, nErrorCount, sTableNames, flag, nTableCount, IndexTable, sTableNames2);
 	  }
