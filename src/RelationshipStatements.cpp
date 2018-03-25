@@ -4,6 +4,7 @@
 #include "RelationshipStatements.h"
 #include "FieldStatements.h"
 #include <afxdao.h>
+#include "mdb2sqlite.h"
 
 #ifdef _DEBUG
 #undef THIS_FILE
@@ -84,7 +85,7 @@ void CRelationships::Relationhips(CDaoDatabase &db, std::vector<CString> &Relati
 }
 void CRelationships::ForeignKeySupport(CDaoDatabase &db, const unsigned &nRelationCount, std::vector<CString> &TableField, std::vector<CString> &ForeignKeySupportinfo, 
 									   std::vector<CString> &sTableNames, std::vector<CString> &statements, std::vector<int> &beginning, std::vector<int> &end, std::vector<CString> &InsertStatements,
-									   bool &isPossibleToAddForeignKeys, unsigned &nWarningCount, const bool &m_bForeignKeyPrimary, wxTextCtrl *PrgDlg /*NULL*/)
+									   bool &isPossibleToAddForeignKeys, unsigned &nWarningCount, const bool &m_bForeignKeyPrimary, CUIObs *pObs)
 {
 	CString temp;
 	CDaoRelationInfo relationinfo;
@@ -167,28 +168,25 @@ void CRelationships::ForeignKeySupport(CDaoDatabase &db, const unsigned &nRelati
 			if( i1 != nRelationFields-1 )
 				temp += _T(",");
 			else temp += ")";
-			if(PrgDlg != NULL)
+			CString temp2 = relationinfo.m_strTable;
+			temp2 += relationinfo.m_pFieldInfos[i1].m_strName;
+			unsigned nVectorLength = TableField.size();
+			for(unsigned i2 = 0; i2 < nVectorLength; ++i2)
 			{
-				CString temp2 = relationinfo.m_strTable;
-				temp2 += relationinfo.m_pFieldInfos[i1].m_strName;
-				unsigned nVectorLength = TableField.size();
-				for(unsigned i2 = 0; i2 < nVectorLength; ++i2)
+				if(!(TableField[i2].Compare(temp2)))
 				{
-					if(!(TableField[i2].Compare(temp2)))
-					{
-						++nWarningCount;
-						wxString WarningMessage = wxT("WARNING: Foreign key of table: ");
-						WarningMessage += CFieldStatements::CstringToWxString(relationinfo.m_strForeignTable);
-						WarningMessage += wxT(" References table: ");
-						WarningMessage += CFieldStatements::CstringToWxString(relationinfo.m_strTable);
-						WarningMessage += wxT(" field: ");
-						WarningMessage += CFieldStatements::CstringToWxString(relationinfo.m_pFieldInfos[i1].m_strName);
-						WarningMessage += wxT(" which is not a PRIMARY KEY.\n");
-						PrgDlg->SetDefaultStyle(wxTextAttr (wxNullColour, *wxYELLOW));
-						PrgDlg->WriteText(WarningMessage);
-						PrgDlg->SetDefaultStyle(wxTextAttr (wxNullColour));
-						break;
-					}
+					++nWarningCount;
+					wxString WarningMessage = wxT("WARNING: Foreign key of table: ");
+					WarningMessage += CFieldStatements::CstringToWxString(relationinfo.m_strForeignTable);
+					WarningMessage += wxT(" References table: ");
+					WarningMessage += CFieldStatements::CstringToWxString(relationinfo.m_strTable);
+					WarningMessage += wxT(" field: ");
+					WarningMessage += CFieldStatements::CstringToWxString(relationinfo.m_pFieldInfos[i1].m_strName);
+					WarningMessage += wxT(" which is not a PRIMARY KEY.\n");
+					pObs->SetDefaultStyle(wxTextAttr (wxNullColour, *wxYELLOW));
+					pObs->WriteText(WarningMessage);
+					pObs->SetDefaultStyle(wxTextAttr (wxNullColour));
+					break;
 				}
 			}
 		}  
@@ -205,12 +203,9 @@ void CRelationships::ForeignKeySupport(CDaoDatabase &db, const unsigned &nRelati
 	{
 		wxString WarningMessage = wxT("WARNING: Sqlite foreing key support cannot be added for the current database as there is a loop between the table references");
 		WarningMessage += wxT("\n");
-		if( PrgDlg != NULL)
-		{
-			PrgDlg->SetDefaultStyle(wxTextAttr (wxNullColour, *wxRED));
-			PrgDlg->WriteText(WarningMessage);
-			PrgDlg->SetDefaultStyle(wxTextAttr (wxNullColour));
-		}
+		pObs->SetDefaultStyle(wxTextAttr (wxNullColour, *wxRED));
+		pObs->WriteText(WarningMessage);
+		pObs->SetDefaultStyle(wxTextAttr (wxNullColour));
 		isPossibleToAddForeignKeys = false;
 		return;
 	}

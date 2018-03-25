@@ -10,6 +10,9 @@
 #include <wx/textctrl.h>
 #include <fstream>
 #include <codecvt>
+#include "DBTable.h"
+#include "UIObs.h"
+#include "StructurePreviewDlg.h"
 
 void CSettingsReader::ReadFromCSimpleIni(CSettings &settings)
 {
@@ -60,7 +63,7 @@ void CSettingsReader::Dumping(std::vector<CString> &statements, std::vector<CStr
 	dumpfile.close();
 }
 
-void CSettingsReader::Control(const char *Path, const char *dPath, wxGauge *gauge /*= NULL*/, wxTextCtrl *PrgDlg /*= NULL*/)
+bool CSettingsReader::Control(const char *Path, const char *dPath, CUIObs *pObs, bool bConvert)
 {
 	AfxDaoInit();
 	std::vector<CString> statements, InsertStatements, RelationFields, IndexStatements, UniqueFields, CollateIndexFields, 
@@ -85,6 +88,8 @@ void CSettingsReader::Control(const char *Path, const char *dPath, wxGauge *gaug
 	std::vector<CString> sTableNames;
 	std::vector<CString> sIndexTableNames; 
 	std::vector<int> indextable;
+	std::vector<CDBTable> structure;
+	std::vector<wxString> warnings;
 
 	for( int i = 0; i < nTableCount; ++i )
 	{
@@ -113,7 +118,7 @@ void CSettingsReader::Control(const char *Path, const char *dPath, wxGauge *gaug
 				}
 				CDaoTableDef TableDef(&db);
 				sStatement = _T("CREATE TABLE `");  
-				if( settings.m_bKeyWordList && PrgDlg != NULL)
+				if( settings.m_bKeyWordList )
 				{
 					for( int i1 = 0; i1 < 124; ++i1 )
 					{
@@ -121,38 +126,54 @@ void CSettingsReader::Control(const char *Path, const char *dPath, wxGauge *gaug
 						{
 							++nWarningCount;
 							wxString ErrorMessage = wxT("WARNING: table name found as sqlite keyword this could lead to unexpected behaviour, table name found: ");
-							PrgDlg->SetDefaultStyle(wxTextAttr (wxNullColour, *wxYELLOW));
+							pObs->SetDefaultStyle(wxTextAttr (wxNullColour, *wxYELLOW));
 							CT2CA pszConvertedAnsiString (tabledefinfo.m_strName);
 							std::string strStd (pszConvertedAnsiString);
 							ErrorMessage += wxString::FromUTF8(_strdup(strStd.c_str() ) );
 							ErrorMessage += wxT("\n");
-							PrgDlg->WriteText(ErrorMessage);
-							PrgDlg->SetDefaultStyle(wxTextAttr (wxNullColour));
+							pObs->WriteText(ErrorMessage);
+							pObs->SetDefaultStyle(wxTextAttr (wxNullColour));
 						}
 
 					}
 				}
 				sStatement += tabledefinfo.m_strName;
 				sStatement += (_T("` ("));
-				TableDef.Open(tabledefinfo.m_strName);   
+				TableDef.Open(tabledefinfo.m_strName);
+				std::vector<CDBFieldIndex> indexes, fields;
 				if( settings.m_bIndexAdd ) 
 				{
 					sIndexTableNames.push_back(tabledefinfo.m_strName);
-					if(PrgDlg != NULL)
-					   CIndexStatements::Indexes(TableDef, IndexStatements, tabledefinfo, sTableNames, UniqueFields, CollateIndexFields, 
+					indexes = CIndexStatements::Indexes(TableDef, IndexStatements, tabledefinfo, sTableNames, UniqueFields, CollateIndexFields, 
 					                             settings.m_bCollateNoCaseIndexAdd, settings.m_bTrimTextValues, settings.m_bKeyWordList, ReservedKeyWords, IndexInfo, nWarningCount,
-												 indextable, PrgDlg);
-					else CIndexStatements::Indexes(TableDef, IndexStatements, tabledefinfo, sTableNames, UniqueFields, CollateIndexFields, 
-					                             settings.m_bCollateNoCaseIndexAdd, settings.m_bTrimTextValues, settings.m_bKeyWordList, ReservedKeyWords, IndexInfo, nWarningCount, 
-												 indextable);
+												 indextable, warnings);
 				}
 
-				if(PrgDlg != NULL)
-					CFieldStatements::fFields(db, TableDef, tabledefinfo, InsertStatements, UniqueFields, settings, sStatement, ReservedKeyWords, TableField, IndexInfo, nWarningCount, PrgDlg); 
-				else CFieldStatements::fFields(db, TableDef, tabledefinfo, InsertStatements, UniqueFields, settings, sStatement, ReservedKeyWords, TableField, IndexInfo, nWarningCount);
+				fields = CFieldStatements::fFields(db, TableDef, tabledefinfo, InsertStatements, UniqueFields, settings, sStatement, ReservedKeyWords, TableField, IndexInfo, nWarningCount, warnings); 
+				CDBTable table(tabledefinfo.m_strName, fields, indexes);
+				structure.push_back(table);
 				statements.push_back(sStatement);
 		} 
 	} 
+
+	if( bConvert )
+	{
+		CStructPreviewDlg dlg(nullptr, structure);
+		bool bOK = dlg.ShowModal() == wxID_OK;
+		if( !bOK ) {
+			AfxDaoTerm();
+			return false;
+		}
+
+		pObs->CreateAdditionalItems();
+	}
+
+	for(const auto &message : warnings)
+	{
+		pObs->SetDefaultStyle(wxTextAttr (wxNullColour, *wxYELLOW));
+		pObs->WriteText(message);
+		pObs->SetDefaultStyle(wxTextAttr (wxNullColour));
+	}
 
 	std::vector<CString> queries;
 	//Currently not supported
@@ -185,11 +206,8 @@ void CSettingsReader::Control(const char *Path, const char *dPath, wxGauge *gaug
 				end.push_back(i);
 		}
 		bool isPossibleToAddForeignKeys = true;
-		if(PrgDlg != NULL)
-			CRelationships::ForeignKeySupport(db, nRelationCount, TableField, ForeignKeySupportinfo, sTableNames, statements, beginning, end, InsertStatements, 
-			                                  isPossibleToAddForeignKeys, nWarningCount, settings.m_ForeignKeyPrimary, PrgDlg);
-		else CRelationships::ForeignKeySupport(db, nRelationCount, TableField, ForeignKeySupportinfo, sTableNames, statements, beginning, end, InsertStatements, 
-			                                   isPossibleToAddForeignKeys, nWarningCount, settings.m_ForeignKeyPrimary);
+		CRelationships::ForeignKeySupport(db, nRelationCount, TableField, ForeignKeySupportinfo, sTableNames, statements, beginning, end, InsertStatements, 
+			                              isPossibleToAddForeignKeys, nWarningCount, settings.m_ForeignKeyPrimary, pObs);
 		if( isPossibleToAddForeignKeys )
 		{   
 			unsigned nVectorLength = statements.size();
@@ -215,19 +233,19 @@ void CSettingsReader::Control(const char *Path, const char *dPath, wxGauge *gaug
 		}
 	}
 	db.Close();
-	if(PrgDlg == NULL)
+	if( !bConvert )
 	{
 		CSettingsReader::Dumping(statements, InsertStatements, RelationFields, IndexStatements, dPath);
 		AfxDaoTerm();
-		return;
 	}
 	else
 	{
-	  gauge -> SetRange(statements.size() + InsertStatements.size() + RelationFields.size() + IndexStatements.size());
-	  CSQLiteConversion::SqliteConversion(statements, InsertStatements, IndexStatements, RelationFields, queries, dPath, gauge, PrgDlg, sTableNames, settings.m_bForeignkeySupport, nWarningCount, 
+	  pObs->SetRange(statements.size() + InsertStatements.size() + RelationFields.size() + IndexStatements.size());
+	  CSQLiteConversion::SqliteConversion(statements, InsertStatements, IndexStatements, RelationFields, queries, dPath, pObs, sTableNames, settings.m_bForeignkeySupport, nWarningCount, 
 		  indextable, sIndexTableNames);
 	  AfxDaoTerm();
 	}
-	
+
+	return true;
 }
 

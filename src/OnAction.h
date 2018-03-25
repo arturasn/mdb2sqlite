@@ -4,6 +4,7 @@
 
 class wxGauge;
 class wxTextCtrl;
+class CUIObs;
 
 #include <vector>
 
@@ -31,7 +32,7 @@ class CSettingsReader
 {
    public:
 		static void ReadFromCSimpleIni(CSettings &settings);
-		static void Control(const char *Path,const char *dPath, wxGauge *gauge = NULL, wxTextCtrl *PrgDlg = NULL);
+		static bool Control(const char *Path, const char *dPath, CUIObs *pObs, bool bConvert);
    private:
 	    static void Dumping(std::vector<CString> &statements, std::vector<CString> &InsertStatements, std::vector<CString> &RelationFields, std::vector<CString> &IndexStatements, 
 			                const char *&dPath);

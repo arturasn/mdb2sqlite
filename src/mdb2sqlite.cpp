@@ -47,6 +47,9 @@ CMainDlg::CMainDlg(const wxString sTitle, const int nX, const int nY, const int 
 	icon.LoadFile("sqliteicon.ico", wxBITMAP_TYPE_ICO);
 	SetIcon(icon);
 
+	m_pGauge = nullptr;
+	m_pPrgDlg = nullptr;
+
 	wxSizer *pSrcDest			= new wxStaticBoxSizer(wxVERTICAL, this);
 	wxSizer *pSrcFile			= new wxStaticBoxSizer(wxVERTICAL, this, "&Source File:");
 	wxBoxSizer *pFilePathSzr		= new wxBoxSizer(wxHORIZONTAL);
@@ -144,7 +147,7 @@ void CMainDlg::OnDump( wxCommandEvent &WXUNUSED(event) )
 			const char *pSrcPath = sSrcPath.mb_str();
 			const char *pDstPath = sDstPath.mb_str();
 
-			CSettingsReader::Control(pSrcPath, pDstPath);
+			CSettingsReader::Control(pSrcPath, pDstPath, this, false);
 			internal::ShowMessageDlg(this, wxT("Succesfully dumped."), wxT("Dump information"));
 		}
 
@@ -163,24 +166,56 @@ void CMainDlg::OnConvert(wxCommandEvent &WXUNUSED(event) )
 	{
 		wxFileName filename(sPathMDB);
 		wxString sFilename = filename.GetFullName();
-		int nPosX, nPosY;
-		GetSize(&nPosX, &nPosY);
-		SetMaxSize(wxSize(nPosX, wxDefaultCoord));
-
+	
 		const char *pSrcPath		= sPathMDB.mb_str();
 		const char *pDPath		= sPathSQLite.mb_str();
-		wxGauge *pGauge			=  new wxGauge(this, wxID_ANY, 100, wxDefaultPosition, wxSize(nPosX, 15));
-		wxTextCtrl *pPrgDlg		= new wxTextCtrl(this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize(250, 120),
-													 wxTE_MULTILINE|wxTE_RICH);
 
+		bool bRet = CSettingsReader::Control(pSrcPath, pDPath, this, true);
+		if( bRet )
+			internal::ShowMessageDlg(this, wxString::Format(wxT("Succesfully exported %s to SQLite"), sFilename), wxT("Succesfully exported to SQLite"));
+	}
+}
 
-		m_pTopSizer->Add(pPrgDlg, 1, wxEXPAND|wxALL, 5);
-		m_pTopSizer->Add(pGauge, 0, wxEXPAND|wxALL, 5);
-		Layout(); Fit(); Refresh(); Update();
-		SetMaxSize(wxSize(wxDefaultCoord, wxDefaultCoord));
-        	SetMinSize(wxSize(wxDefaultCoord, wxDefaultCoord));
-		CSettingsReader::Control(pSrcPath, pDPath, pGauge, pPrgDlg);
-		internal::ShowMessageDlg(this, wxString::Format(wxT("Succesfully exported %s to SQLite"), sFilename), wxT("Succesfully exported to SQLite"));
+void CMainDlg::CreateAdditionalItems()
+{
+	int nPosX, nPosY;
+	GetSize(&nPosX, &nPosY);
+	SetMaxSize(wxSize(nPosX, wxDefaultCoord));
+
+	m_pGauge		=  new wxGauge(this, wxID_ANY, 100, wxDefaultPosition, wxSize(nPosX, 15));
+	m_pPrgDlg		= new wxTextCtrl(this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize(250, 120), wxTE_MULTILINE|wxTE_RICH);
+	m_pTopSizer->Add(m_pPrgDlg, 1, wxEXPAND|wxALL, 5);
+	m_pTopSizer->Add(m_pGauge, 0, wxEXPAND|wxALL, 5);
+	Layout(); Fit(); Refresh(); Update();
+	SetMaxSize(wxSize(wxDefaultCoord, wxDefaultCoord));
+	SetMinSize(wxSize(wxDefaultCoord, wxDefaultCoord));
+}
+
+void CMainDlg::SetDefaultStyle(const wxTextAttr &atr)
+{
+	if( m_pPrgDlg ) {
+		m_pPrgDlg->SetDefaultStyle(atr);
+	}
+}
+
+void CMainDlg::WriteText(wxString sMsg)
+{
+	if( m_pPrgDlg ) {
+		m_pPrgDlg->WriteText(sMsg);
+	}
+}
+
+void CMainDlg::SetRange(int range)
+{
+	if( m_pGauge ) {
+		m_pGauge->SetRange(range);
+	}
+}
+
+void CMainDlg::SetValue(int value)
+{
+	if( m_pGauge ) {
+		m_pGauge->SetValue(value);
 	}
 }
 

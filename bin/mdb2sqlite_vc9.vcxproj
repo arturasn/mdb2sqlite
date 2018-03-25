@@ -46,6 +46,7 @@
     <ClCompile Include="..\src\stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="..\src\StructurePreviewDlg.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\FieldStatements.h" />
@@ -60,6 +61,10 @@
     <ClInclude Include="..\src\sqlite3.h" />
     <ClInclude Include="..\src\sqlitestatementexecution.h" />
     <ClInclude Include="..\src\stdafx.h" />
+    <ClInclude Include="..\src\StructurePreviewDlg.h" />
+    <ClInclude Include="DBField.h" />
+    <ClInclude Include="DBTable.h" />
+    <ClInclude Include="UIObs.h" />
   </ItemGroup>
   <ItemGroup>
     <Library Include="..\src\sqlite3.lib" />

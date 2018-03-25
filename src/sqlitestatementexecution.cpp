@@ -4,6 +4,7 @@
 #include "sqlite3.h"
 #include <wx/gauge.h>
 #include <wx/textctrl.h>
+#include "UIObs.h"
 
 #ifdef _DEBUG
 #undef THIS_FILE
@@ -42,7 +43,7 @@ std::string CSQLiteConversion::ConvertToUTF8(const wchar_t *wstr)
         return strTo;
 }
 
-void CSQLiteConversion::SqliteStatementExecution(std::vector<CString> &statements, sqlite3 *&sqlitedatabase, int rc , wxGauge *&gauge, unsigned &nValue, wxTextCtrl *&PrgDlg, 
+void CSQLiteConversion::SqliteStatementExecution(std::vector<CString> &statements, sqlite3 *&sqlitedatabase, int rc , CUIObs *pObs, unsigned &nValue,
 												 unsigned &nErrorCount, const std::vector<CString> &sTableNames, unsigned &flag, unsigned &nTableCount, std::vector<int> &indextable, const std::vector<CString> &sIndexTableNames)
 {
 	 char *zErrMsg = 0;
@@ -51,31 +52,31 @@ void CSQLiteConversion::SqliteStatementExecution(std::vector<CString> &statement
      for( auto it = statements.begin(); it != end_it; ++it )
 	{
 			++nValue;
-			gauge ->SetValue(nValue);
+			pObs->SetValue(nValue);
 			std::string sB = ConvertToUTF8(*it);
 		    const char* pszC = _strdup(sB.c_str());		
             rc = sqlite3_exec(sqlitedatabase, pszC, NULL, 0, &zErrMsg);
             if( rc != SQLITE_OK )
 	          {
 				  ++nErrorCount;
-				  PrgDlg->SetDefaultStyle(wxTextAttr (wxNullColour, *wxRED));
+				  pObs->SetDefaultStyle(wxTextAttr (wxNullColour, *wxRED));
 				  wxString ErrorMessage = wxT("");
 				  ErrorMessage += wxString::FromUTF8(zErrMsg);
 				  ErrorMessage += " \n";
-				  PrgDlg->WriteText(ErrorMessage);
+				  pObs->WriteText(ErrorMessage);
 				  CT2CA pszConvertedAnsiString (*it);
 	              std::string strStd (pszConvertedAnsiString);
 				  ErrorMessage = wxString::FromUTF8(_strdup(strStd.c_str() ) ) + "\n";
-				  PrgDlg->WriteText(ErrorMessage);
+				  pObs->WriteText(ErrorMessage);
 				  if(flag & 1)
 				  {
 					ErrorMessage = wxT("Table: ");
 					sB = ConvertToUTF8(sTableNames[nValue-1]);
 					ErrorMessage += wxString::FromUTF8(_strdup(sB.c_str() ) );
 					ErrorMessage += wxT(" wasnt created succesfully \n");
-					PrgDlg->WriteText(ErrorMessage);
+					pObs->WriteText(ErrorMessage);
 				  }
-				  PrgDlg->SetDefaultStyle(wxTextAttr (wxNullColour));
+				  pObs->SetDefaultStyle(wxTextAttr (wxNullColour));
                   sqlite3_free(zErrMsg);
 			  }
 			else
@@ -86,7 +87,7 @@ void CSQLiteConversion::SqliteStatementExecution(std::vector<CString> &statement
 					sB = ConvertToUTF8(sTableNames[nValue-1]);
 					sMessage += wxString::FromUTF8(_strdup(sB.c_str() ) );
 					sMessage += wxT(" created succesfully \n");
-					PrgDlg->WriteText(sMessage);
+					pObs->WriteText(sMessage);
 				}
 				else if(flag & ExecuteInserts)
 				{
@@ -98,7 +99,7 @@ void CSQLiteConversion::SqliteStatementExecution(std::vector<CString> &statement
 						sMessage += wxString::FromUTF8(_strdup(sB.c_str() ) );
 						sMessage += wxT(" records inserted \n");
 						++index;
-						PrgDlg->WriteText(sMessage);
+						pObs->WriteText(sMessage);
 					}
 				}
 				else if(flag & ExecuteIndexes)
@@ -111,7 +112,7 @@ void CSQLiteConversion::SqliteStatementExecution(std::vector<CString> &statement
 									sB = ConvertToUTF8(sIndexTableNames[index]);
 									sMessage += wxString::FromUTF8(_strdup(sB.c_str() ) );
 									sMessage += wxT(" created \n");
-									PrgDlg->WriteText(sMessage);
+									pObs->WriteText(sMessage);
 									++index;
 								}
 						}
@@ -124,7 +125,7 @@ void CSQLiteConversion::SqliteStatementExecution(std::vector<CString> &statement
 								sB = ConvertToUTF8(sIndexTableNames[index]);
 								sMessage += wxString::FromUTF8(_strdup(sB.c_str() ) );
 								sMessage += wxT(" created \n");
-								PrgDlg->WriteText(sMessage);
+								pObs->WriteText(sMessage);
 								++index;
 							}
 						}
@@ -137,7 +138,7 @@ void CSQLiteConversion::SqliteStatementExecution(std::vector<CString> &statement
 									sB = ConvertToUTF8(sIndexTableNames[index]);
 									sMessage += wxString::FromUTF8(_strdup(sB.c_str() ) );
 									sMessage += wxT(" created \n");
-									PrgDlg->WriteText(sMessage);
+									pObs->WriteText(sMessage);
 									++index;
 								}
 						}
@@ -150,7 +151,7 @@ void CSQLiteConversion::SqliteStatementExecution(std::vector<CString> &statement
 }
 
 void CSQLiteConversion::SqliteConversion(std::vector<CString> &statements, std::vector<CString> &InsertStatements, std::vector<CString> &IndexStatements, 
-										 std:: vector<CString> &RelationFields, std::vector<CString> &queries, const char *dPath, wxGauge *&gauge, wxTextCtrl *&PrgDlg, const std::vector<CString> &sTableNames, 
+										 std:: vector<CString> &RelationFields, std::vector<CString> &queries, const char *dPath, CUIObs *pObs, const std::vector<CString> &sTableNames, 
 										 const bool &m_bForeignKeySupport, unsigned &nWarningCount, std::vector<int> &indextable, const std::vector<CString> &sIndexTableNames)
  {
 	char *zErrMsg			= 0;
@@ -178,30 +179,30 @@ void CSQLiteConversion::SqliteConversion(std::vector<CString> &statements, std::
 			 sqlite3_exec(sqlitedatabase, "PRAGMA foreign_keys = ON", NULL, NULL, &zErrMsg);
 		 }
 
-		 SqliteStatementExecution(statements, sqlitedatabase, rcc, gauge, nValue, PrgDlg, nErrorCount, sTableNames, flag, nTableCount, indextable, sIndexTableNames);
+		 SqliteStatementExecution(statements, sqlitedatabase, rcc, pObs, nValue, nErrorCount, sTableNames, flag, nTableCount, indextable, sIndexTableNames);
 		 flag = ExecuteInserts;
-		 SqliteStatementExecution(InsertStatements, sqlitedatabase, rcc, gauge, nValue, PrgDlg, nErrorCount, sTableNames, flag, nTableCount, indextable, sIndexTableNames);
+		 SqliteStatementExecution(InsertStatements, sqlitedatabase, rcc, pObs, nValue, nErrorCount, sTableNames, flag, nTableCount, indextable, sIndexTableNames);
 		 flag = ExecuteTriggers;
-		 PrgDlg->WriteText(wxT("Starting trigger creation \n"));
-		 SqliteStatementExecution(RelationFields, sqlitedatabase, rcc, gauge, nValue, PrgDlg,  nErrorCount, sTableNames, flag, nTableCount, indextable, sIndexTableNames);
-		 PrgDlg->WriteText(wxT("All triggers created \n"));
+		 pObs->WriteText(wxT("Starting trigger creation \n"));
+		 SqliteStatementExecution(RelationFields, sqlitedatabase, rcc, pObs, nValue,  nErrorCount, sTableNames, flag, nTableCount, indextable, sIndexTableNames);
+		 pObs->WriteText(wxT("All triggers created \n"));
 		 flag = ExecuteQueries;
-		 SqliteStatementExecution(queries, sqlitedatabase, rcc, gauge, nValue, PrgDlg,  nErrorCount, sTableNames, flag, nTableCount, indextable, sIndexTableNames);
+		 SqliteStatementExecution(queries, sqlitedatabase, rcc, pObs, nValue,  nErrorCount, sTableNames, flag, nTableCount, indextable, sIndexTableNames);
 		 flag = ExecuteIndexes;
-		 PrgDlg->WriteText(wxT("Starting index creation \n"));
-	     SqliteStatementExecution(IndexStatements, sqlitedatabase, rcc, gauge, nValue, PrgDlg, nErrorCount, sTableNames, flag, nTableCount, indextable, sIndexTableNames);
-		 PrgDlg->WriteText(wxT("All indexes created \n"));
+		 pObs->WriteText(wxT("Starting index creation \n"));
+	     SqliteStatementExecution(IndexStatements, sqlitedatabase, rcc, pObs, nValue, nErrorCount, sTableNames, flag, nTableCount, indextable, sIndexTableNames);
+		 pObs->WriteText(wxT("All indexes created \n"));
 	 }
 
 	 wxString ConclusionMessage = wxT("Statements executed successfully: ");
 	 ConclusionMessage << nValue-nErrorCount;
-	 PrgDlg->SetDefaultStyle(wxTextAttr (*wxBLUE));
-	 PrgDlg->WriteText(ConclusionMessage);
+	 pObs->SetDefaultStyle(wxTextAttr (*wxBLUE));
+	 pObs->WriteText(ConclusionMessage);
 	 ConclusionMessage = wxT("\nErrors: ");
 	 ConclusionMessage << nErrorCount;
-	 PrgDlg->WriteText(ConclusionMessage);
+	 pObs->WriteText(ConclusionMessage);
 	 ConclusionMessage = wxT(", Warnings: ");
 	 ConclusionMessage << nWarningCount;
-	 PrgDlg->WriteText(ConclusionMessage);
+	 pObs->WriteText(ConclusionMessage);
      sqlite3_close(sqlitedatabase);
  }
