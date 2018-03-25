@@ -83,7 +83,7 @@ void CRelationships::Relationhips(CDaoDatabase &db, std::vector<CString> &Relati
 		}		  
 }
 void CRelationships::ForeignKeySupport(CDaoDatabase &db, const unsigned &nRelationCount, std::vector<CString> &TableField, std::vector<CString> &ForeignKeySupportinfo, 
-	                                   CString *&sTableNames, std::vector<CString> &statements, std::vector<int> &beginning, std::vector<int> &end, std::vector<CString> &InsertStatements,
+									   std::vector<CString> &sTableNames, std::vector<CString> &statements, std::vector<int> &beginning, std::vector<int> &end, std::vector<CString> &InsertStatements,
 									   bool &isPossibleToAddForeignKeys, unsigned &nWarningCount, const bool &m_bForeignKeyPrimary, wxTextCtrl *PrgDlg /*NULL*/)
 {
 	CString temp;
@@ -215,7 +215,7 @@ void CRelationships::ForeignKeySupport(CDaoDatabase &db, const unsigned &nRelati
 		return;
 	}
 
-	CRelationships::CreatePriority(statements,priority,sTableNames,beginning,end,InsertStatements);
+	CRelationships::CreatePriority(statements, priority, sTableNames, beginning, end, InsertStatements);
 }
 void CRelationships::ForeignKeyPriority(const unsigned &nTreeSize, int **&tree, std::vector<int> &priority)
 {
@@ -248,12 +248,13 @@ void CRelationships::ForeignKeyPriority(const unsigned &nTreeSize, int **&tree, 
 		}
 	}
 }
-int CRelationships::Findind(CString *&sTableNames, CString &sSearchedTable, const unsigned &nTreeSize)
+int CRelationships::Findind(std::vector<CString> &sTableNames, CString &sSearchedTable, const unsigned &nTreeSize)
 {
 	for(unsigned i3 = 0; i3 < nTreeSize; ++i3)
 	{
-		if( !(sTableNames[i3].Compare(sSearchedTable)) )
+		if( !(sTableNames[i3].Compare(sSearchedTable)) ) {
 			return i3;
+		}
 	}
 	
 	//MS added system tables
@@ -278,7 +279,7 @@ bool CRelationships::Repeat(int index, std::vector<int> &priority)
 	}
 	return false;
 }
-void CRelationships::CreatePriority(std::vector<CString> &statements, std::vector<int> &priority, CString *&sTableNames, std::vector<int> &beginning, 
+void CRelationships::CreatePriority(std::vector<CString> &statements, std::vector<int> &priority, std::vector<CString> &sTableNames, std::vector<int> &beginning, 
 	                                std::vector<int> &end, std::vector <CString> &InsertStatements)
 {
 	unsigned nTableCount = priority.size();

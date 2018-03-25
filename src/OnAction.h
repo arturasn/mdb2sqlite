@@ -8,7 +8,7 @@ class wxTextCtrl;
 #include <vector>
 
 class CSettings
- {
+{
  public:
 		bool m_bRelationshipAdd;
 		bool m_bRecordAdd;
@@ -25,7 +25,8 @@ class CSettings
 		bool m_bForeignkeySupport;
 		bool m_PrimaryKeySupport;
 		bool m_ForeignKeyPrimary;
- };
+};
+
 class CSettingsReader
 {
    public:
@@ -34,5 +35,6 @@ class CSettingsReader
    private:
 	    static void Dumping(std::vector<CString> &statements, std::vector<CString> &InsertStatements, std::vector<CString> &RelationFields, std::vector<CString> &IndexStatements, 
 			                const char *&dPath);
+
 };
 #endif

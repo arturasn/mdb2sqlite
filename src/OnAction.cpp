@@ -32,6 +32,7 @@ void CSettingsReader::ReadFromCSimpleIni(CSettings &settings)
 	settings.m_PrimaryKeySupport = ini.GetBoolValue(_T("Settings"),_T("PrimaryKeySupport"),true);
 	settings.m_ForeignKeyPrimary = ini.GetBoolValue(_T("Settings"),_T("ForeignKeyPrimary"),true);
 }
+
 void CSettingsReader::Dumping(std::vector<CString> &statements, std::vector<CString> &InsertStatements, std::vector<CString> &RelationFields, std::vector<CString> &IndexStatements, 
 	                          const char *&dPath)
 {
@@ -58,19 +59,13 @@ void CSettingsReader::Dumping(std::vector<CString> &statements, std::vector<CStr
 		dumpfile << (LPCTSTR)*it << std::endl;
 	dumpfile.close();
 }
+
 void CSettingsReader::Control(const char *Path, const char *dPath, wxGauge *gauge /*= NULL*/, wxTextCtrl *PrgDlg /*= NULL*/)
 {
 	AfxDaoInit();
-	CSettings settings;
-	std::vector<CString> statements;
-	std::vector<CString> InsertStatements;
-	std::vector<CString> RelationFields;
-	std::vector<CString> IndexStatements;
-	std::vector<CString> UniqueFields;
-	std::vector<CString> CollateIndexFields;
-	std::vector<CString> TableField;
-	std::vector<CString> ForeignKeySupportinfo;
-	std::vector<CString> IndexInfo;
+	std::vector<CString> statements, InsertStatements, RelationFields, IndexStatements, UniqueFields, CollateIndexFields, 
+	TableField, ForeignKeySupportinfo, IndexInfo;
+
 	unsigned nWarningCount = 0;
 	CString ReservedKeyWords[] = {"ABORT", "ACTION", "ADD", "AFTER", "ALL", "ALTER", "ANALYZE", "AND", "AS", "ASC", "ATTACH", "AUTOINCREMENT", "BEFORE", "BEGIN", "BETWEEN", "BY", "CASCADE", "CASE", 
 		"CAST", "CHECK", "COLLATE", "COLUMN", "COMMIT", "CONFLICT", "CONSTRAINT", "CREATE", "CROSS", "CURRENT_DATE", "CURRENT_TIME", "CURRENT_TIMESTAMP", "DATABASE", "DEFAULT", "DEFERRABLE",
@@ -79,31 +74,32 @@ void CSettingsReader::Control(const char *Path, const char *dPath, wxGauge *gaug
         "LIKE", "LIMIT", "MATCH", "NATURAL", "NO", "NOT", "NOTNULL", "NULL", "OF", "OFFSET", "ON", "OR", "ORDER", "OUTER", "PLAN", "PRAGMA", "PRIMARY", "QUERY", "RAISE", "RECURSIVE", "REFERENCES",
         "REGEXP", "REINDEX", "RELEASE", "RENAME", "REPLACE", "RESTRICT", "RIGHT", "ROLLBACK", "ROW", "SAVEPOINT", "SELECT", "SET", "TABLE", "TEMP", "TEMPORARY", "THEN", "TO", "TRANSACTION", "TRIGGER",
         "UNION", "UNIQUE", "UPDATE", "USING", "VACUUM", "VALUES", "VIEW", "VIRTUAL", "WHEN", "WHERE", "WITH", "WITHOUT"};
+
 	CString sStatement;
     CString widepath = (CString)Path;
+	CSettings settings;
 	CSettingsReader::ReadFromCSimpleIni(settings);                                                        
 	CDaoDatabase db;                                            
 	db.Open(widepath);                                          
-	short nTableCount = db.GetTableDefCount();                 
-	CString *sTableNames = new CString[nTableCount]; 
-	CString *sTableNames2 = new CString[nTableCount]; 
-	int *IndexTable = new int[nTableCount];
-	int index = 0;
-	short nNonSystemTableCount=0;
+	int nTableCount = db.GetTableDefCount();                 
+	std::vector<CString> sTableNames;
+	std::vector<CString> sIndexTableNames; 
+	std::vector<int> indextable;
+
 	for( int i = 0; i < nTableCount; ++i )
 	{
 		CDaoTableDefInfo tabledefinfo;                           
-		db.GetTableDefInfo(i,tabledefinfo);                      
+		db.GetTableDefInfo(i, tabledefinfo);                      
 		if( tabledefinfo.m_lAttributes == 0 )                      
 	   	{  
 			CDaoTableDef TableDef(&db);
-			sTableNames[nNonSystemTableCount] = tabledefinfo.m_strName;
+			sTableNames.push_back(tabledefinfo.m_strName);
 			TableDef.Open(tabledefinfo.m_strName);
-			nNonSystemTableCount++;
 			if( settings.m_bCollateNoCaseIndexAdd ) 
 				CFieldStatements::FieldCollation(TableDef, tabledefinfo, CollateIndexFields, settings.m_bTrimTextValues);
 		}
 	}
+
 	for( int i = 0; i < nTableCount; ++i )
 	{
 		CDaoTableDefInfo tabledefinfo;                           
@@ -141,16 +137,16 @@ void CSettingsReader::Control(const char *Path, const char *dPath, wxGauge *gaug
 				TableDef.Open(tabledefinfo.m_strName);   
 				if( settings.m_bIndexAdd ) 
 				{
-
+					sIndexTableNames.push_back(tabledefinfo.m_strName);
 					if(PrgDlg != NULL)
-					   CIndexStatements::Indexes(TableDef, IndexStatements, tabledefinfo, sTableNames, nNonSystemTableCount, UniqueFields, CollateIndexFields, 
-					                             settings.m_bCollateNoCaseIndexAdd, settings.m_bTrimTextValues, settings.m_bKeyWordList, ReservedKeyWords, IndexInfo, nWarningCount, sTableNames2, 
-												 IndexTable, index, PrgDlg);
-					else CIndexStatements::Indexes(TableDef, IndexStatements, tabledefinfo, sTableNames, nNonSystemTableCount, UniqueFields, CollateIndexFields, 
-					                             settings.m_bCollateNoCaseIndexAdd, settings.m_bTrimTextValues, settings.m_bKeyWordList, ReservedKeyWords, IndexInfo, nWarningCount, sTableNames2, 
-												 IndexTable, index);
+					   CIndexStatements::Indexes(TableDef, IndexStatements, tabledefinfo, sTableNames, UniqueFields, CollateIndexFields, 
+					                             settings.m_bCollateNoCaseIndexAdd, settings.m_bTrimTextValues, settings.m_bKeyWordList, ReservedKeyWords, IndexInfo, nWarningCount,
+												 indextable, PrgDlg);
+					else CIndexStatements::Indexes(TableDef, IndexStatements, tabledefinfo, sTableNames, UniqueFields, CollateIndexFields, 
+					                             settings.m_bCollateNoCaseIndexAdd, settings.m_bTrimTextValues, settings.m_bKeyWordList, ReservedKeyWords, IndexInfo, nWarningCount, 
+												 indextable);
 				}
-				++index;
+
 				if(PrgDlg != NULL)
 					CFieldStatements::fFields(db, TableDef, tabledefinfo, InsertStatements, UniqueFields, settings, sStatement, ReservedKeyWords, TableField, IndexInfo, nWarningCount, PrgDlg); 
 				else CFieldStatements::fFields(db, TableDef, tabledefinfo, InsertStatements, UniqueFields, settings, sStatement, ReservedKeyWords, TableField, IndexInfo, nWarningCount);
@@ -222,7 +218,6 @@ void CSettingsReader::Control(const char *Path, const char *dPath, wxGauge *gaug
 	if(PrgDlg == NULL)
 	{
 		CSettingsReader::Dumping(statements, InsertStatements, RelationFields, IndexStatements, dPath);
-		delete [] sTableNames;
 		AfxDaoTerm();
 		return;
 	}
@@ -230,10 +225,7 @@ void CSettingsReader::Control(const char *Path, const char *dPath, wxGauge *gaug
 	{
 	  gauge -> SetRange(statements.size() + InsertStatements.size() + RelationFields.size() + IndexStatements.size());
 	  CSQLiteConversion::SqliteConversion(statements, InsertStatements, IndexStatements, RelationFields, queries, dPath, gauge, PrgDlg, sTableNames, settings.m_bForeignkeySupport, nWarningCount, 
-		                                  IndexTable, sTableNames2);
-	  delete [] sTableNames;
-	  delete [] sTableNames2;
-	  delete [] IndexTable;
+		  indextable, sIndexTableNames);
 	  AfxDaoTerm();
 	}
 	
