@@ -49,6 +49,8 @@
     <ClCompile Include="..\src\StructurePreviewDlg.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\src\DBField.h" />
+    <ClInclude Include="..\src\DBTable.h" />
     <ClInclude Include="..\src\FieldStatements.h" />
     <ClInclude Include="..\src\FileUtils.h" />
     <ClInclude Include="..\src\IndexStatements.h" />
@@ -62,9 +64,7 @@
     <ClInclude Include="..\src\sqlitestatementexecution.h" />
     <ClInclude Include="..\src\stdafx.h" />
     <ClInclude Include="..\src\StructurePreviewDlg.h" />
-    <ClInclude Include="DBField.h" />
-    <ClInclude Include="DBTable.h" />
-    <ClInclude Include="UIObs.h" />
+    <ClInclude Include="..\src\UIObs.h" />
   </ItemGroup>
   <ItemGroup>
     <Library Include="..\src\sqlite3.lib" />
