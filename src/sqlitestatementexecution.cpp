@@ -106,7 +106,7 @@ void CSQLiteConversion::SqliteStatementExecution(std::vector<CString> &statement
 				{   
 					if( index < nTableCount )
 						{
-							while( !indextable[index] )
+							while( index < indextable.size() && !indextable[index] )
 								{	
 									wxString sMessage = wxT("indexes of table: ");
 									sB = ConvertToUTF8(sIndexTableNames[index]);
@@ -116,7 +116,7 @@ void CSQLiteConversion::SqliteStatementExecution(std::vector<CString> &statement
 									++index;
 								}
 						}
-					indextable[index]--;
+					if( index < indextable.size() ) indextable[index]--;
 					if( index < nTableCount )
 						{
 							if( !indextable[index] )
@@ -131,7 +131,7 @@ void CSQLiteConversion::SqliteStatementExecution(std::vector<CString> &statement
 						}
 					if(index < nTableCount )
 						{
-							while( !indextable[index] )
+							while( index < indextable.size() && indextable[index]  )
 								{	
 						
 									wxString sMessage = wxT("indexes of table: ");
