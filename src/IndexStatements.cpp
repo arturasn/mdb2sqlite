@@ -12,7 +12,7 @@ static char THIS_FILE[]=__FILE__;
 
 std::vector<CDBFieldIndex> CIndexStatements::Indexes(CDaoTableDef &TableDef, std::vector<CString> &IndexStatements, const CDaoTableDefInfo &tabledefinfo, std::vector<CString> &sTableNames, 
 	                           std::vector<CString> &UniqueFields, std::vector<CString> &CollateIndexFields, const bool &m_bCollateNoCaseIndexAdd, const bool &m_bTrimTextValues,  
-							   const bool &bKeyWordList, CString (&ReservedKeyWords)[124], std::vector<CString> &IndexInfo, unsigned &nWarningCount, std::vector<int> &indextable, std::vector<wxString> &warnings)
+							   const bool &bKeyWordList, CString (&ReservedKeyWords)[124], std::vector<CString> &primary_fields, unsigned &nWarningCount, std::vector<int> &indextable, std::vector<wxString> &warnings)
 {
 	CString sParrent;
 	CString sStatement;
@@ -35,9 +35,13 @@ std::vector<CDBFieldIndex> CIndexStatements::Indexes(CDaoTableDef &TableDef, std
 		}
 		if( indexinfo.m_bPrimary )
 		{
-			CString temp = tabledefinfo.m_strName;
-			temp += indexinfo.m_pFieldInfos[0].m_strName;
-			IndexInfo.push_back(temp);
+			for(int i2 = 0; i2 < indexinfo.m_nFields; ++i2) 
+			{
+				CString temp = tabledefinfo.m_strName;
+				temp += indexinfo.m_pFieldInfos[i2].m_strName;
+				primary_fields.push_back(temp);
+			}
+
 		}
 		if( indexinfo.m_bUnique == TRUE )
 			sStatement = _T("CREATE UNIQUE INDEX ");

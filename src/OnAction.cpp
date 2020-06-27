@@ -67,7 +67,7 @@ bool CSettingsReader::Control(const char *Path, const char *dPath, CUIObs *pObs,
 {
 	AfxDaoInit();
 	std::vector<CString> statements, InsertStatements, RelationFields, IndexStatements, UniqueFields, CollateIndexFields, 
-	TableField, ForeignKeySupportinfo, IndexInfo;
+	TableField, ForeignKeySupportinfo, primary_fields;
 
 	unsigned nWarningCount = 0;
 	CString ReservedKeyWords[] = {"ABORT", "ACTION", "ADD", "AFTER", "ALL", "ALTER", "ANALYZE", "AND", "AS", "ASC", "ATTACH", "AUTOINCREMENT", "BEFORE", "BEGIN", "BETWEEN", "BY", "CASCADE", "CASE", 
@@ -108,7 +108,7 @@ bool CSettingsReader::Control(const char *Path, const char *dPath, CUIObs *pObs,
 	for( int i = 0; i < nTableCount; ++i )
 	{
 		CDaoTableDefInfo tabledefinfo;                           
-		db.GetTableDefInfo(i,tabledefinfo);      
+		db.GetTableDefInfo(i,tabledefinfo);
 		if( tabledefinfo.m_lAttributes == 0 )                      // We choose only the elements that we need as the database adds some system files
 	   	{  
 				if( !i && settings.m_bRelationshipAdd )
@@ -145,11 +145,11 @@ bool CSettingsReader::Control(const char *Path, const char *dPath, CUIObs *pObs,
 				{
 					sIndexTableNames.push_back(tabledefinfo.m_strName);
 					indexes = CIndexStatements::Indexes(TableDef, IndexStatements, tabledefinfo, sTableNames, UniqueFields, CollateIndexFields, 
-					                             settings.m_bCollateNoCaseIndexAdd, settings.m_bTrimTextValues, settings.m_bKeyWordList, ReservedKeyWords, IndexInfo, nWarningCount,
+					                             settings.m_bCollateNoCaseIndexAdd, settings.m_bTrimTextValues, settings.m_bKeyWordList, ReservedKeyWords, primary_fields, nWarningCount,
 												 indextable, warnings);
 				}
 
-				fields = CFieldStatements::fFields(db, TableDef, tabledefinfo, InsertStatements, UniqueFields, settings, sStatement, ReservedKeyWords, TableField, IndexInfo, nWarningCount, warnings); 
+				fields = CFieldStatements::fFields(db, TableDef, tabledefinfo, InsertStatements, UniqueFields, settings, sStatement, ReservedKeyWords, TableField, primary_fields, nWarningCount, warnings); 
 				CDBTable table(tabledefinfo.m_strName, fields, indexes);
 				structure.push_back(table);
 				statements.push_back(sStatement);

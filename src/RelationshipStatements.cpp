@@ -146,15 +146,15 @@ void CRelationships::ForeignKeySupport(CDaoDatabase &db, const unsigned &nRelati
 		if (idx1 == -1 || idx2 == -1) continue;
 
 		temp = relationinfo.m_strForeignTable;
-		temp += _T("FOREIGN KEY(");
+		temp += _T("FOREIGN KEY(`");
 		unsigned nRelationFields = relationinfo.m_nFields;
 
 		for( unsigned i1 = 0; i1 < nRelationFields; ++i1)
 		{
 			temp += relationinfo.m_pFieldInfos[i1].m_strForeignName;
 			if( i1 != nRelationFields-1 )
-				temp += _T(",");
-			else temp += ")";
+				temp += _T("`,`");
+			else temp += "`)";
 		}
 
 		temp += _T(" REFERENCES ");
