@@ -2,6 +2,7 @@
 #include "stdafx.h"
 #include "sqlitestatementexecution.h"
 #include "sqlite3.h"
+#include "wxuse.h"
 #include <wx/gauge.h>
 #include <wx/textctrl.h>
 #include "UIObs.h"
@@ -12,7 +13,7 @@ static char THIS_FILE[]=__FILE__;
 #define new DEBUG_NEW
 #endif
 
-  #pragma comment (lib, "sqlite3.lib")
+  #pragma comment (lib, "../bin/sqlite3.lib")
 enum
 {
 	ExecuteTables = 1 << 0,

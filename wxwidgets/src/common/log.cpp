@@ -46,17 +46,13 @@
 #include "wx/vector.h"
 
 // other standard headers
-#ifndef __WXWINCE__
 #include <errno.h>
-#endif
+
+#include <string.h>
 
 #include <stdlib.h>
 
-#ifndef __WXWINCE__
 #include <time.h>
-#else
-#include "wx/msw/wince/time.h"
-#endif
 
 #if defined(__WINDOWS__)
     #include "wx/msw/private.h" // includes windows.h
@@ -170,7 +166,7 @@ public:
     wxLogOutputBest() { }
 
 protected:
-    virtual void DoLogText(const wxString& msg)
+    virtual void DoLogText(const wxString& msg) wxOVERRIDE
     {
         wxMessageOutputBest().Output(msg);
     }
@@ -278,13 +274,13 @@ unsigned wxLog::LogLastRepeatIfNeeded()
             // Notice that we still use wxPLURAL() to ensure that multiple
             // numbers of times are correctly formatted, even though we never
             // actually use the singular string.
-            msg.Printf(wxPLURAL("The previous message repeated %lu time.",
-                                "The previous message repeated %lu times.",
+            msg.Printf(wxPLURAL("The previous message repeated %u time.",
+                                "The previous message repeated %u times.",
                                 gs_prevLog.numRepeated),
                        gs_prevLog.numRepeated);
         }
 #else
-        msg.Printf(wxS("The previous message was repeated %lu time(s)."),
+        msg.Printf(wxS("The previous message was repeated %u time(s)."),
                    gs_prevLog.numRepeated);
 #endif
         gs_prevLog.numRepeated = 0;
@@ -306,12 +302,12 @@ wxLog::~wxLog()
 #if wxUSE_INTL
             wxPLURAL
             (
-                "Last repeated message (\"%s\", %lu time) wasn't output",
-                "Last repeated message (\"%s\", %lu times) wasn't output",
+                "Last repeated message (\"%s\", %u time) wasn't output",
+                "Last repeated message (\"%s\", %u times) wasn't output",
                 gs_prevLog.numRepeated
             ),
 #else
-            wxS("Last repeated message (\"%s\", %lu time(s)) wasn't output"),
+            wxS("Last repeated message (\"%s\", %u time(s)) wasn't output"),
 #endif
             gs_prevLog.msg,
             gs_prevLog.numRepeated
@@ -422,7 +418,7 @@ wxLog::CallDoLogNow(wxLogLevel level,
     {
         const long err = static_cast<long>(num);
 
-        suffix.Printf(_(" (error %ld: %s)"), err, wxSysErrorMsg(err));
+        suffix.Printf(_(" (error %ld: %s)"), err, wxSysErrorMsgStr(err));
     }
 
 #if wxUSE_LOG_TRACE
@@ -607,9 +603,12 @@ void wxLog::SetComponentLevel(const wxString& component, wxLogLevel level)
 }
 
 /* static */
-wxLogLevel wxLog::GetComponentLevel(wxString component)
+wxLogLevel wxLog::GetComponentLevel(const wxString& componentOrig)
 {
     wxCRIT_SECT_LOCKER(lock, GetLevelsCS());
+
+    // Make a copy before modifying it in the loop.
+    wxString component = componentOrig;
 
     const wxStringToNumHashMap& componentLevels = GetComponentLevels();
     while ( !component.empty() )
@@ -843,12 +842,9 @@ void wxLogBuffer::DoLogTextAtLevel(wxLogLevel level, const wxString& msg)
 // wxLogStderr class implementation
 // ----------------------------------------------------------------------------
 
-wxLogStderr::wxLogStderr(FILE *fp)
+wxLogStderr::wxLogStderr(FILE *fp, const wxMBConv& conv)
+           : wxMessageOutputStderr(fp ? fp : stderr, conv)
 {
-    if ( fp == NULL )
-        m_fp = stderr;
-    else
-        m_fp = fp;
 }
 
 void wxLogStderr::DoLogText(const wxString& msg)
@@ -856,7 +852,7 @@ void wxLogStderr::DoLogText(const wxString& msg)
     // First send it to stderr, even if we don't have it (e.g. in a Windows GUI
     // application under) it's not a problem to try to use it and it's easier
     // than determining whether we do have it or not.
-    wxMessageOutputStderr(m_fp).Output(msg);
+    wxMessageOutputStderr::Output(msg);
 
     // under GUI systems such as Windows or Mac, programs usually don't have
     // stderr at all, so show the messages also somewhere else, typically in
@@ -878,7 +874,8 @@ void wxLogStderr::DoLogText(const wxString& msg)
 
 #if wxUSE_STD_IOSTREAM
 #include "wx/ioswrap.h"
-wxLogStream::wxLogStream(wxSTD ostream *ostr)
+wxLogStream::wxLogStream(wxSTD ostream *ostr, const wxMBConv& conv)
+    : wxMessageOutputWithConv(conv)
 {
     if ( ostr == NULL )
         m_ostr = &wxSTD cerr;
@@ -888,7 +885,8 @@ wxLogStream::wxLogStream(wxSTD ostream *ostr)
 
 void wxLogStream::DoLogText(const wxString& msg)
 {
-    (*m_ostr) << msg << wxSTD endl;
+    const wxCharBuffer& buf = PrepareForOutput(msg);
+    m_ostr->write(buf, buf.length());
 }
 #endif // wxUSE_STD_IOSTREAM
 
@@ -1054,27 +1052,25 @@ static void wxLogWrap(FILE *f, const char *pszPrefix, const char *psz)
 // get error code from syste
 unsigned long wxSysErrorCode()
 {
-#if defined(__WINDOWS__) && !defined(__WXMICROWIN__)
+#if defined(__WINDOWS__)
     return ::GetLastError();
 #else   //Unix
     return errno;
 #endif  //Win/Unix
 }
 
-// get error message from system
-const wxChar *wxSysErrorMsg(unsigned long nErrCode)
+static const wxChar* GetSysErrorMsg(wxChar* szBuf, size_t sizeBuf, unsigned long nErrCode)
 {
     if ( nErrCode == 0 )
         nErrCode = wxSysErrorCode();
 
-#if defined(__WINDOWS__) && !defined(__WXMICROWIN__)
-    static wxChar s_szBuf[1024];
-
+#if defined(__WINDOWS__)
     // get error message from system
     LPVOID lpMsgBuf;
     if ( ::FormatMessage
          (
-            FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
+            FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM |
+            FORMAT_MESSAGE_IGNORE_INSERTS,
             NULL,
             nErrCode,
             MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
@@ -1083,48 +1079,76 @@ const wxChar *wxSysErrorMsg(unsigned long nErrCode)
             NULL
          ) == 0 )
     {
+        wxLogDebug(wxS("FormatMessage failed with error 0x%lx in %s"),
+            GetLastError(), __WXFUNCTION__ ? __WXFUNCTION__ : "");
         // if this happens, something is seriously wrong, so don't use _() here
         // for safety
-        wxSprintf(s_szBuf, wxS("unknown error %lx"), nErrCode);
-        return s_szBuf;
+        wxSprintf(szBuf, wxS("unknown error 0x%lx"), nErrCode);
+        return szBuf;
     }
 
 
     // copy it to our buffer and free memory
     // Crashes on SmartPhone (FIXME)
-#if !defined(__SMARTPHONE__) /* of WinCE */
     if( lpMsgBuf != 0 )
     {
-        wxStrlcpy(s_szBuf, (const wxChar *)lpMsgBuf, WXSIZEOF(s_szBuf));
+        wxStrlcpy(szBuf, (const wxChar *)lpMsgBuf, sizeBuf);
 
         LocalFree(lpMsgBuf);
 
-        // returned string is capitalized and ended with '\r\n' - bad
-        s_szBuf[0] = (wxChar)wxTolower(s_szBuf[0]);
-        size_t len = wxStrlen(s_szBuf);
-        if ( len > 0 ) {
+        // returned string is ended with '\r\n' - bad
+        size_t len = wxStrlen(szBuf);
+        if ( len >= 2 ) {
             // truncate string
-            if ( s_szBuf[len - 2] == wxS('\r') )
-                s_szBuf[len - 2] = wxS('\0');
+            if ( szBuf[len - 2] == wxS('\r') )
+                szBuf[len - 2] = wxS('\0');
         }
     }
     else
-#endif // !__SMARTPHONE__
     {
-        s_szBuf[0] = wxS('\0');
+        szBuf[0] = wxS('\0');
     }
 
-    return s_szBuf;
+    return szBuf;
 #else // !__WINDOWS__
+        char buffer[1024];
+        char *errorMsg = buffer;
+
+#if defined(__GLIBC__) && defined(_GNU_SOURCE) // GNU-specific strerror_r
+        // GNU's strerror_r has a weird interface -- it doesn't
+        // necessarily copy anything to the buffer given; use return
+        // value instead.
+        errorMsg = strerror_r((int)nErrCode, buffer, sizeof(buffer));
+#elif defined( __VMS )
+        errorMsg = strerror((int)nErrCode);
+#else // XSI-compliant strerror_r
+        strerror_r((int)nErrCode, buffer, sizeof(buffer));
+#endif
+
+        // at this point errorMsg might not point to buffer anymore
+        szBuf[0] = wxS('\0');
     #if wxUSE_UNICODE
-        static wchar_t s_wzBuf[1024];
-        wxConvCurrent->MB2WC(s_wzBuf, strerror((int)nErrCode),
-                             WXSIZEOF(s_wzBuf) - 1);
-        return s_wzBuf;
+        wxConvCurrent->MB2WC(szBuf, errorMsg, sizeBuf - 1);
+        szBuf[sizeBuf - 1] = wxS('\0');
     #else
-        return strerror((int)nErrCode);
+        wxStrlcpy(szBuf, errorMsg, sizeBuf);
     #endif
+        return szBuf;
 #endif  // __WINDOWS__/!__WINDOWS__
+}
+
+// get error message from system
+const wxChar *wxSysErrorMsg(unsigned long nErrCode)
+{
+    static wxChar s_szBuf[1024];
+    return GetSysErrorMsg(s_szBuf, WXSIZEOF(s_szBuf), nErrCode);
+}
+
+// get error message from system as wxString
+wxString wxSysErrorMsgStr(unsigned long nErrCode)
+{
+    wxChar szBuf[1024];
+    return GetSysErrorMsg(szBuf, WXSIZEOF(szBuf), nErrCode);
 }
 
 #endif // wxUSE_LOG

@@ -76,7 +76,7 @@ switch_page(GtkNotebook* widget, GtkNotebookPage*, guint page_num, wxMDIParentFr
 // wxMDIParentFrame
 //-----------------------------------------------------------------------------
 
-IMPLEMENT_DYNAMIC_CLASS(wxMDIParentFrame,wxFrame)
+wxIMPLEMENT_DYNAMIC_CLASS(wxMDIParentFrame, wxFrame);
 
 void wxMDIParentFrame::Init()
 {
@@ -256,12 +256,12 @@ void wxMDIParentFrame::ActivatePrevious()
 // wxMDIChildFrame
 //-----------------------------------------------------------------------------
 
-IMPLEMENT_DYNAMIC_CLASS(wxMDIChildFrame,wxFrame)
+wxIMPLEMENT_DYNAMIC_CLASS(wxMDIChildFrame, wxFrame);
 
-BEGIN_EVENT_TABLE(wxMDIChildFrame, wxFrame)
+wxBEGIN_EVENT_TABLE(wxMDIChildFrame, wxFrame)
     EVT_ACTIVATE(wxMDIChildFrame::OnActivate)
     EVT_MENU_HIGHLIGHT_ALL(wxMDIChildFrame::OnMenuHighlight)
-END_EVENT_TABLE()
+wxEND_EVENT_TABLE()
 
 void wxMDIChildFrame::Init()
 {
@@ -375,7 +375,7 @@ void wxMDIChildFrame::SetTitle( const wxString &title )
 // wxMDIClientWindow
 //-----------------------------------------------------------------------------
 
-IMPLEMENT_DYNAMIC_CLASS(wxMDIClientWindow, wxWindow)
+wxIMPLEMENT_DYNAMIC_CLASS(wxMDIClientWindow, wxWindow);
 
 wxMDIClientWindow::~wxMDIClientWindow()
 {
@@ -422,7 +422,13 @@ void wxMDIClientWindow::AddChildGTK(wxWindowGTK* child)
         s = _("MDI child");
 
     GtkWidget *label_widget = gtk_label_new( s.mbc_str() );
+#ifdef __WXGTK4__
+    g_object_set(label_widget, "xalign", 0.0f, NULL);
+#else
+    wxGCC_WARNING_SUPPRESS(deprecated-declarations)
     gtk_misc_set_alignment( GTK_MISC(label_widget), 0.0, 0.5 );
+    wxGCC_WARNING_RESTORE()
+#endif
 
     GtkNotebook* notebook = GTK_NOTEBOOK(m_widget);
 

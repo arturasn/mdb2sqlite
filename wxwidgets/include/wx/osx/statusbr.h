@@ -27,16 +27,23 @@ public:
               const wxString& name = wxStatusBarNameStr);
 
     // Implementation
-    virtual void MacHiliteChanged();
+    virtual void MacHiliteChanged() wxOVERRIDE;
     void OnPaint(wxPaintEvent& event);
 
 protected:
-    virtual void DrawFieldText(wxDC& dc, const wxRect& rc, int i, int textHeight);
-    virtual void DrawField(wxDC& dc, int i, int textHeight);
-    virtual void DoUpdateStatusText(int number = 0);
+    virtual void DrawFieldText(wxDC& dc, const wxRect& rc, int i, int textHeight) wxOVERRIDE;
+    virtual void DrawField(wxDC& dc, int i, int textHeight) wxOVERRIDE;
+    virtual void DoUpdateStatusText(int number = 0) wxOVERRIDE;
 
-    DECLARE_DYNAMIC_CLASS(wxStatusBarMac)
-    DECLARE_EVENT_TABLE()
+    virtual void InitColours() wxOVERRIDE;
+
+private:
+    wxColour m_textActive, m_textInactive,
+             m_bgActiveFrom, m_bgActiveTo,
+             m_borderActive, m_borderInactive;
+
+    wxDECLARE_DYNAMIC_CLASS(wxStatusBarMac);
+    wxDECLARE_EVENT_TABLE();
 };
 
 #endif // _WX_STATBAR_H_

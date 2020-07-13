@@ -24,8 +24,13 @@
 #include <mshtml.h>
 #include "wx/msw/registry.h"
 #include "wx/msw/missing.h"
+#include "wx/msw/ole/safearray.h"
 #include "wx/filesys.h"
 #include "wx/dynlib.h"
+#include "wx/scopeguard.h"
+
+#include "wx/private/jsscriptwrapper.h"
+
 #include <initguid.h>
 #include <wininet.h>
 
@@ -59,10 +64,10 @@ enum //Internal find flags
 
 wxIMPLEMENT_DYNAMIC_CLASS(wxWebViewIE, wxWebView);
 
-BEGIN_EVENT_TABLE(wxWebViewIE, wxControl)
+wxBEGIN_EVENT_TABLE(wxWebViewIE, wxControl)
     EVT_ACTIVEX(wxID_ANY, wxWebViewIE::onActiveXEvent)
     EVT_ERASE_BACKGROUND(wxWebViewIE::onEraseBg)
-END_EVENT_TABLE()
+wxEND_EVENT_TABLE()
 
 bool wxWebViewIE::Create(wxWindow* parent,
            wxWindowID id,
@@ -105,6 +110,10 @@ bool wxWebViewIE::Create(wxWindow* parent,
 
     EnableControlFeature(21 /* FEATURE_DISABLE_NAVIGATION_SOUNDS */);
 
+    // Make behaviour consistent with the other backends when loading localhost
+    // pages without any physical network connection.
+    SetOfflineMode(false);
+
     LoadURL(url);
     return true;
 }
@@ -128,7 +137,7 @@ wxWebViewIE::~wxWebViewIE()
 
         for(unsigned int i = 0; i < m_factories.size(); i++)
         {
-            session->UnregisterNameSpace(m_factories[i], 
+            session->UnregisterNameSpace(m_factories[i],
                                         (m_factories[i]->GetName()).wc_str());
             m_factories[i]->Release();
         }
@@ -141,18 +150,39 @@ void wxWebViewIE::LoadURL(const wxString& url)
     m_ie.CallMethod("Navigate", wxConvertStringToOle(url));
 }
 
+namespace
+{
+
+// Helper function: wrap the given string in a SAFEARRAY<VARIANT> of size 1.
+SAFEARRAY* MakeOneElementVariantSafeArray(const wxString& str)
+{
+    wxSafeArray<VT_VARIANT> sa;
+    if ( !sa.Create(1) )
+    {
+        wxLogLastError(wxT("SafeArrayCreateVector"));
+        return NULL;
+    }
+
+    long ind = 0;
+    if ( !sa.SetElement(&ind, str) )
+    {
+        wxLogLastError(wxT("SafeArrayPtrOfIndex"));
+        return NULL;
+    }
+
+    return sa.Detach();
+}
+
+} // anonymous namespace
+
 void wxWebViewIE::DoSetPage(const wxString& html, const wxString& baseUrl)
 {
-    BSTR bstr = SysAllocString(OLESTR(""));
-    SAFEARRAY *psaStrings = SafeArrayCreateVector(VT_VARIANT, 0, 1);
-    if (psaStrings != NULL)
     {
-        VARIANT *param;
-        HRESULT hr = SafeArrayAccessData(psaStrings, (LPVOID*)&param);
-        param->vt = VT_BSTR;
-        param->bstrVal = bstr;
+        SAFEARRAY* const psaStrings = MakeOneElementVariantSafeArray(wxString());
+        if ( !psaStrings )
+            return;
 
-        hr = SafeArrayUnaccessData(psaStrings);
+        wxON_BLOCK_EXIT1(SafeArrayDestroy, psaStrings);
 
         wxCOMPtr<IHTMLDocument2> document(GetDocument());
 
@@ -161,50 +191,34 @@ void wxWebViewIE::DoSetPage(const wxString& html, const wxString& baseUrl)
 
         document->write(psaStrings);
         document->close();
-
-        SafeArrayDestroy(psaStrings);
-
-        bstr = SysAllocString(html.wc_str());
-
-        // Creates a new one-dimensional array
-        psaStrings = SafeArrayCreateVector(VT_VARIANT, 0, 1);
-        if (psaStrings != NULL)
-        {
-            hr = SafeArrayAccessData(psaStrings, (LPVOID*)&param);
-            param->vt = VT_BSTR;
-            param->bstrVal = bstr;
-            hr = SafeArrayUnaccessData(psaStrings);
-
-            document = GetDocument();
-
-            if(!document)
-                return;
-
-            document->write(psaStrings);
-
-            // SafeArrayDestroy calls SysFreeString for each BSTR
-            SafeArrayDestroy(psaStrings);
-
-            //We send the events when we are done to mimic webkit
-            //Navigated event
-            wxWebViewEvent event(wxEVT_WEBVIEW_NAVIGATED,
-                                 GetId(), baseUrl, "");
-            event.SetEventObject(this);
-            HandleWindowEvent(event);
-
-            //Document complete event
-            event.SetEventType(wxEVT_WEBVIEW_LOADED);
-            event.SetEventObject(this);
-            HandleWindowEvent(event);
-        }
-        else
-        {
-            wxLogError("wxWebViewIE::SetPage() : psaStrings is NULL");
-        }
     }
-    else
+
     {
-        wxLogError("wxWebViewIE::SetPage() : psaStrings is NULL during clear");
+        SAFEARRAY* const psaStrings = MakeOneElementVariantSafeArray(html);
+
+        if ( !psaStrings )
+            return;
+
+        wxON_BLOCK_EXIT1(SafeArrayDestroy, psaStrings);
+
+        wxCOMPtr<IHTMLDocument2> document(GetDocument());
+
+        if(!document)
+            return;
+
+        document->write(psaStrings);
+
+        //We send the events when we are done to mimic webkit
+        //Navigated event
+        wxWebViewEvent event(wxEVT_WEBVIEW_NAVIGATED,
+                             GetId(), baseUrl, "");
+        event.SetEventObject(this);
+        HandleWindowEvent(event);
+
+        //Document complete event
+        event.SetEventType(wxEVT_WEBVIEW_LOADED);
+        event.SetEventObject(this);
+        HandleWindowEvent(event);
     }
 }
 
@@ -223,9 +237,9 @@ wxString wxWebViewIE::GetPageSource() const
             hr = bodyTag->get_parentElement(&htmlTag);
             if(SUCCEEDED(hr))
             {
-                BSTR bstr;
-                htmlTag->get_outerHTML(&bstr);
-                source = wxString(bstr);
+                wxBasicString bstr;
+                if ( htmlTag->get_outerHTML(bstr.ByRef()) == S_OK )
+                    source = bstr;
             }
         }
         return source;
@@ -531,15 +545,13 @@ bool wxWebViewIE::IsOfflineMode()
 
 void wxWebViewIE::SetOfflineMode(bool offline)
 {
-    // FIXME: the wxWidgets docs do not really document what the return
-    //        parameter of PutProperty is
 #if wxDEBUG_LEVEL
-    const bool success =
+    const HRESULT success =
 #endif
             m_ie.PutProperty("Offline", (offline ?
                                          VARIANT_TRUE :
                                          VARIANT_FALSE));
-    wxASSERT(success);
+    wxASSERT(SUCCEEDED(success));
 }
 
 bool wxWebViewIE::IsBusy() const
@@ -565,16 +577,15 @@ wxString wxWebViewIE::GetCurrentTitle() const
 {
     wxCOMPtr<IHTMLDocument2> document(GetDocument());
 
+    wxString s;
     if(document)
     {
-        BSTR title;
-        document->get_nameProp(&title);
-        return wxString(title);
+        wxBasicString title;
+        if ( document->get_nameProp(title.ByRef()) == S_OK )
+            s = title;
     }
-    else
-    {
-        return "";
-    }
+
+    return s;
 }
 
 bool wxWebViewIE::CanCut() const
@@ -685,9 +696,9 @@ void wxWebViewIE::SetEditable(bool enable)
     if(document)
     {
         if( enable )
-            document->put_designMode(SysAllocString(L"On"));
+            document->put_designMode(wxBasicString("On"));
         else
-            document->put_designMode(SysAllocString(L"Off"));
+            document->put_designMode(wxBasicString("Off"));
 
     }
 }
@@ -698,17 +709,14 @@ bool wxWebViewIE::IsEditable() const
 
     if(document)
     {
-        BSTR mode;
-        document->get_designMode(&mode);
-        if(wxString(mode) == "On")
-            return true;
-        else
-            return false;
+        wxBasicString mode;
+        if ( document->get_designMode(mode.ByRef()) == S_OK )
+        {
+            if ( wxString(mode) == "On" )
+                return true;
+        }
     }
-    else
-    {
-        return false;
-    }
+    return false;
 }
 
 void wxWebViewIE::SelectAll()
@@ -727,9 +735,9 @@ bool wxWebViewIE::HasSelection() const
         HRESULT hr = document->get_selection(&selection);
         if(SUCCEEDED(hr))
         {
-            BSTR type;
-            selection->get_type(&type);
-            sel = wxString(type);
+            wxBasicString type;
+            if ( selection->get_type(type.ByRef()) == S_OK )
+                sel = type;
         }
         return sel != "None";
     }
@@ -763,9 +771,9 @@ wxString wxWebViewIE::GetSelectedText() const
                 hr = disrange->QueryInterface(IID_IHTMLTxtRange, (void**)&range);
                 if(SUCCEEDED(hr))
                 {
-                    BSTR text;
-                    range->get_text(&text);
-                    selected = wxString(text);
+                    wxBasicString text;
+                    if ( range->get_text(text.ByRef()) == S_OK )
+                        selected = text;
                 }
             }
         }
@@ -796,9 +804,9 @@ wxString wxWebViewIE::GetSelectedSource() const
                 hr = disrange->QueryInterface(IID_IHTMLTxtRange, (void**)&range);
                 if(SUCCEEDED(hr))
                 {
-                    BSTR text;
-                    range->get_htmlText(&text);
-                    selected = wxString(text);
+                    wxBasicString text;
+                    if ( range->get_htmlText(text.ByRef()) == S_OK )
+                        selected = text;
                 }
             }
         }
@@ -837,9 +845,9 @@ wxString wxWebViewIE::GetPageText() const
         HRESULT hr = document->get_body(&body);
         if(SUCCEEDED(hr))
         {
-            BSTR out;
-            body->get_innerText(&out);
-            text = wxString(out);
+            wxBasicString out;
+            if ( body->get_innerText(out.ByRef()) == S_OK )
+                text = out;
         }
         return text;
     }
@@ -849,25 +857,100 @@ wxString wxWebViewIE::GetPageText() const
     }
 }
 
-void wxWebViewIE::RunScript(const wxString& javascript)
+bool wxWebViewIE::MSWSetEmulationLevel(wxWebViewIE_EmulationLevel level)
 {
-    wxCOMPtr<IHTMLDocument2> document(GetDocument());
+    // Registry key where emulation level for programs are set
+    static const wxChar* IE_EMULATION_KEY =
+        wxT("SOFTWARE\\Microsoft\\Internet Explorer\\Main")
+        wxT("\\FeatureControl\\FEATURE_BROWSER_EMULATION");
 
-    if(document)
+    wxRegKey key(wxRegKey::HKCU, IE_EMULATION_KEY);
+    if ( !key.Exists() )
     {
-        wxCOMPtr<IHTMLWindow2> window;
-        wxString language = "javascript";
-        HRESULT hr = document->get_parentWindow(&window);
-        if(SUCCEEDED(hr))
+        wxLogWarning(_("Failed to find web view emulation level in the registry"));
+        return false;
+    }
+
+    const wxString programName = wxGetFullModuleName().AfterLast('\\');
+    if ( level != wxWEBVIEWIE_EMU_DEFAULT )
+    {
+        if ( !key.SetValue(programName, level) )
         {
-            VARIANT level;
-            VariantInit(&level);
-            V_VT(&level) = VT_EMPTY;
-            window->execScript(SysAllocString(javascript.wc_str()),
-                               SysAllocString(language.wc_str()),
-                               &level);
+            wxLogWarning(_("Failed to set web view to modern emulation level"));
+            return false;
         }
     }
+    else
+    {
+        if ( !key.DeleteValue(programName) )
+        {
+            wxLogWarning(_("Failed to reset web view to standard emulation level"));
+            return false;
+        }
+    }
+
+    return true;
+}
+
+static
+bool CallEval(const wxString& code,
+              wxAutomationObject& scriptAO,
+              wxVariant* varResult)
+{
+    wxVariant varCode(code);
+    return scriptAO.Invoke("eval", DISPATCH_METHOD, *varResult, 1, &varCode);
+}
+
+bool wxWebViewIE::RunScript(const wxString& javascript, wxString* output)
+{
+    wxCOMPtr<IHTMLDocument2> document(GetDocument());
+    if ( !document )
+    {
+        wxLogWarning(_("Can't run JavaScript script without a valid HTML document"));
+        return false;
+    }
+
+    IDispatch* scriptDispatch = NULL;
+    if ( FAILED(document->get_Script(&scriptDispatch)) )
+    {
+        wxLogWarning(_("Can't get the JavaScript object"));
+        return false;
+    }
+
+    wxJSScriptWrapper wrapJS(javascript, &m_runScriptCount);
+
+    wxAutomationObject scriptAO(scriptDispatch);
+    wxVariant varResult;
+
+    wxString err;
+    if ( !CallEval(wrapJS.GetWrappedCode(), scriptAO, &varResult) )
+    {
+        err = _("failed to evaluate");
+    }
+    else if ( varResult.IsType("bool") && varResult.GetBool() )
+    {
+        if ( output != NULL )
+        {
+            if ( CallEval(wrapJS.GetOutputCode(), scriptAO, &varResult) )
+                *output = varResult.MakeString();
+            else
+                err = _("failed to retrieve execution result");
+        }
+
+        CallEval(wrapJS.GetCleanUpCode(), scriptAO, &varResult);
+    }
+    else // result available but not the expected "true"
+    {
+        err = varResult.MakeString();
+    }
+
+    if ( !err.empty() )
+    {
+        wxLogWarning(_("Error running JavaScript: %s"), varResult.MakeString());
+        return false;
+    }
+
+    return true;
 }
 
 void wxWebViewIE::RegisterHandler(wxSharedPtr<wxWebViewHandler> handler)
@@ -909,7 +992,7 @@ bool wxWebViewIE::CanExecCommand(wxString command) const
     {
         VARIANT_BOOL enabled;
 
-        document->queryCommandEnabled(SysAllocString(command.wc_str()), &enabled);
+        document->queryCommandEnabled(wxBasicString(command), &enabled);
 
         return (enabled == VARIANT_TRUE);
     }
@@ -926,7 +1009,7 @@ void wxWebViewIE::ExecCommand(wxString command)
 
     if(document)
     {
-        document->execCommand(SysAllocString(command.wc_str()), VARIANT_FALSE, VARIANT(), NULL);
+        document->execCommand(wxBasicString(command), VARIANT_FALSE, VARIANT(), NULL);
     }
 }
 
@@ -946,7 +1029,6 @@ wxCOMPtr<IHTMLDocument2> wxWebViewIE::GetDocument() const
 bool wxWebViewIE::IsElementVisible(wxCOMPtr<IHTMLElement> elm)
 {
     wxCOMPtr<IHTMLElement> elm1 = elm;
-    BSTR tmp_bstr;
     bool is_visible = true;
     //This method is not perfect but it does discover most of the hidden elements.
     //so if a better solution is found, then please do improve.
@@ -958,15 +1040,18 @@ bool wxWebViewIE::IsElementVisible(wxCOMPtr<IHTMLElement> elm)
             wxCOMPtr<wxIHTMLCurrentStyle> style;
             if(SUCCEEDED(elm2->get_currentStyle(&style)))
             {
+                wxBasicString display_bstr;
+                wxBasicString visibility_bstr;
+
                 //Check if the object has the style display:none.
-                if((style->get_display(&tmp_bstr) != S_OK) || 
-                   (tmp_bstr != NULL && (wxCRT_StricmpW(tmp_bstr, L"none") == 0)))
+                if((style->get_display(display_bstr.ByRef()) != S_OK) ||
+                    wxString(display_bstr).IsSameAs(wxS("none"), false))
                 {
                     is_visible = false;
                 }
                 //Check if the object has the style visibility:hidden.
-                if((is_visible && (style->get_visibility(&tmp_bstr) != S_OK)) ||
-                  (tmp_bstr != NULL && wxCRT_StricmpW(tmp_bstr, L"hidden") == 0))
+                if((is_visible && (style->get_visibility(visibility_bstr.ByRef()) != S_OK)) ||
+                    wxString(visibility_bstr).IsSameAs(wxS("hidden"), false))
                 {
                     is_visible = false;
                 }
@@ -1003,8 +1088,9 @@ void wxWebViewIE::FindInternal(const wxString& text, int flags, int internal_fla
         if(SUCCEEDED(document->QueryInterface(wxIID_IMarkupContainer, (void **)&pIMC)))
         {
             wxCOMPtr<wxIMarkupPointer> ptrBegin, ptrEnd;
-            BSTR attr_bstr = SysAllocString(L"style=\"background-color:#ffff00\"");
-            BSTR text_bstr = SysAllocString(text.wc_str());
+            wxBasicString attr_bstr(wxS("style=\"background-color:#ffff00\""));
+            wxBasicString text_bstr(text);
+
             pIMS->CreateMarkupPointer(&ptrBegin);
             pIMS->CreateMarkupPointer(&ptrEnd);
 
@@ -1060,9 +1146,6 @@ void wxWebViewIE::FindInternal(const wxString& text, int flags, int internal_fla
                 }
                 ptrBegin->MoveToPointer(ptrEnd);
             }
-            //Clean up.
-            SysFreeString(text_bstr);
-            SysFreeString(attr_bstr);
         }
     }
 }
@@ -1244,7 +1327,7 @@ void wxWebViewIE::onActiveXEvent(wxActiveXEvent& evt)
         {
             wxString url = evt[1].GetString();
             // TODO: set target parameter if possible
-            wxString target = wxEmptyString;
+            wxString target;
             wxWebViewEvent event(wxEVT_WEBVIEW_NAVIGATED,
                                  GetId(), url, target);
             event.SetEventObject(this);
@@ -1277,7 +1360,7 @@ void wxWebViewIE::onActiveXEvent(wxActiveXEvent& evt)
             if(m_historyEnabled && !m_historyLoadingFromList &&
               (url == GetCurrentURL() ||
               (GetCurrentURL().substr(0, 4) == "file" &&
-               wxFileSystem::URLToFileName(GetCurrentURL()).GetFullPath() == url)))
+               wxFileName::URLToFileName(GetCurrentURL()).GetFullPath() == url)))
             {
                 //If we are not at the end of the list, then erase everything
                 //between us and the end before adding the new page
@@ -1295,7 +1378,7 @@ void wxWebViewIE::onActiveXEvent(wxActiveXEvent& evt)
             //Reset the find values.
             FindClear();
             // TODO: set target parameter if possible
-            wxString target = wxEmptyString;
+            wxString target;
             wxWebViewEvent event(wxEVT_WEBVIEW_LOADED, GetId(),
                                  url, target);
             event.SetEventObject(this);
@@ -1388,9 +1471,15 @@ void wxWebViewIE::onActiveXEvent(wxActiveXEvent& evt)
         case DISPID_NEWWINDOW3:
         {
             wxString url = evt[4].GetString();
+            long flags = evt[2].GetLong();
+
+            wxWebViewNavigationActionFlags navFlags = wxWEBVIEW_NAV_ACTION_OTHER;
+
+            if(flags & wxNWMF_USERINITED || flags & wxNWMF_USERREQUESTED)
+                navFlags = wxWEBVIEW_NAV_ACTION_USER;
 
             wxWebViewEvent event(wxEVT_WEBVIEW_NEWWINDOW,
-                                 GetId(), url, wxEmptyString);
+                                 GetId(), url, wxEmptyString, navFlags);
             event.SetEventObject(this);
             HandleWindowEvent(event);
 
@@ -1542,16 +1631,20 @@ HRESULT wxSTDCALL DocHostUIHandler::ShowContextMenu(DWORD dwID, POINT *ppt,
     wxUnusedVar(ppt);
     wxUnusedVar(pcmdtReserved);
     wxUnusedVar(pdispReserved);
-    if(m_browser->IsContextMenuEnabled()) 
-        return E_NOTIMPL; 
-    else 
-        return S_OK; 
+    if(m_browser->IsContextMenuEnabled())
+        return E_NOTIMPL;
+    else
+        return S_OK;
 }
 
 HRESULT wxSTDCALL DocHostUIHandler::GetHostInfo(DOCHOSTUIINFO *pInfo)
 {
-    //don't show 3d border and enable themes.
-    pInfo->dwFlags = pInfo->dwFlags | DOCHOSTUIFLAG_NO3DBORDER | DOCHOSTUIFLAG_THEME;
+    // Don't show 3d border and enable themes and also enable sending redirect
+    // notifications as otherwise we wouldn't get wxEVT_WEBVIEW_NAVIGATING when
+    // redirected.
+    pInfo->dwFlags |= DOCHOSTUIFLAG_NO3DBORDER |
+                      DOCHOSTUIFLAG_THEME |
+                      DOCHOSTUIFLAG_ENABLE_REDIRECT_NOTIFICATION;
     return S_OK;
 }
 
@@ -1615,7 +1708,7 @@ HRESULT wxSTDCALL DocHostUIHandler::TranslateAccelerator(LPMSG lpMsg,
     {
         // check control is down but that it isn't right-alt which is mapped to
         // alt + ctrl
-        if(GetKeyState(VK_CONTROL) & 0x8000 && 
+        if(GetKeyState(VK_CONTROL) & 0x8000 &&
          !(GetKeyState(VK_MENU) & 0x8000))
         {
             //skip the accelerators used by the control

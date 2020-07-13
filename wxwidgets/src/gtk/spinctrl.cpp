@@ -20,9 +20,7 @@
     #include "wx/wxcrtvararg.h"
 #endif
 
-#include <gtk/gtk.h>
 #include "wx/gtk/private.h"
-#include "wx/gtk/private/gtk2-compat.h"
 
 //-----------------------------------------------------------------------------
 // data
@@ -83,7 +81,7 @@ gtk_changed(GtkSpinButton* spinbutton, wxSpinCtrl* win)
 class wxSpinCtrlEventDisabler
 {
 public:
-    wxEXPLICIT wxSpinCtrlEventDisabler(wxSpinCtrlGTKBase* spin)
+    explicit wxSpinCtrlEventDisabler(wxSpinCtrlGTKBase* spin)
         : m_spin(spin)
     {
         m_spin->GtkDisableEvents();
@@ -104,9 +102,9 @@ private:
 // wxSpinCtrlGTKBase
 //-----------------------------------------------------------------------------
 
-BEGIN_EVENT_TABLE(wxSpinCtrlGTKBase, wxSpinCtrlBase)
+wxBEGIN_EVENT_TABLE(wxSpinCtrlGTKBase, wxSpinCtrlBase)
     EVT_CHAR(wxSpinCtrlGTKBase::OnChar)
-END_EVENT_TABLE()
+wxEND_EVENT_TABLE()
 
 bool wxSpinCtrlGTKBase::Create(wxWindow *parent, wxWindowID id,
                         const wxString& value,
@@ -269,6 +267,8 @@ void wxSpinCtrlGTKBase::DoSetRange(double minVal, double maxVal)
 
     wxSpinCtrlEventDisabler disable(this);
     gtk_spin_button_set_range( GTK_SPIN_BUTTON(m_widget), minVal, maxVal);
+
+    InvalidateBestSize();
 }
 
 void wxSpinCtrlGTKBase::DoSetIncrement(double inc)
@@ -342,8 +342,7 @@ void wxSpinCtrlGTKBase::OnChar( wxKeyEvent &event )
 GdkWindow *wxSpinCtrlGTKBase::GTKGetWindow(wxArrayGdkWindows& windows) const
 {
 #ifdef __WXGTK3__
-    void wxGTKFindWindow(GtkWidget* widget, wxArrayGdkWindows& windows);
-    wxGTKFindWindow(m_widget, windows);
+    GTKFindWindow(m_widget, windows);
 #else
     GtkSpinButton* spinbutton = GTK_SPIN_BUTTON(m_widget);
 
@@ -356,31 +355,33 @@ GdkWindow *wxSpinCtrlGTKBase::GTKGetWindow(wxArrayGdkWindows& windows) const
 
 wxSize wxSpinCtrlGTKBase::DoGetBestSize() const
 {
-    return DoGetSizeFromTextSize(95); // TODO: 95 is completely arbitrary
+    const int minVal = static_cast<int>(DoGetMin());
+    const int maxVal = static_cast<int>(DoGetMax());
+    return wxPrivate::wxSpinCtrlGetBestSize(this, minVal, maxVal, GetBase());
 }
 
 wxSize wxSpinCtrlGTKBase::DoGetSizeFromTextSize(int xlen, int ylen) const
 {
     wxASSERT_MSG( m_widget, wxS("GetSizeFromTextSize called before creation") );
 
-    // Set an as small as possible size for the control, so preferred sizes
-    // return "natural" sizes, not taking into account the previous ones (which
-    // seems to be GTK+3 behaviour)
-    gtk_widget_set_size_request(m_widget, 0, 0);
+    const gint widthChars = gtk_entry_get_width_chars(GTK_ENTRY(m_widget));
+    gtk_entry_set_width_chars(GTK_ENTRY(m_widget), 0);
+#if GTK_CHECK_VERSION(3,12,0)
+    gint maxWidthChars = 0;
+    if ( gtk_check_version(3,12,0) == NULL )
+    {
+        maxWidthChars = gtk_entry_get_max_width_chars(GTK_ENTRY(m_widget));
+        gtk_entry_set_max_width_chars(GTK_ENTRY(m_widget), 0);
+    }
+#endif // GTK+ 3.12+
 
-    // Both Gtk+2 and Gtk+3 use current value/range to measure control's width.
-    // So, we can't ask Gtk+ for its width. Instead, we used hardcoded values.
-
-    // Returned height is OK
     wxSize totalS = GTKGetPreferredSize(m_widget);
 
-#if GTK_CHECK_VERSION(3,4,0)
-    // two buttons in horizontal
-    totalS.x = 46 + 15; // margins included
-#else
-    // two small buttons in vertical
-    totalS.x = GetFont().GetPixelSize().y + 13; // margins included
-#endif
+#if GTK_CHECK_VERSION(3,12,0)
+    if ( gtk_check_version(3,12,0) == NULL )
+        gtk_entry_set_max_width_chars(GTK_ENTRY(m_widget), maxWidthChars);
+#endif // GTK+ 3.12+
+    gtk_entry_set_width_chars(GTK_ENTRY(m_widget), widthChars);
 
     wxSize tsize(xlen + totalS.x, totalS.y);
 
@@ -471,6 +472,11 @@ bool wxSpinCtrl::SetBase(int base)
                                              this);
     }
 
+    InvalidateBestSize();
+
+    // Update the displayed text after changing the base it uses.
+    SetValue(GetValue());
+
     return true;
 }
 
@@ -478,7 +484,7 @@ bool wxSpinCtrl::SetBase(int base)
 // wxSpinCtrlDouble
 //-----------------------------------------------------------------------------
 
-IMPLEMENT_DYNAMIC_CLASS(wxSpinCtrlDouble, wxSpinCtrlGTKBase)
+wxIMPLEMENT_DYNAMIC_CLASS(wxSpinCtrlDouble, wxSpinCtrlGTKBase);
 
 unsigned wxSpinCtrlDouble::GetDigits() const
 {

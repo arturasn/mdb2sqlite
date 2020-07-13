@@ -2,6 +2,7 @@
 #include "stdafx.h"
 #include "FieldStatements.h"
 #include <afxdao.h>
+#include "wxuse.h"
 #include <wx/textctrl.h>
 #include <fstream>
 #include <iomanip>

@@ -93,6 +93,9 @@ enum wxImagePNGType
 #define wxIMAGE_OPTION_CUR_HOTSPOT_Y                    wxString("HotSpotY")
 
 #define wxIMAGE_OPTION_GIF_COMMENT                      wxString("GifComment")
+#define wxIMAGE_OPTION_GIF_TRANSPARENCY                 wxString("Transparency")
+#define wxIMAGE_OPTION_GIF_TRANSPARENCY_HIGHLIGHT       wxString("Highlight")
+#define wxIMAGE_OPTION_GIF_TRANSPARENCY_UNCHANGED       wxString("Unchanged")
 
 #define wxIMAGE_OPTION_PNG_FORMAT                       wxString("PngFormat")
 #define wxIMAGE_OPTION_PNG_BITDEPTH                     wxString("PngBitDepth")
@@ -224,7 +227,7 @@ public:
                 for which this function returns the number of frames in the
                 animation).
     */
-    virtual int GetImageCount(wxInputStream& stream);
+    int GetImageCount(wxInputStream& stream);
 
     /**
         Gets the MIME type associated with this handler.
@@ -242,7 +245,7 @@ public:
     wxBitmapType GetType() const;
 
     /**
-        Loads a image from a stream, putting the resulting data into @a image.
+        Loads an image from a stream, putting the resulting data into @a image.
 
         If the image file contains more than one image and the image handler is
         capable of retrieving these individually, @a index indicates which image
@@ -266,7 +269,7 @@ public:
                           bool verbose = true, int index = -1);
 
     /**
-        Saves a image in the output stream.
+        Saves an image in the output stream.
 
         @param image
             The image object which is to be affected by this operation.
@@ -322,6 +325,14 @@ public:
     void SetName(const wxString& name);
 
     /**
+       Sets the bitmap type for the handler.
+
+       @param type
+           The bitmap type.
+    */
+    void SetType(wxBitmapType type);
+
+    /**
         Retrieve the version information about the image library used by this
         handler.
 
@@ -339,7 +350,7 @@ protected:
     /**
        Called to get the number of images available in a multi-image file
        type, if supported.
-       
+
        NOTE: this function is allowed to change the current stream position
              since GetImageCount() will take care of restoring it later
     */
@@ -347,7 +358,7 @@ protected:
 
     /**
        Called to test if this handler can read an image from the given stream.
-       
+
        NOTE: this function is allowed to change the current stream position
              since CallDoCanRead() will take care of restoring it later
     */
@@ -501,7 +512,7 @@ public:
 
         double hue;
         double saturation;
-        double value;        
+        double value;
     };
 
     /**
@@ -942,9 +953,8 @@ public:
         than @a threshold are replaced with the mask colour and the alpha
         channel is removed. Otherwise nothing is done.
 
-        The mask colour is chosen automatically using
-        FindFirstUnusedColour() by this function, see the overload below if you
-        this is not appropriate.
+        The mask colour is chosen automatically using FindFirstUnusedColour(),
+        see the overload below if this is not appropriate.
 
         @return Returns @true on success, @false on error.
     */
@@ -1279,6 +1289,19 @@ public:
             PHOTOMETRIC_MINISWHITE or PHOTOMETRIC_MINISBLACK. The other values
             are taken care of.
 
+        Options specific to wxGIFHandler:
+        @li @c wxIMAGE_OPTION_GIF_TRANSPARENCY: How to deal with transparent pixels.
+            By default, the color of transparent pixels is changed to bright pink, so
+            that if the image is accidentally drawn without transparency, it will be
+            obvious.
+            Normally, this would not be noticed, as these pixels will not be rendered.
+            But in some cases it might be useful to load a GIF without making any
+            modifications to its colours.
+            Use @c wxIMAGE_OPTION_GIF_TRANSPARENCY_UNCHANGED to keep the colors correct.
+            Use @c wxIMAGE_OPTION_GIF_TRANSPARENCY_HIGHLIGHT to convert transparent pixels
+            to pink (default).
+            This option has been added in wxWidgets 3.1.1.
+
         @note
         Be careful when combining the options @c wxIMAGE_OPTION_TIFF_SAMPLESPERPIXEL,
         @c wxIMAGE_OPTION_TIFF_BITSPERSAMPLE, and @c wxIMAGE_OPTION_TIFF_PHOTOMETRIC.
@@ -1372,6 +1395,12 @@ public:
 
     /**
         Loads an image from an input stream.
+
+        If the file can't be loaded, this function returns false and logs an
+        error using wxLogError(). If the file can be loaded but some problems
+        were detected while doing it, it can also call wxLogWarning() to notify
+        about these problems. If this is undesirable, use SetLoadFlags() to
+        reset @c Load_Verbose flag and suppress these warnings.
 
         @param stream
             Opened input stream from which to load the image.
@@ -1606,6 +1635,47 @@ public:
                  bool static_data = false);
 
     /**
+        Sets the default value for the flags used for loading image files.
+
+        This method changes the global value of the flags used for all the
+        subsequently created wxImage objects by default. It doesn't affect the
+        already existing objects.
+
+        By default, the global flags include @c Load_Verbose flag value.
+
+        @see LoadFile(), SetLoadFlags(), GetDefaultLoadFlags()
+
+        @since 3.1.0
+     */
+    static void SetDefaultLoadFlags(int flags);
+
+    /**
+        Sets the flags used for loading image files by this object.
+
+        The flags will affect any future calls to LoadFile() for this object.
+        To change the flags for all image objects, call SetDefaultLoadFlags()
+        before creating any of them.
+
+        Currently the only defined flag is @c Load_Verbose which determines if
+        the non-fatal (i.e. not preventing the file from being loaded
+        completely) problems should result in the calls to wxLogWarning()
+        function. It is recommended to customize handling of these warnings by
+        e.g. defining a custom log target (see @ref overview_log), but if such
+        warnings should be completely suppressed, clearing this flag provides a
+        simple way to do it, for example:
+        @code
+            wxImage image;
+            image.SetLoadFlags(image.GetLoadFlags() & ~wxImage::Load_Verbose);
+            image.LoadFile(...);
+        @endcode
+
+        @see LoadFile(), SetLoadFlags(), GetLoadFlags()
+
+        @since 3.1.0
+     */
+    void SetLoadFlags(int flags);
+
+    /**
         Specifies whether there is a mask or not.
 
         The area of the mask is determined by the current mask colour.
@@ -1673,7 +1743,7 @@ public:
     /**
        Set the color of the pixel at the given x and y coordinate.
     */
-    
+
     void SetRGB( int x, int y, unsigned char r, unsigned char g, unsigned char b );
 
     /**
@@ -1852,6 +1922,15 @@ public:
     */
     static bool CanRead(wxInputStream& stream);
 
+    /**
+        Returns the currently used default file load flags.
+
+        See SetDefaultLoadFlags() for more information about these flags.
+
+        @since 3.1.0
+     */
+    static int GetDefaultLoadFlags();
+
     //@{
     /**
         If the image file contains more than one image and the image handler is
@@ -1908,6 +1987,15 @@ public:
         @see wxImageHandler
     */
     static wxString GetImageExtWildcard();
+
+    /**
+        Returns the file load flags used for this object.
+
+        See SetLoadFlags() for more information about these flags.
+
+        @since 3.1.0
+     */
+    int GetLoadFlags() const;
 
     /**
         Converts a color in RGB color space to HSV color space.

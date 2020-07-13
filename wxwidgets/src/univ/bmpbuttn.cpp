@@ -37,10 +37,10 @@
 // implementation
 // ============================================================================
 
-BEGIN_EVENT_TABLE(wxBitmapButton, wxButton)
+wxBEGIN_EVENT_TABLE(wxBitmapButton, wxButton)
     EVT_SET_FOCUS(wxBitmapButton::OnSetFocus)
     EVT_KILL_FOCUS(wxBitmapButton::OnKillFocus)
-END_EVENT_TABLE()
+wxEND_EVENT_TABLE()
 
 // ----------------------------------------------------------------------------
 // wxBitmapButton
@@ -94,6 +94,7 @@ bool wxBitmapButton::ChangeBitmap(const wxBitmap& bmp)
         return false;
 
     m_bitmap = bitmap;
+    SetInitialSize(bitmap.GetSize());
 
     return true;
 }

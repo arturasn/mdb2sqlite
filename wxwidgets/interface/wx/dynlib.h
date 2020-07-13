@@ -118,6 +118,16 @@ public:
     wxDynamicLibrary(const wxString& name, int flags = wxDL_DEFAULT);
 
     /**
+        Returns the platform-specific dynamic library file extension, or
+        depending on @a flags, the plugin file extension. The leading dot
+        is included.
+
+        For example, on Windows @c ".dll" is returned, and either @c ".dylib"
+        or @c ".bundle" on OS X.
+    */
+    static wxString GetDllExt(wxDynamicLibraryCategory cat = wxDL_LIBRARY);
+
+    /**
         Returns the platform-specific full name for the library called @a name.
         E.g. it adds a @c ".dll" extension under Windows and @c "lib" prefix
         and @c ".so", @c ".sl" or @c ".dylib" extension under Unix.
@@ -194,6 +204,21 @@ public:
         useful mostly for diagnostics purposes.
     */
     static wxDynamicLibraryDetailsArray ListLoaded();
+
+    /**
+        Returns the load address of the module containing the specified address
+        or @NULL if not found.
+
+        If the second argument @a path is not @NULL, it is filled with the full
+        path to the file the module was loaded from upon a successful return.
+
+        This method is implemented under MSW and Unix platforms providing
+        `dladdr()` call (which include Linux and various BSD systems) and
+        always returns @NULL elsewhere.
+
+        @since 3.1.0
+    */
+    static void* GetModuleFromAddress(const void* addr, wxString* path = NULL);
 
     /**
         Loads DLL with the given @a name into memory. The @a flags argument can

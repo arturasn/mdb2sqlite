@@ -3,7 +3,7 @@
 // Purpose:     implementation of wxButtonBase
 // Author:      Vadim Zeitlin
 // Created:     2007-04-08
-// Copyright:   (c) 2007 Vadim Zeitlin <vadim@wxwindows.org>
+// Copyright:   (c) 2007 Vadim Zeitlin <vadim@wxwidgets.org>
 // Licence:     wxWindows licence
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -71,7 +71,7 @@ wxFLAGS_MEMBER(wxBU_BOTTOM)
 wxFLAGS_MEMBER(wxBU_EXACTFIT)
 wxEND_FLAGS( wxButtonStyle )
 
-wxIMPLEMENT_DYNAMIC_CLASS_XTI(wxButton, wxControl, "wx/button.h")
+wxIMPLEMENT_DYNAMIC_CLASS_XTI(wxButton, wxControl, "wx/button.h");
 
 wxBEGIN_PROPERTIES_TABLE(wxButton)
 wxEVENT_PROPERTY( Click, wxEVT_BUTTON, wxCommandEvent )

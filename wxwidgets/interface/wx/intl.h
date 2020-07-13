@@ -55,8 +55,13 @@ struct wxLanguageInfo
     /// @onlyfor{wxmsw}
     wxUint32 GetLCID() const;
 
-    /// Return the locale name corresponding to this language usable with
-    /// @c setlocale() on the current system.
+    /**
+        Return the locale name corresponding to this language usable with
+        @c setlocale() on the current system.
+
+        If setting locale for this language is not supported, the returned
+        string is empty.
+     */
     wxString GetLocaleName() const;
 };
 
@@ -93,15 +98,15 @@ enum wxLocaleCategory
 
 /**
     The values understood by wxLocale::GetInfo().
-    
-    Note that for the @c wxLOCALE_*_FMT constants (the date and time formats), 
+
+    Note that for the @c wxLOCALE_*_FMT constants (the date and time formats),
     the strings returned by wxLocale::GetInfo() use strftime() or,
     equivalently, wxDateTime::Format() format. If the relevant format
     couldn't be determined, an empty string is returned -- there is no
     fallback value so that the application could determine the best course
     of actions itself in such case.
 
-    All of these values are used with @c wxLOCALE_CAT_DATE in wxLocale::GetInfo() or, 
+    All of these values are used with @c wxLOCALE_CAT_DATE in wxLocale::GetInfo() or,
     more typically, with @c wxLOCALE_CAT_DEFAULT as they only apply to a single category.
 */
 enum wxLocaleInfo
@@ -209,6 +214,12 @@ enum wxLocaleInfo
 
     @see @ref overview_i18n, @ref page_samples_internat, wxXLocale, wxTranslations
 */
+enum wxLocaleInitFlags
+{
+    wxLOCALE_DONT_LOAD_DEFAULT = 0x0000,     ///< Don't load wxstd.mo catalog.
+    wxLOCALE_LOAD_DEFAULT      = 0x0001      ///< Load wxstd.mo (done by default).
+};
+
 class wxLocale
 {
 public:
@@ -356,15 +367,15 @@ public:
     /**
         Calls wxGetTranslation(const wxString&, const wxString&).
     */
-    virtual const wxString& GetString(const wxString& origString,
-                                      const wxString& domain = wxEmptyString) const;
+    const wxString& GetString(const wxString& origString,
+                              const wxString& domain = wxEmptyString) const;
 
     /**
         Calls wxGetTranslation(const wxString&, const wxString&, unsigned, const wxString&).
     */
-    virtual const wxString& GetString(const wxString& origString,
-                                      const wxString& origString2, unsigned n,
-                                      const wxString& domain = wxEmptyString) const;
+    const wxString& GetString(const wxString& origString,
+                              const wxString& origString2, unsigned n,
+                              const wxString& domain = wxEmptyString) const;
 
     /**
         Returns current platform-specific locale name as passed to setlocale().
@@ -422,6 +433,21 @@ public:
                             wxLocaleCategory cat = wxLOCALE_CAT_DEFAULT);
 
     /**
+        Get the values of a locale datum in the OS locale.
+
+        This function is similar to GetInfo() and, in fact, identical to it
+        under non-MSW systems. Under MSW it differs from it when no locale had
+        been explicitly set: GetInfo() returns the values corresponding to the
+        "C" locale used by the standard library functions, while this method
+        returns the values used by the OS which, in Windows case, correspond to
+        the user settings in the control panel.
+
+        @since 3.1.0
+     */
+    static wxString GetOSInfo(wxLocaleInfo index,
+                              wxLocaleCategory cat = wxLOCALE_CAT_DEFAULT);
+
+    /**
         Initializes the wxLocale instance.
 
         The call of this function has several global side effects which you should
@@ -470,7 +496,7 @@ public:
 
     /**
         Check whether the operating system and/or C run time environment supports
-        this locale. For example in Windows 2000 and Windows XP, support for many
+        this locale. For example in Windows, support for many
         locales is not installed by default. Returns @true if the locale is
         supported.
 
@@ -493,3 +519,11 @@ public:
     */
     bool IsOk() const;
 };
+
+
+
+/**
+   Get the current locale object (note that it may be NULL!)
+*/
+wxLocale* wxGetLocale();
+

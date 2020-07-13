@@ -48,6 +48,7 @@ enum wxMediaCtrlPlayerControls
     @beginEventTable{wxMediaEvent}
     @event{EVT_MEDIA_LOADED(id\, func)}
            Sent when a media has loaded enough data that it can start playing.
+           Processes a @c wxEVT_MEDIA_LOADED event type.
     @event{EVT_MEDIA_STOP(id\, func)}
            Sent when a media has switched to the @c wxMEDIASTATE_STOPPED state.
            You may be able to Veto this event to prevent it from stopping,
@@ -55,14 +56,19 @@ enum wxMediaCtrlPlayerControls
            the media (note that this may not have the desired effect - if you
            want to loop the media, for example, catch the @c EVT_MEDIA_FINISHED
            and play there instead).
+           Processes a @c wxEVT_MEDIA_STOP event type.
     @event{EVT_MEDIA_FINISHED(id\, func)}
            Sent when a media has finished playing in a wxMediaCtrl.
+           Processes a @c wxEVT_MEDIA_FINISHED event type.
     @event{EVT_MEDIA_STATECHANGED(id\, func)}
            Sent when a media has switched its state (from any media state).
+           Processes a @c wxEVT_MEDIA_STATECHANGED event type.
     @event{EVT_MEDIA_PLAY(id\, func)}
            Sent when a media has switched to the @c wxMEDIASTATE_PLAYING state.
+           Processes a @c wxEVT_MEDIA_PLAY event type.
     @event{EVT_MEDIA_PAUSE(id\, func)}
            Sent when a media has switched to the @c wxMEDIASTATE_PAUSED state.
+           Processes a @c wxEVT_MEDIA_PAUSE event type.
     @endEventTable
 
     @library{wxmedia}
@@ -191,14 +197,13 @@ public:
 
     - @b wxMEDIABACKEND_DIRECTSHOW: Use ActiveMovie/DirectShow.
       Uses the native ActiveMovie (I.E. DirectShow) control.
-      Default backend on Windows and supported by nearly all Windows versions,
-      even some Windows CE versions.
+      Default backend on Windows and supported by nearly all Windows versions.
       May display a windows media player logo while inactive.
     - @b wxMEDIABACKEND_QUICKTIME: Use QuickTime. Mac Only.
       WARNING: May not working correctly embedded in a wxNotebook.
     - @b wxMEDIABACKEND_GSTREAMER, Use GStreamer. Unix Only.
-      Requires GStreamer 0.8 along with at the very least the xvimagesink, xoverlay,
-      and gst-play modules of gstreamer to function.
+      Requires GStreamer 0.10 along with at the very least the xvimagesink,
+      xoverlay and gst-play modules of gstreamer to function.
       You need the correct modules to play the relevant files, for example the
       mad module to play mp3s, etc.
     - @b wxMEDIABACKEND_WMP10, Uses Windows Media Player 10 (Windows only) -
@@ -217,11 +222,11 @@ public:
     wxMediaCtrl::CreateControl which does the actual creation of the control,
     in cases where a custom control is not needed you may simply call wxControl::Create().
 
-    You need to make sure to use the @c DECLARE_CLASS and @c IMPLEMENT_CLASS macros.
+    You need to make sure to use the @c wxDECLARE_CLASS and @c wxIMPLEMENT_CLASS macros.
 
     The only real tricky part is that you need to make sure the file in compiled in,
     which if there are just backends in there will not happen and you may need to
-    use a force link hack (see http://www.wxwidgets.org/wiki/index.php/RTTI).
+    use a force link hack (see https://wiki.wxwidgets.org/RTTI).
 
     This is a rather simple example of how to create a backend in the
     wxActiveXContainer documentation.
@@ -367,13 +372,13 @@ public:
     /**
         Same as Load(const wxURI& uri). Kept for wxPython compatibility.
     */
-    bool LoadURI(const wxString& fileName);
+    bool LoadURI(const wxString& uri);
 
     /**
         Same as Load(const wxURI& uri, const wxURI& proxy).
         Kept for wxPython compatibility.
     */
-    bool LoadURIWithProxy(const wxString& fileName, const wxString& proxy);
+    bool LoadURIWithProxy(const wxString& uri, const wxString& proxy);
 
     /**
         Pauses playback of the movie.
@@ -442,3 +447,9 @@ public:
     wxFileOffset Tell();
 };
 
+wxEventType wxEVT_MEDIA_LOADED;
+wxEventType wxEVT_MEDIA_STOP;
+wxEventType wxEVT_MEDIA_FINISHED;
+wxEventType wxEVT_MEDIA_STATECHANGED;
+wxEventType wxEVT_MEDIA_PLAY;
+wxEventType wxEVT_MEDIA_PAUSE;

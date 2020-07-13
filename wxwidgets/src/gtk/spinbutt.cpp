@@ -14,7 +14,7 @@
 
 #include "wx/spinbutt.h"
 
-#include <gtk/gtk.h>
+#include "wx/gtk/private/wrapgtk.h"
 
 //-----------------------------------------------------------------------------
 // data
@@ -30,8 +30,7 @@ extern "C" {
 static void
 gtk_value_changed(GtkSpinButton* spinbutton, wxSpinButton* win)
 {
-    const double value = gtk_spin_button_get_value(spinbutton);
-    const int pos = int(value);
+    const int pos = gtk_spin_button_get_value_as_int(spinbutton);
     const int oldPos = win->m_pos;
     if (g_blockEventsOnDrag || pos == oldPos)
     {
@@ -39,7 +38,19 @@ gtk_value_changed(GtkSpinButton* spinbutton, wxSpinButton* win)
         return;
     }
 
-    wxSpinEvent event(pos > oldPos ? wxEVT_SCROLL_LINEUP : wxEVT_SCROLL_LINEDOWN, win->GetId());
+    int inc = pos - oldPos;
+    // Adjust for wrap arounds
+    // (Doesn't work for degenerated cases, like [0..1] range.)
+    if ( win->HasFlag(wxSP_WRAP) )
+    {
+        if ( inc > 1 )
+            inc = -1;
+        else if ( inc < -1 )
+            inc = 1;
+    }
+    wxASSERT( inc == 1 || inc == -1 );
+
+    wxSpinEvent event(inc > 0 ? wxEVT_SCROLL_LINEUP : wxEVT_SCROLL_LINEDOWN, win->GetId());
     event.SetPosition(pos);
     event.SetEventObject(win);
 
@@ -92,6 +103,18 @@ bool wxSpinButton::Create(wxWindow *parent,
     g_object_ref(m_widget);
 
     gtk_entry_set_width_chars(GTK_ENTRY(m_widget), 0);
+#if GTK_CHECK_VERSION(3,12,0)
+    if (gtk_check_version(3,12,0) == NULL)
+        gtk_entry_set_max_width_chars(GTK_ENTRY(m_widget), 0);
+#endif
+#ifdef __WXGTK3__
+    if (gtk_check_version(3,20,0) == NULL)
+    {
+        GTKApplyCssStyle(
+            "entry { min-width:0; padding-left:0; padding-right:0 }"
+            "button.down { border-style:none }");
+    }
+#endif
     gtk_spin_button_set_wrap( GTK_SPIN_BUTTON(m_widget),
                               (int)(m_windowStyle & wxSP_WRAP) );
 
@@ -150,16 +173,16 @@ void wxSpinButton::SetRange(int minVal, int maxVal)
     GtkEnableEvents();
 }
 
-bool wxSpinButton::Enable( bool enable )
+void wxSpinButton::DoEnable(bool enable)
 {
-    if (!base_type::Enable(enable))
-        return false;
+    if ( !m_widget )
+        return;
+
+    base_type::DoEnable(enable);
 
     // Work around lack of visual update when enabling
     if (enable)
         GTKFixSensitivity(false /* fix even if not under mouse */);
-
-    return true;
 }
 
 void wxSpinButton::GtkDisableEvents() const
@@ -174,14 +197,12 @@ void wxSpinButton::GtkEnableEvents() const
         (gpointer)gtk_value_changed, (void*) this);
 }
 
-GdkWindow *wxSpinButton::GTKGetWindow(wxArrayGdkWindows& windows) const
+GdkWindow *wxSpinButton::GTKGetWindow(wxArrayGdkWindows& WXUNUSED_IN_GTK2(windows)) const
 {
 #ifdef __WXGTK3__
-    void wxGTKFindWindow(GtkWidget* widget, wxArrayGdkWindows& windows);
-    wxGTKFindWindow(m_widget, windows);
+    GTKFindWindow(m_widget, windows);
     return NULL;
 #else
-    wxUnusedVar(windows);
     return GTK_SPIN_BUTTON(m_widget)->panel;
 #endif
 }
@@ -192,7 +213,7 @@ wxSize wxSpinButton::DoGetBestSize() const
 #ifdef __WXGTK3__
     GtkStyleContext* sc = gtk_widget_get_style_context(m_widget);
     GtkBorder pad = { 0, 0, 0, 0 };
-    gtk_style_context_get_padding(sc, GtkStateFlags(0), &pad);
+    gtk_style_context_get_padding(sc, gtk_style_context_get_state(sc), &pad);
     best.x -= pad.left + pad.right;
 #else
     gtk_widget_ensure_style(m_widget);
@@ -202,7 +223,6 @@ wxSize wxSpinButton::DoGetBestSize() const
         w = 6;
     best.x = w + 2 * m_widget->style->xthickness;
 #endif
-    CacheBestSize(best);
     return best;
 }
 

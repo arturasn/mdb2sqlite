@@ -50,12 +50,8 @@
    having been defined in sys/types.h" when winsock.h is included later and
    doesn't seem to be necessary anyhow. It's not needed under Mac neither.
  */
-#if !defined(__WXMAC__) && !defined(__WXMSW__) && !defined(__WXWINCE__)
+#if !defined(__WXMAC__) && !defined(__WXMSW__)
 #include <sys/types.h>
-#endif
-
-#ifdef __WXWINCE__
-#include <stdlib.h>
 #endif
 
 // include the header defining timeval: under Windows this struct is used only
@@ -64,6 +60,15 @@
     #include "wx/msw/wrapwin.h"
 #else
     #include <sys/time.h>   // for timeval
+#endif
+
+// 64 bit Cygwin can't use the standard struct timeval because it has long
+// fields, which are supposed to be 32 bits in Win64 API, but long is 64 bits
+// in 64 bit Cygwin, so we need to use its special __ms_timeval instead.
+#if defined(__CYGWIN__) && defined(__LP64__) && defined(__WINDOWS__)
+    typedef __ms_timeval wxTimeVal_t;
+#else
+    typedef timeval wxTimeVal_t;
 #endif
 
 // these definitions are for MSW when we don't use configure, otherwise these
@@ -258,7 +263,7 @@ public:
     // flags defines what kind of conditions we're interested in, the return
     // value is composed of a (possibly empty) subset of the bits set in flags
     wxSocketEventFlags Select(wxSocketEventFlags flags,
-                              const timeval *timeout = NULL);
+                              wxTimeVal_t *timeout = NULL);
 
     // convenient wrapper calling Select() with our default timeout
     wxSocketEventFlags SelectWithTimeout(wxSocketEventFlags flags)
@@ -303,10 +308,13 @@ public:
     bool m_broadcast;
     bool m_dobind;
 
-    struct timeval m_timeout;
+    wxTimeVal_t m_timeout;
 
 protected:
     wxSocketImpl(wxSocketBase& wxsocket);
+
+    // get the associated socket flags
+    wxSocketFlags GetSocketFlags() const { return m_wxsocket->GetFlags(); }
 
     // true if we're a listening stream socket
     bool m_server;

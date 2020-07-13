@@ -40,22 +40,11 @@
     #endif
 #endif
 
-#if defined(__VISAGECPP__) && !defined(HAVE_FTIME)
-    #define HAVE_FTIME
-#  if __IBMCPP__ >= 400
-    #  define ftime(x) _ftime(x)
-#  endif
-#endif
-
-#ifndef __WXWINCE__
 #include <time.h>
-#else
-#include "wx/msw/private.h"
-#include "wx/msw/wince/time.h"
-#endif
 
+wxDECL_FOR_STRICT_MINGW32(void, tzset, (void));
 
-#if !defined(__WXMAC__) && !defined(__WXWINCE__)
+#if !defined(__WXMAC__)
     #include <sys/types.h>      // for time_t
 #endif
 
@@ -66,7 +55,7 @@
     #include <sys/timeb.h>
 #endif
 
-#if defined(__DJGPP__) || defined(__WINE__)
+#if defined(__WINE__)
     #include <sys/timeb.h>
     #include <values.h>
 #endif
@@ -83,23 +72,6 @@ const int MICROSECONDS_PER_SECOND = 1000*1000;
 // ============================================================================
 // implementation
 // ============================================================================
-
-// NB: VC8 safe time functions could/should be used for wxMSW as well probably
-#if defined(__WXWINCE__) && defined(__VISUALC8__)
-
-struct tm *wxLocaltime_r(const time_t *t, struct tm* tm)
-{
-    __time64_t t64 = *t;
-    return _localtime64_s(tm, &t64) == 0 ? tm : NULL;
-}
-
-struct tm *wxGmtime_r(const time_t* t, struct tm* tm)
-{
-    __time64_t t64 = *t;
-    return _gmtime64_s(tm, &t64) == 0 ? tm : NULL;
-}
-
-#else // !wxWinCE with VC8
 
 #if (!defined(HAVE_LOCALTIME_R) || !defined(HAVE_GMTIME_R)) && wxUSE_THREADS && !defined(__WINDOWS__)
 static wxMutex timeLock;
@@ -152,8 +124,6 @@ struct tm *wxGmtime_r(const time_t* ticks, struct tm* temp)
 }
 #endif // !HAVE_GMTIME_R
 
-#endif // wxWinCE with VC8/other platforms
-
 // returns the time zone in the C sense, i.e. the difference UTC - local
 // (in seconds)
 int wxGetTimeZone()
@@ -186,14 +156,16 @@ int wxGetTimeZone()
             gmtoffset += 3600;
     }
     return (int)gmtoffset;
-#elif defined(__DJGPP__) || defined(__WINE__)
+#elif defined(__WINE__)
     struct timeb tb;
     ftime(&tb);
     return tb.timezone*60;
 #elif defined(__VISUALC__)
-    // We must initialize the time zone information before using it (this will
-    // be done only once internally).
-    _tzset();
+    // We must initialize the time zone information before using it. It's not a
+    // problem if we do it twice due to a race condition, as it's idempotent
+    // anyhow, so don't bother with any locks here.
+    static bool s_tzSet = (_tzset(), true);
+    wxUnusedVar(s_tzSet);
 
     // Starting with VC++ 8 timezone variable is deprecated and is not even
     // available in some standard library version so use the new function for
@@ -207,11 +179,16 @@ int wxGetTimeZone()
     #endif
 #else // Use some kind of time zone variable.
     // In any case we must initialize the time zone before using it.
-    tzset();
+    static bool s_tzSet = (tzset(), true);
+    wxUnusedVar(s_tzSet);
 
     #if defined(WX_TIMEZONE) // If WX_TIMEZONE was defined by configure, use it.
         return WX_TIMEZONE;
-    #elif defined(__BORLANDC__) || defined(__MINGW32__) || defined(__VISAGECPP__)
+    #elif defined(__BORLANDC__) || defined(__MINGW32__)
+        #if defined(__MINGW32_TOOLCHAIN__) && defined(__STRICT_ANSI__)
+            extern long _timezone;
+        #endif
+
         return _timezone;
     #else // unknown platform -- assume it has timezone
         return timezone;
@@ -331,7 +308,7 @@ wxLongLong wxGetUTCTimeMillis()
     // do NOT just shut off these warnings, drop me a line instead at
     // <guille@iies.es>
 
-    #if defined(__VISUALC__) || defined (__WATCOMC__)
+    #if defined(__VISUALC__)
         #pragma message("wxStopWatch will be up to second resolution!")
     #elif defined(__BORLANDC__)
         #pragma message "wxStopWatch will be up to second resolution!"
@@ -353,7 +330,7 @@ wxLongLong wxGetLocalTimeMillis()
 
 #else // !wxUSE_LONGLONG
 
-double wxGetLocalTimeMillis(void)
+double wxGetLocalTimeMillis()
 {
     return (double(clock()) / double(CLOCKS_PER_SEC)) * 1000.0;
 }

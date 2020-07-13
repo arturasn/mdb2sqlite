@@ -19,8 +19,7 @@
 #include "wx/scopedptr.h"
 #include "wx/modalhook.h"
 
-#include <gtk/gtk.h>
-#include "wx/gtk/private/gtk2-compat.h"
+#include "wx/gtk/private/wrapgtk.h"
 #include "wx/gtk/private/dialogcount.h"
 
 wxDEFINE_TIED_SCOPED_PTR_TYPE(wxGUIEventLoop)
@@ -136,9 +135,7 @@ int wxDialog::ShowModal()
     // release the mouse if it's currently captured as the window having it
     // will be disabled when this dialog is shown -- but will still keep the
     // capture making it impossible to do anything in the modal dialog itself
-    wxWindow * const win = wxWindow::GetCapture();
-    if ( win )
-        win->GTKReleaseMouseAndNotify();
+    GTKReleaseMouseAndNotify();
 
     wxWindow * const parent = GetParentForModalDialog();
     if ( parent )
@@ -150,10 +147,8 @@ int wxDialog::ShowModal()
 #if GTK_CHECK_VERSION(2,10,0)
     unsigned sigId = 0;
     gulong hookId = 0;
-#ifndef __WXGTK3__
     // Ubuntu overlay scrollbar uses at least GTK 2.24
-    if (gtk_check_version(2,24,0) == NULL)
-#endif
+    if (wx_is_at_least_gtk2(24))
     {
         sigId = g_signal_lookup("realize", GTK_TYPE_WIDGET);
         hookId = g_signal_add_emission_hook(sigId, 0, realize_hook, NULL, NULL);
@@ -163,9 +158,9 @@ int wxDialog::ShowModal()
     // NOTE: this will cause a gtk_grab_add() during Show()
     gtk_window_set_modal(GTK_WINDOW(m_widget), true);
 
-    Show( true );
-
     m_modalShowing = true;
+
+    Show( true );
 
     wxOpenModalDialogLocker modalLock;
 

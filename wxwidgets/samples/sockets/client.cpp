@@ -31,7 +31,8 @@
 #include "wx/socket.h"
 #include "wx/url.h"
 #include "wx/sstream.h"
-#include <memory>
+#include "wx/thread.h"
+#include "wx/scopedptr.h"
 
 // --------------------------------------------------------------------------
 // resources
@@ -50,7 +51,7 @@
 class MyApp : public wxApp
 {
 public:
-  virtual bool OnInit();
+  virtual bool OnInit() wxOVERRIDE;
 };
 
 // Define a new frame type: this is going to be our main frame
@@ -171,7 +172,7 @@ wxBEGIN_EVENT_TABLE(MyFrame, wxFrame)
   EVT_SOCKET(SOCKET_ID,     MyFrame::OnSocketEvent)
 wxEND_EVENT_TABLE()
 
-IMPLEMENT_APP(MyApp)
+wxIMPLEMENT_APP(MyApp);
 
 // ==========================================================================
 // implementation
@@ -224,7 +225,7 @@ MyFrame::MyFrame() : wxFrame((wxFrame *)NULL, wxID_ANY,
   m_menuSocket->Append(CLIENT_TEST2, _("Test &2\tCtrl-F2"), _("Test ReadMsg and WriteMsg"));
   m_menuSocket->Append(CLIENT_TEST3, _("Test &3\tCtrl-F3"), _("Test large data transfer"));
   m_menuSocket->AppendSeparator();
-  m_menuSocket->Append(CLIENT_CLOSE, _("&Close session\tCtrl-Q"), _("Close connection"));
+  m_menuSocket->Append(CLIENT_CLOSE, _("&Close session\tCtrl-C"), _("Close connection"));
 
   m_menuDatagramSocket = new wxMenu();
   m_menuDatagramSocket->Append(CLIENT_DGRAM, _("&Datagram test\tCtrl-D"), _("Test UDP sockets"));
@@ -575,23 +576,13 @@ void MyFrame::OnDatagram(wxCommandEvent& WXUNUSED(event))
 
 #if wxUSE_URL
 
-void MyFrame::OnTestURL(wxCommandEvent& WXUNUSED(event))
+void DoDownload(const wxString& urlname)
 {
-    // Ask for the URL
-    static wxString s_urlname("http://www.google.com/");
-    wxString urlname = wxGetTextFromUser
-                       (
-                        _("Enter an URL to get"),
-                        _("URL:"),
-                        s_urlname
-                       );
-    if ( urlname.empty() )
-        return; // cancelled by user
+    wxString testname("URL");
+    if ( !wxIsMainThread() )
+        testname += " in worker thread";
 
-    s_urlname = urlname;
-
-
-    TestLogger logtest("URL");
+    TestLogger logtest(testname);
 
     // Parse the URL
     wxURL url(urlname);
@@ -603,7 +594,7 @@ void MyFrame::OnTestURL(wxCommandEvent& WXUNUSED(event))
 
     // Try to get the input stream (connects to the given URL)
     wxLogMessage("Establishing connection to \"%s\"...", urlname);
-    const std::auto_ptr<wxInputStream> data(url.GetInputStream());
+    const wxScopedPtr<wxInputStream> data(url.GetInputStream());
     if ( !data.get() )
     {
         wxLogError("Failed to retrieve URL \"%s\"", urlname);
@@ -624,6 +615,51 @@ void MyFrame::OnTestURL(wxCommandEvent& WXUNUSED(event))
 
     wxLogMessage("Text retrieved from URL \"%s\" follows:\n%s",
                  urlname, sout.GetString());
+}
+
+void MyFrame::OnTestURL(wxCommandEvent& WXUNUSED(event))
+{
+    // Ask for the URL
+    static wxString s_urlname("http://www.google.com/");
+    wxString urlname = wxGetTextFromUser
+                       (
+                        _("Enter an URL to get"),
+                        _("URL:"),
+                        s_urlname
+                       );
+    if ( urlname.empty() )
+        return; // cancelled by user
+
+    s_urlname = urlname;
+
+    // First do it in this thread.
+    DoDownload(urlname);
+
+    // And then also in a worker thread.
+#if wxUSE_THREADS
+    class DownloadThread : public wxThread
+    {
+    public:
+        explicit DownloadThread(const wxString& url): m_url(url)
+        {
+            Run();
+        }
+
+        virtual void* Entry() wxOVERRIDE
+        {
+            DoDownload(m_url);
+
+            return NULL;
+        }
+
+    private:
+        const wxString m_url;
+    };
+
+    // NB: there is a race condition here, we don't check for this thread
+    // termination before exiting the application, don't do this in real code!
+    new DownloadThread(urlname);
+#endif // wxUSE_THREADS
 }
 
 #endif // wxUSE_URL

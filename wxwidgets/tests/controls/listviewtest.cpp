@@ -24,10 +24,10 @@ class ListViewTestCase : public ListBaseTestCase, public CppUnit::TestCase
 public:
     ListViewTestCase() { }
 
-    virtual void setUp();
-    virtual void tearDown();
+    virtual void setUp() wxOVERRIDE;
+    virtual void tearDown() wxOVERRIDE;
 
-    virtual wxListCtrl *GetList() const { return m_list; }
+    virtual wxListCtrl *GetList() const wxOVERRIDE { return m_list; }
 
 private:
     CPPUNIT_TEST_SUITE( ListViewTestCase );
@@ -41,7 +41,7 @@ private:
 
     wxListView *m_list;
 
-    DECLARE_NO_COPY_CLASS(ListViewTestCase)
+    wxDECLARE_NO_COPY_CLASS(ListViewTestCase);
 };
 
 // register in the unnamed registry so that these tests are run by default

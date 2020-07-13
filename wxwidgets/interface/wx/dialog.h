@@ -126,7 +126,7 @@ enum wxDialogLayoutAdaptationMode
            calling SetExtraStyle() before Create is called (two-step
            construction).
     @style{wxDIALOG_EX_METAL}
-           On Mac OS X, frames with this style will be shown with a metallic
+           On OS X, frames with this style will be shown with a metallic
            look. This is an extra style.
     @endStyleTable
 
@@ -292,9 +292,21 @@ public:
 
     /**
        Splits text up at newlines and places the lines into wxStaticText
-       objects in a vertical wxBoxSizer.
+       objects with the specified maximum width in a vertical wxBoxSizer.
+
+       If @a widthMax has its default value of -1, only explicit new line
+       characters in @a message are taken into account. Otherwise, lines are
+       broken either after a new line or wrapped, at word boundary, if their
+       width would become bigger than the specified maximal width.
+
+       @param message The text to be displayed.
+       @param widthMax Specifies the text's maximum width (this argument is
+        available since version 3.1.1, previous versions always behaved as if
+        the maximal width of -1 was specified).
+
+       @see wxStaticText::Wrap(int width)
     */
-    wxSizer *CreateTextSizer( const wxString& message );
+    wxSizer *CreateTextSizer(const wxString& message, int widthMax = -1);
 
     /**
         Performs layout adaptation, usually if the dialog is too large to fit
@@ -303,17 +315,6 @@ public:
         @see @ref overview_dialog_autoscrolling (for more on layout adaptation)
     */
     virtual bool DoLayoutAdaptation();
-
-    /**
-        This function is called when the titlebar OK button is pressed
-        (PocketPC only). A command event for the identifier returned by
-        GetAffirmativeId() is sent by default. You can override this function.
-        If the function returns @false, wxWidgets will call Close() for the
-        dialog.
-
-        @onlyfor{wxmsw}
-    */
-    virtual bool DoOK();
 
     /**
         A static function enabling or disabling layout adaptation for all
@@ -590,7 +591,7 @@ public:
         EndModal().
 
         Notice that it is possible to call ShowModal() for a dialog which had
-        been previously shown with Show(), this allows to make an existing
+        been previously shown with Show(), this allows making an existing
         modeless dialog modal. However ShowModal() can't be called twice
         without intervening EndModal() calls.
 

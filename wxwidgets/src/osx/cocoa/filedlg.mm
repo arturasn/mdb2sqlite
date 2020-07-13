@@ -52,33 +52,7 @@
 // then the delegate method - (BOOL)panel:(id)sender shouldShowFilename:(NSString *)filename will have to
 // be implemented
 
-namespace
-{
-
-bool HasAppKit_10_6()
-{
-    // Even if we require 10.6, we might be loaded by an application that
-    // was linked against 10.5.  setAllowedFileTypes will still be ignored
-    // in this case.  From NSSavePanel.h:
-    // NSOpenPanel: On versions less than 10.6, this property is ignored.
-    // For applications that link against 10.6 and higher, this property will
-    // determine which files should be enabled in the open panel.
-    int32_t version = NSVersionOfLinkTimeLibrary("AppKit");
-    if (version == -1)
-    {
-        // If we're loaded by an application that doesn't link against AppKit,
-        // use the runtime version instead.  This check will not work for the
-        // case above.
-        version = NSVersionOfRunTimeLibrary("AppKit");
-    }
-
-    // Notice that this still works correctly even if version is -1.
-    return version >= 0x40e2400 /* version of 10.6 AppKit */;
-}
-
-} // anonymous namespace
-
-@interface wxOpenPanelDelegate : NSObject wxOSX_10_6_AND_LATER(<NSOpenSavePanelDelegate>)
+@interface wxOpenPanelDelegate : NSObject <NSOpenSavePanelDelegate>
 {
     wxFileDialog* _dialog;
 }
@@ -94,8 +68,10 @@ bool HasAppKit_10_6()
 
 - (id) init
 {
-    self = [super init];
-    _dialog = NULL;
+    if ( self = [super init] )
+    {
+        _dialog = NULL;
+    }
     return self;
 }
 
@@ -112,13 +88,18 @@ bool HasAppKit_10_6()
 - (BOOL)panel:(id)sender shouldShowFilename:(NSString *)filename
 {
     BOOL showObject = YES;
-    
+
+    wxGCC_WARNING_SUPPRESS(deprecated-declarations)
+
     NSString* resolvedLink = [[NSFileManager defaultManager] pathContentOfSymbolicLinkAtPath:filename];
     if ( resolvedLink != nil )
         filename = resolvedLink;
-    
+
     NSDictionary* fileAttribs = [[NSFileManager defaultManager]
                                  fileAttributesAtPath:filename traverseLink:YES];
+
+    wxGCC_WARNING_RESTORE(deprecated-declarations)
+
     if (fileAttribs)
     {
         // check for packages
@@ -184,7 +165,7 @@ bool HasAppKit_10_6()
 
 @end
 
-IMPLEMENT_CLASS(wxFileDialog, wxFileDialogBase)
+wxIMPLEMENT_CLASS(wxFileDialog, wxFileDialogBase);
 
 void wxFileDialog::Init()
 {
@@ -333,7 +314,9 @@ void wxFileDialog::ShowWindowModal()
     if (GetParent())
         parentWindow = dynamic_cast<wxNonOwnedWindow*>(wxGetTopLevelParent(GetParent()));
 
-    wxASSERT_MSG(parentWindow, "Window modal display requires parent.");
+    wxCHECK_RET(parentWindow, "Window modal display requires parent.");
+
+    wxGCC_WARNING_SUPPRESS(deprecated-declarations)
 
     NSArray* types = GetTypesFromFilter( m_wildCard, m_filterNames, m_filterExtensions ) ;
     if ( HasFlag(wxFD_SAVE) )
@@ -357,6 +340,7 @@ void wxFileDialog::ShowWindowModal()
             modalForWindow: nativeParent modalDelegate: m_sheetDelegate
             didEndSelector: @selector(sheetDidEnd:returnCode:contextInfo:)
             contextInfo: nil];
+        [sPanel setShowsHiddenFiles: HasFlag(wxFD_SHOW_HIDDEN) ? YES : NO];
     }
     else 
     {
@@ -366,7 +350,7 @@ void wxFileDialog::ShowWindowModal()
 
         [oPanel setTreatsFilePackagesAsDirectories:NO];
         [oPanel setCanChooseDirectories:NO];
-        [oPanel setResolvesAliases:YES];
+        [oPanel setResolvesAliases:HasFlag(wxFD_NO_FOLLOW) ? NO : YES];
         [oPanel setCanChooseFiles:YES];
         [oPanel setMessage:cf.AsNSString()];
         [oPanel setAllowsMultipleSelection: (HasFlag(wxFD_MULTIPLE) ? YES : NO )];
@@ -377,7 +361,10 @@ void wxFileDialog::ShowWindowModal()
             modalDelegate: m_sheetDelegate
             didEndSelector: @selector(sheetDidEnd:returnCode:contextInfo:)
             contextInfo: nil];
+        [oPanel setShowsHiddenFiles: HasFlag(wxFD_SHOW_HIDDEN) ? YES : NO];
     }
+
+    wxGCC_WARNING_RESTORE(deprecated-declarations)
 }
 
 // Create a panel with the file type drop down list
@@ -405,7 +392,7 @@ wxWindow* wxFileDialog::CreateFilterPanel(wxWindow *extracontrol)
             if ( m_firstFileTypeFilter >= 0 )
                 m_filterChoice->SetSelection(m_firstFileTypeFilter);
         }
-        m_filterChoice->Connect(wxEVT_CHOICE, wxCommandEventHandler(wxFileDialog::OnFilterSelected), NULL, this);
+        m_filterChoice->Bind(wxEVT_CHOICE, &wxFileDialog::OnFilterSelected, this);
     }
         
     if(extracontrol)
@@ -476,16 +463,6 @@ void wxFileDialog::SetupExtraControls(WXWindow nativeWindow)
     {
         m_filterPanel = CreateFilterPanel(extracontrol);
         accView = m_filterPanel->GetHandle();
-        if( HasFlag(wxFD_OPEN) )
-        {
-            if ( UMAGetSystemVersion() < 0x1060 || !HasAppKit_10_6() )
-            {
-                wxOpenPanelDelegate* del = [[wxOpenPanelDelegate alloc]init];
-                [del setFileDialog:this];
-                [panel setDelegate:del];
-                m_delegate = del;
-            }
-        }
     }
     else
     {
@@ -519,7 +496,7 @@ int wxFileDialog::ShowModal()
     wxCFStringRef dir( m_dir );
     wxCFStringRef file( m_fileName );
 
-    m_path = wxEmptyString;
+    m_path.clear();
     m_fileNames.Clear();
     m_paths.Clear();
 
@@ -582,6 +559,10 @@ int wxFileDialog::ShowModal()
         }
     }
 
+    wxGCC_WARNING_SUPPRESS(deprecated-declarations)
+
+    OSXBeginModalDialog();
+
     if ( HasFlag(wxFD_SAVE) )
     {
         NSSavePanel* sPanel = [NSSavePanel savePanel];
@@ -597,6 +578,7 @@ int wxFileDialog::ShowModal()
         [sPanel setCanSelectHiddenExtension:YES];
         [sPanel setAllowedFileTypes:types];
         [sPanel setAllowsOtherFileTypes:NO];
+        [sPanel setShowsHiddenFiles: HasFlag(wxFD_SHOW_HIDDEN) ? YES : NO];
 
         if ( HasFlag(wxFD_OVERWRITE_PROMPT) )
         {
@@ -626,35 +608,44 @@ int wxFileDialog::ShowModal()
                 
         [oPanel setTreatsFilePackagesAsDirectories:NO];
         [oPanel setCanChooseDirectories:NO];
-        [oPanel setResolvesAliases:YES];
+        [oPanel setResolvesAliases:HasFlag(wxFD_NO_FOLLOW) ? NO : YES];
         [oPanel setCanChooseFiles:YES];
         [oPanel setMessage:cf.AsNSString()];
         [oPanel setAllowsMultipleSelection: (HasFlag(wxFD_MULTIPLE) ? YES : NO )];
+        [oPanel setShowsHiddenFiles: HasFlag(wxFD_SHOW_HIDDEN) ? YES : NO];
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1060
-        if ( UMAGetSystemVersion() >= 0x1060 && HasAppKit_10_6() )
+        // Note that the test here is intentionally different from the one
+        // above, in the wxFD_SAVE case: we need to call DoOnFilterSelected()
+        // even for m_firstFileTypeFilter == 0, i.e. when using the default
+        // filter.
+        if ( m_firstFileTypeFilter >= 0 )
+        {
+            DoOnFilterSelected(m_firstFileTypeFilter);
+        }
+        else
         {
             [oPanel setAllowedFileTypes: (m_delegate == nil ? types : nil)];
-            if ( !m_dir.IsEmpty() )
-                [oPanel setDirectoryURL:[NSURL fileURLWithPath:dir.AsNSString() 
-                                                   isDirectory:YES]];
-            returnCode = [oPanel runModal];
         }
-        else 
-#endif
-        {
-            returnCode = [oPanel runModalForDirectory:m_dir.IsEmpty() ? nil : dir.AsNSString()
-                                                 file:file.AsNSString() types:(m_delegate == nil ? types : nil)];
-        }
+        if ( !m_dir.IsEmpty() )
+            [oPanel setDirectoryURL:[NSURL fileURLWithPath:dir.AsNSString() 
+                                               isDirectory:YES]];
+        returnCode = [oPanel runModal];
             
         ModalFinishedCallback(oPanel, returnCode);
     }
+    
+    OSXEndModalDialog();
+
+
+    wxGCC_WARNING_RESTORE(deprecated-declarations)
 
     return GetReturnCode();
 }
 
 void wxFileDialog::ModalFinishedCallback(void* panel, int returnCode)
 {
+    wxGCC_WARNING_SUPPRESS(deprecated-declarations)
+
     int result = wxID_CANCEL;
     if (HasFlag(wxFD_SAVE))
     {
@@ -679,6 +670,12 @@ void wxFileDialog::ModalFinishedCallback(void* panel, int returnCode)
         {
             panel = oPanel;
             result = wxID_OK;
+
+            if (m_filterChoice)
+            {
+                m_filterIndex = m_filterChoice->GetSelection();
+            }
+
             NSArray* filenames = [oPanel filenames];
             for ( size_t i = 0 ; i < [filenames count] ; ++ i )
             {
@@ -709,6 +706,8 @@ void wxFileDialog::ModalFinishedCallback(void* panel, int returnCode)
     if ( m_isNativeWindowWrapper )
         UnsubclassWin();
     [(NSSavePanel*) panel setAccessoryView:nil];
+
+    wxGCC_WARNING_RESTORE(deprecated-declarations)
 }
 
 #endif // wxUSE_FILEDLG

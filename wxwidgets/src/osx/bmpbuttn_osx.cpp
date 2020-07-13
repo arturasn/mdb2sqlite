@@ -38,16 +38,8 @@ bool wxBitmapButton::Create( wxWindow *parent,
                                      validator, name) )
         return false;
 
-    if ( style & wxBU_AUTODRAW )
-    {
-        m_marginX =
-        m_marginY = wxDEFAULT_BUTTON_MARGIN;
-    }
-    else
-    {
-        m_marginX =
-        m_marginY = 0;
-    }
+    m_marginX =
+    m_marginY = wxDEFAULT_BUTTON_MARGIN;
 
     m_bitmaps[State_Normal] = bitmap;
 
@@ -66,6 +58,10 @@ wxSize wxBitmapButton::DoGetBestSize() const
 
     if ( GetBitmapLabel().IsOk() )
     {
+        // Hack to stop 16x16 bitmap being clipped
+        if (GetBitmapLabel().GetScaledSize().x == 16)
+            best += wxSize(4,0);
+            
         best += GetBitmapLabel().GetScaledSize();
     }
 

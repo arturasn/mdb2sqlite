@@ -66,10 +66,10 @@ WX_DEFINE_ARRAY_PTR(wxOverlayImpl*, wxDfbOverlaysList);
 // ---------------------------------------------------------------------------
 
 // in wxUniv this class is abstract because it doesn't have DoPopupMenu()
-IMPLEMENT_ABSTRACT_CLASS(wxWindowDFB, wxWindowBase)
+wxIMPLEMENT_ABSTRACT_CLASS(wxWindowDFB, wxWindowBase);
 
-BEGIN_EVENT_TABLE(wxWindowDFB, wxWindowBase)
-END_EVENT_TABLE()
+wxBEGIN_EVENT_TABLE(wxWindowDFB, wxWindowBase)
+wxEND_EVENT_TABLE()
 
 //-----------------------------------------------------------------------------
 // global functions
@@ -310,6 +310,13 @@ void wxWindowDFB::DoReleaseMouse()
 /* static */ wxWindow *wxWindowBase::GetCapture()
 {
     return (wxWindow*)gs_mouseCapture;
+}
+
+wxMouseState wxGetMouseState()
+{
+#warning "implement this"
+    wxMouseState ms;
+    return ms;
 }
 
 bool wxWindowDFB::SetCursor(const wxCursor& cursor)

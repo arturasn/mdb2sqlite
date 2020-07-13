@@ -28,6 +28,7 @@
 !INCLUDE ..\nmake.opt
 
 OBJ	= \
+        snprintf.obj \
 	strcasecmp.obj \
 	getopt.obj
 

@@ -82,7 +82,7 @@ static void gtk_spinctrl_callback( GtkWidget *WXUNUSED(widget), wxSpinCtrl *win 
     if (!win->m_hasVMT) return;
     if (g_blockEventsOnDrag) return;
 
-    wxCommandEvent event( wxEVT_SPINCTRL, win->GetId());
+    wxSpinEvent event( wxEVT_SPINCTRL, win->GetId());
     event.SetEventObject( win );
 
     // note that we don't use wxSpinCtrl::GetValue() here because it would
@@ -122,9 +122,9 @@ gtk_spinctrl_text_changed_callback( GtkWidget *WXUNUSED(widget), wxSpinCtrl *win
 // wxSpinCtrl
 //-----------------------------------------------------------------------------
 
-BEGIN_EVENT_TABLE(wxSpinCtrl, wxControl)
+wxBEGIN_EVENT_TABLE(wxSpinCtrl, wxControl)
     EVT_CHAR(wxSpinCtrl::OnChar)
-END_EVENT_TABLE()
+wxEND_EVENT_TABLE()
 
 bool wxSpinCtrl::Create(wxWindow *parent, wxWindowID id,
                         const wxString& value,
@@ -330,10 +330,7 @@ bool wxSpinCtrl::IsOwnGtkWindow( GdkWindow *window )
 
 wxSize wxSpinCtrl::DoGetBestSize() const
 {
-    wxSize ret( wxControl::DoGetBestSize() );
-    wxSize best(95, ret.y);
-    CacheBestSize(best);
-    return best;
+    return wxSize(95, wxControl::DoGetBestSize().y);
 }
 
 bool wxSpinCtrl::SetBase(int base)

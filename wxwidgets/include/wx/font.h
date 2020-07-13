@@ -19,6 +19,7 @@
 #include "wx/fontenc.h"     // the font encoding constants
 #include "wx/gdiobj.h"      // the base class
 #include "wx/gdicmn.h"      // for wxGDIObjListBase
+#include "wx/math.h"        // for wxRound()
 
 // ----------------------------------------------------------------------------
 // forward declarations
@@ -59,10 +60,18 @@ enum wxFontStyle
 // font weights
 enum wxFontWeight
 {
-    wxFONTWEIGHT_NORMAL = wxNORMAL,
-    wxFONTWEIGHT_LIGHT = wxLIGHT,
-    wxFONTWEIGHT_BOLD = wxBOLD,
-    wxFONTWEIGHT_MAX
+    wxFONTWEIGHT_INVALID = 0,
+    wxFONTWEIGHT_THIN = 100,
+    wxFONTWEIGHT_EXTRALIGHT = 200,
+    wxFONTWEIGHT_LIGHT = 300,
+    wxFONTWEIGHT_NORMAL = 400,
+    wxFONTWEIGHT_MEDIUM = 500,
+    wxFONTWEIGHT_SEMIBOLD = 600,
+    wxFONTWEIGHT_BOLD = 700,
+    wxFONTWEIGHT_EXTRABOLD = 800,
+    wxFONTWEIGHT_HEAVY = 900,
+    wxFONTWEIGHT_EXTRAHEAVY = 1000,
+    wxFONTWEIGHT_MAX = wxFONTWEIGHT_EXTRAHEAVY
 };
 
 // Symbolic font sizes as defined in CSS specification.
@@ -87,7 +96,7 @@ enum wxFontFlag
     wxFONTFLAG_ITALIC           = 1 << 0,
     wxFONTFLAG_SLANT            = 1 << 1,
 
-    // weight flags (default: medium)
+    // weight flags (default: medium):
     wxFONTFLAG_LIGHT            = 1 << 2,
     wxFONTFLAG_BOLD             = 1 << 3,
 
@@ -120,13 +129,22 @@ public:
     // Default ctor uses the default font size appropriate for the current
     // platform.
     wxFontInfo()
-        { InitPointSize(-1); }
+        { InitPointSize(-1.0f); }
 
     // These ctors specify the font size, either in points or in pixels.
-    wxEXPLICIT wxFontInfo(int pointSize)
+    // Point size is a floating point number, however we also accept all
+    // integer sizes using the simple template ctor below.
+    explicit wxFontInfo(float pointSize)
         { InitPointSize(pointSize); }
-    wxEXPLICIT wxFontInfo(const wxSize& pixelSize) : m_pixelSize(pixelSize)
+    explicit wxFontInfo(const wxSize& pixelSize) : m_pixelSize(pixelSize)
         { Init(); }
+
+    // Need to define this one to avoid casting double to int too.
+    explicit wxFontInfo(double pointSize)
+        { InitPointSize(static_cast<float>(pointSize)); }
+    template <typename T>
+    explicit wxFontInfo(T pointSize)
+        { InitPointSize(ToFloatPointSize(pointSize)); }
 
     // Setters for the various attributes. All of them return the object itself
     // so that the calls to them could be chained.
@@ -135,15 +153,27 @@ public:
     wxFontInfo& FaceName(const wxString& faceName)
         { m_faceName = faceName; return *this; }
 
+    wxFontInfo& Weight(int weight)
+        { m_weight = weight; return *this; }
     wxFontInfo& Bold(bool bold = true)
-        { SetFlag(wxFONTFLAG_BOLD, bold); return *this; }
+        { return Weight(bold ? wxFONTWEIGHT_BOLD : wxFONTWEIGHT_NORMAL); }
     wxFontInfo& Light(bool light = true)
-        { SetFlag(wxFONTFLAG_LIGHT, light); return *this; }
+        { return Weight(light ? wxFONTWEIGHT_LIGHT : wxFONTWEIGHT_NORMAL); }
 
     wxFontInfo& Italic(bool italic = true)
         { SetFlag(wxFONTFLAG_ITALIC, italic); return *this; }
     wxFontInfo& Slant(bool slant = true)
         { SetFlag(wxFONTFLAG_SLANT, slant); return *this; }
+    wxFontInfo& Style(wxFontStyle style)
+    {
+        if ( style == wxFONTSTYLE_ITALIC )
+            return Italic();
+
+        if ( style == wxFONTSTYLE_SLANT )
+            return Slant();
+
+        return *this;
+    }
 
     wxFontInfo& AntiAliased(bool antiAliased = true)
         { SetFlag(wxFONTFLAG_ANTIALIASED, antiAliased); return *this; }
@@ -158,15 +188,29 @@ public:
 
     // Set all flags at once.
     wxFontInfo& AllFlags(int flags)
-        { m_flags = flags; return *this; }
+    {
+        m_flags = flags;
+
+        m_weight = m_flags & wxFONTFLAG_BOLD
+                        ? wxFONTWEIGHT_BOLD
+                        : m_flags & wxFONTFLAG_LIGHT
+                            ? wxFONTWEIGHT_LIGHT
+                            : wxFONTWEIGHT_NORMAL;
+
+        return *this;
+    }
 
 
     // Accessors are mostly meant to be used by wxFont itself to extract the
     // various pieces of the font description.
 
     bool IsUsingSizeInPixels() const { return m_pixelSize != wxDefaultSize; }
-    int GetPointSize() const { return m_pointSize; }
+    float GetFractionalPointSize() const { return m_pointSize; }
+    int GetPointSize() const { return ToIntPointSize(m_pointSize); }
     wxSize GetPixelSize() const { return m_pixelSize; }
+
+    // If face name is not empty, it has priority, otherwise use family.
+    bool HasFaceName() const { return !m_faceName.empty(); }
     wxFontFamily GetFamily() const { return m_family; }
     const wxString& GetFaceName() const { return m_faceName; }
 
@@ -179,13 +223,14 @@ public:
                             : wxFONTSTYLE_NORMAL;
     }
 
+    int GetNumericWeight() const
+    {
+        return m_weight;
+    }
+
     wxFontWeight GetWeight() const
     {
-        return m_flags & wxFONTFLAG_LIGHT
-                        ? wxFONTWEIGHT_LIGHT
-                        : m_flags & wxFONTFLAG_BOLD
-                            ? wxFONTWEIGHT_BOLD
-                            : wxFONTWEIGHT_NORMAL;
+        return GetWeightClosestToNumericValue(m_weight);
     }
 
     bool IsAntiAliased() const
@@ -208,17 +253,57 @@ public:
 
     // Default copy ctor, assignment operator and dtor are OK.
 
+
+    // Helper functions for converting between integer and fractional sizes.
+    static int ToIntPointSize(float pointSize) { return wxRound(pointSize); }
+    static float ToFloatPointSize(int pointSize)
+    {
+        wxCHECK_MSG( pointSize == -1 || pointSize >= 0,
+                     -1, "Invalid font point size" );
+
+        // Huge values are not exactly representable as floats, so don't accept
+        // those neither as they can only be due to a mistake anyhow: nobody
+        // could possibly need a font of size 16777217pt (which is the first
+        // value for which this fails).
+        const float f = static_cast<float>(pointSize);
+        wxCHECK_MSG( static_cast<int>(f) == pointSize,
+                     -1, "Font point size out of range" );
+
+        return f;
+    }
+
+    // Another helper for converting arbitrary numeric weight to the closest
+    // value of wxFontWeight enum. It should be avoided in the new code (also
+    // note that the function for the conversion in the other direction is
+    // trivial and so is not provided, we only have GetNumericWeightOf() which
+    // contains backwards compatibility hacks, but we don't need it here).
+    static wxFontWeight GetWeightClosestToNumericValue(int numWeight)
+    {
+        wxASSERT(numWeight > 0);
+        wxASSERT(numWeight <= 1000);
+
+        // round to nearest hundredth = wxFONTWEIGHT_ constant
+        int weight = ((numWeight + 50) / 100) * 100;
+
+        if (weight < wxFONTWEIGHT_THIN)
+            weight = wxFONTWEIGHT_THIN;
+        if (weight > wxFONTWEIGHT_MAX)
+            weight = wxFONTWEIGHT_MAX;
+
+        return static_cast<wxFontWeight>(weight);
+    }
+
 private:
-    // Common part of all ctor, initializing everything except the size (which
-    // is initialized by the ctors themselves).
     void Init()
     {
+        m_pointSize = -1;
         m_family = wxFONTFAMILY_DEFAULT;
         m_flags = wxFONTFLAG_DEFAULT;
+        m_weight = wxFONTWEIGHT_NORMAL;
         m_encoding = wxFONTENCODING_DEFAULT;
     }
 
-    void InitPointSize(int pointSize)
+    void InitPointSize(float pointSize)
     {
         Init();
 
@@ -237,15 +322,15 @@ private:
     }
 
     // The size information: if m_pixelSize is valid (!= wxDefaultSize), then
-    // it is used. Otherwise m_pointSize is used, taking into account that if
-    // it is == -1, it means that the platform dependent font size should be
-    // used.
-    int m_pointSize;
+    // it is used. Otherwise m_pointSize is used, except if it is < 0, which
+    // means that the platform dependent font size should be used instead.
+    float m_pointSize;
     wxSize m_pixelSize;
 
     wxFontFamily m_family;
     wxString m_faceName;
     int m_flags;
+    int m_weight;
     wxFontEncoding m_encoding;
 };
 
@@ -284,32 +369,6 @@ public:
     // creator function
     virtual ~wxFontBase();
 
-
-#if FUTURE_WXWIN_COMPATIBILITY_3_0
-    // from the font components
-    static wxFont *New(
-        int pointSize,              // size of the font in points
-        int family,                 // see wxFontFamily enum
-        int style,                  // see wxFontStyle enum
-        int weight,                 // see wxFontWeight enum
-        bool underlined = false,    // not underlined by default
-        const wxString& face = wxEmptyString,              // facename
-        wxFontEncoding encoding = wxFONTENCODING_DEFAULT)  // ISO8859-X, ...
-        { return New(pointSize, (wxFontFamily)family, (wxFontStyle)style,
-                     (wxFontWeight)weight, underlined, face, encoding); }
-
-    // from the font components
-    static wxFont *New(
-        const wxSize& pixelSize,    // size of the font in pixels
-        int family,                 // see wxFontFamily enum
-        int style,                  // see wxFontStyle enum
-        int weight,                 // see wxFontWeight enum
-        bool underlined = false,    // not underlined by default
-        const wxString& face = wxEmptyString,              // facename
-        wxFontEncoding encoding = wxFONTENCODING_DEFAULT)  // ISO8859-X, ...
-        { return New(pixelSize, (wxFontFamily)family, (wxFontStyle)style,
-                     (wxFontWeight)weight, underlined, face, encoding); }
-#endif
 
     // from the font components
     static wxFont *New(
@@ -354,34 +413,45 @@ public:
     // from the string representation of wxNativeFontInfo
     static wxFont *New(const wxString& strNativeFontDesc);
 
+    // Load the font from the given file and return true on success or false on
+    // error (an error message will be logged in this case).
+#if wxUSE_PRIVATE_FONTS
+    static bool AddPrivateFont(const wxString& filename);
+#endif // wxUSE_PRIVATE_FONTS
+
     // comparison
     bool operator==(const wxFont& font) const;
     bool operator!=(const wxFont& font) const { return !(*this == font); }
 
     // accessors: get the font characteristics
-    virtual int GetPointSize() const = 0;
+    virtual int GetPointSize() const;
+    virtual float GetFractionalPointSize() const = 0;
     virtual wxSize GetPixelSize() const;
     virtual bool IsUsingSizeInPixels() const;
     wxFontFamily GetFamily() const;
     virtual wxFontStyle GetStyle() const = 0;
-    virtual wxFontWeight GetWeight() const = 0;
+    virtual int GetNumericWeight() const = 0;
     virtual bool GetUnderlined() const = 0;
     virtual bool GetStrikethrough() const { return false; }
     virtual wxString GetFaceName() const = 0;
     virtual wxFontEncoding GetEncoding() const = 0;
     virtual const wxNativeFontInfo *GetNativeFontInfo() const = 0;
 
+    // Accessors that can be overridden in the platform-specific code but for
+    // which we provide a reasonable default implementation in the base class.
+    virtual wxFontWeight GetWeight() const;
     virtual bool IsFixedWidth() const;
 
     wxString GetNativeFontInfoDesc() const;
     wxString GetNativeFontInfoUserDesc() const;
 
     // change the font characteristics
-    virtual void SetPointSize( int pointSize ) = 0;
+    virtual void SetPointSize( int pointSize );
+    virtual void SetFractionalPointSize( float pointSize ) = 0;
     virtual void SetPixelSize( const wxSize& pixelSize );
     virtual void SetFamily( wxFontFamily family ) = 0;
     virtual void SetStyle( wxFontStyle style ) = 0;
-    virtual void SetWeight( wxFontWeight weight ) = 0;
+    virtual void SetNumericWeight( int weight ) = 0;
 
     virtual void SetUnderlined( bool underlined ) = 0;
     virtual void SetStrikethrough( bool WXUNUSED(strikethrough) ) {}
@@ -389,6 +459,10 @@ public:
     virtual bool SetFaceName( const wxString& faceName );
     void SetNativeFontInfo(const wxNativeFontInfo& info)
         { DoSetNativeFontInfo(info); }
+
+    // Similarly to the accessors above, the functions in this group have a
+    // reasonable default implementation in the base class.
+    virtual void SetWeight( wxFontWeight weight );
 
     bool SetNativeFontInfo(const wxString& info);
     bool SetNativeFontInfoUserDesc(const wxString& info);
@@ -417,11 +491,63 @@ public:
     static wxFontEncoding GetDefaultEncoding() { return ms_encodingDefault; }
     static void SetDefaultEncoding(wxFontEncoding encoding);
 
+    // Account for legacy font weight values: if the argument is one of
+    // wxNORMAL, wxLIGHT or wxBOLD, return the corresponding wxFONTWEIGHT_XXX
+    // enum value. Otherwise just return it unchanged.
+    static int ConvertFromLegacyWeightIfNecessary(int weight);
+
+    // Convert between symbolic and numeric font weights. This function uses
+    // ConvertFromLegacyWeightIfNecessary(), so takes legacy values into
+    // account as well.
+    static int GetNumericWeightOf(wxFontWeight weight);
+
+    // Some ports need to modify the font object when the DPI of the window it
+    // is used with changes, this function can be used to do it.
+    //
+    // Currently it is only used in wxMSW and is not considered to be part of
+    // wxWidgets public API.
+    virtual void WXAdjustToPPI(const wxSize& WXUNUSED(ppi)) { }
+
     // this doesn't do anything and is kept for compatibility only
 #if WXWIN_COMPATIBILITY_2_8
     wxDEPRECATED_INLINE(void SetNoAntiAliasing(bool no = true), wxUnusedVar(no);)
     wxDEPRECATED_INLINE(bool GetNoAntiAliasing() const, return false;)
 #endif // WXWIN_COMPATIBILITY_2_8
+
+    wxDEPRECATED_MSG("use wxFONTWEIGHT_XXX constants instead of raw values")
+    void SetWeight(int weight)
+        { SetWeight(static_cast<wxFontWeight>(weight)); }
+
+    wxDEPRECATED_MSG("use wxFONTWEIGHT_XXX constants instead of wxLIGHT/wxNORMAL/wxBOLD")
+    void SetWeight(wxDeprecatedGUIConstants weight)
+        { SetWeight(static_cast<wxFontWeight>(weight)); }
+
+    // from the font components
+    wxDEPRECATED_MSG("use wxFONT{FAMILY,STYLE,WEIGHT}_XXX constants")
+    static wxFont *New(
+        int pointSize,              // size of the font in points
+        int family,                 // see wxFontFamily enum
+        int style,                  // see wxFontStyle enum
+        int weight,                 // see wxFontWeight enum
+        bool underlined = false,    // not underlined by default
+        const wxString& face = wxEmptyString,              // facename
+        wxFontEncoding encoding = wxFONTENCODING_DEFAULT)  // ISO8859-X, ...
+        { return New(pointSize, (wxFontFamily)family, (wxFontStyle)style,
+                     (wxFontWeight)weight, underlined, face, encoding); }
+
+    // from the font components
+    wxDEPRECATED_MSG("use wxFONT{FAMILY,STYLE,WEIGHT}_XXX constants")
+    static wxFont *New(
+        const wxSize& pixelSize,    // size of the font in pixels
+        int family,                 // see wxFontFamily enum
+        int style,                  // see wxFontStyle enum
+        int weight,                 // see wxFontWeight enum
+        bool underlined = false,    // not underlined by default
+        const wxString& face = wxEmptyString,              // facename
+        wxFontEncoding encoding = wxFONTENCODING_DEFAULT)  // ISO8859-X, ...
+        { return New(pixelSize, (wxFontFamily)family, (wxFontStyle)style,
+                     (wxFontWeight)weight, underlined, face, encoding); }
+
 
 protected:
     // the function called by both overloads of SetNativeFontInfo()
@@ -462,6 +588,26 @@ protected:
         return (flags & wxFONTFLAG_STRIKETHROUGH) != 0;
     }
 
+    // Create wxFontInfo object from the parameters passed to the legacy wxFont
+    // ctor/Create() overload. This function implements the compatibility hack
+    // which interprets wxDEFAULT value of size as meaning -1 and also supports
+    // specifying wxNORMAL, wxLIGHT and wxBOLD as weight values.
+    static wxFontInfo InfoFromLegacyParams(int pointSize,
+                                           wxFontFamily family,
+                                           wxFontStyle style,
+                                           wxFontWeight weight,
+                                           bool underlined,
+                                           const wxString& face,
+                                           wxFontEncoding encoding);
+
+    static wxFontInfo InfoFromLegacyParams(const wxSize& pixelSize,
+                                           wxFontFamily family,
+                                           wxFontStyle style,
+                                           wxFontWeight weight,
+                                           bool underlined,
+                                           const wxString& face,
+                                           wxFontEncoding encoding);
+
 private:
     // the currently default encoding: by default, it's the default system
     // encoding, but may be changed by the application using
@@ -475,27 +621,20 @@ WXDLLIMPEXP_CORE wxString wxToString(const wxFontBase& font);
 WXDLLIMPEXP_CORE bool wxFromString(const wxString& str, wxFontBase* font);
 
 
-#if FUTURE_WXWIN_COMPATIBILITY_3_0
-#define wxDECLARE_FONT_COMPAT_SETTER   \
-    wxDEPRECATED_FUTURE( void SetFamily(int family) ) \
-        { SetFamily((wxFontFamily)family); } \
-    wxDEPRECATED_FUTURE( void SetStyle(int style) ) \
-        { SetStyle((wxFontStyle)style); } \
-    wxDEPRECATED_FUTURE( void SetWeight(int weight) ) \
-        { SetWeight((wxFontWeight)weight); } \
-    wxDEPRECATED_FUTURE( void SetFamily(wxDeprecatedGUIConstants family) ) \
-        { SetFamily((wxFontFamily)family); } \
-    wxDEPRECATED_FUTURE( void SetStyle(wxDeprecatedGUIConstants style) ) \
-        { SetStyle((wxFontStyle)style); } \
-    wxDEPRECATED_FUTURE( void SetWeight(wxDeprecatedGUIConstants weight) ) \
-        { SetWeight((wxFontWeight)weight); }
-#else
-#define wxDECLARE_FONT_COMPAT_SETTER  /*empty*/
-#endif
-
 // this macro must be used in all derived wxFont classes declarations
 #define wxDECLARE_COMMON_FONT_METHODS() \
-    wxDECLARE_FONT_COMPAT_SETTER \
+    wxDEPRECATED_MSG("use wxFONTFAMILY_XXX constants") \
+    void SetFamily(int family) \
+        { SetFamily((wxFontFamily)family); } \
+    wxDEPRECATED_MSG("use wxFONTSTYLE_XXX constants") \
+    void SetStyle(int style) \
+        { SetStyle((wxFontStyle)style); } \
+    wxDEPRECATED_MSG("use wxFONTFAMILY_XXX constants") \
+    void SetFamily(wxDeprecatedGUIConstants family) \
+        { SetFamily((wxFontFamily)family); } \
+    wxDEPRECATED_MSG("use wxFONTSTYLE_XXX constants") \
+    void SetStyle(wxDeprecatedGUIConstants style) \
+        { SetStyle((wxFontStyle)style); } \
  \
     /* functions for modifying font in place */ \
     wxFont& MakeBold(); \
@@ -507,6 +646,7 @@ WXDLLIMPEXP_CORE bool wxFromString(const wxString& str, wxFontBase* font);
     wxFont& Scale(float x); \
     /* functions for creating fonts based on this one */ \
     wxFont Bold() const; \
+    wxFont GetBaseFont() const; \
     wxFont Italic() const; \
     wxFont Underlined() const; \
     wxFont Strikethrough() const; \
@@ -529,10 +669,8 @@ WXDLLIMPEXP_CORE bool wxFromString(const wxString& str, wxFontBase* font);
     #include "wx/dfb/font.h"
 #elif defined(__WXMAC__)
     #include "wx/osx/font.h"
-#elif defined(__WXCOCOA__)
-    #include "wx/cocoa/font.h"
-#elif defined(__WXPM__)
-    #include "wx/os2/font.h"
+#elif defined(__WXQT__)
+    #include "wx/qt/font.h"
 #endif
 
 class WXDLLIMPEXP_CORE wxFontList: public wxGDIObjListBase
@@ -546,19 +684,19 @@ public:
                              const wxString& face = wxEmptyString,
                              wxFontEncoding encoding = wxFONTENCODING_DEFAULT);
 
-#if FUTURE_WXWIN_COMPATIBILITY_3_0
-     wxFont *FindOrCreateFont(int pointSize, int family, int style, int weight,
+    wxDEPRECATED_MSG("use wxFONT{FAMILY,STYLE,WEIGHT}_XXX constants")
+    wxFont *FindOrCreateFont(int pointSize, int family, int style, int weight,
                               bool underline = false,
                               const wxString& face = wxEmptyString,
                               wxFontEncoding encoding = wxFONTENCODING_DEFAULT)
         { return FindOrCreateFont(pointSize, (wxFontFamily)family, (wxFontStyle)style,
                                   (wxFontWeight)weight, underline, face, encoding); }
-#endif
 
-#if WXWIN_COMPATIBILITY_2_6
-    wxDEPRECATED( void AddFont(wxFont*) );
-    wxDEPRECATED( void RemoveFont(wxFont*) );
-#endif
+    wxFont *FindOrCreateFont(const wxFontInfo& fontInfo)
+        { return FindOrCreateFont(fontInfo.GetPointSize(), fontInfo.GetFamily(),
+                                  fontInfo.GetStyle(), fontInfo.GetWeight(),
+                                  fontInfo.IsUnderlined(), fontInfo.GetFaceName(),
+                                  fontInfo.GetEncoding()); }
 };
 
 extern WXDLLIMPEXP_DATA_CORE(wxFontList*)    wxTheFontList;
@@ -570,29 +708,31 @@ extern WXDLLIMPEXP_DATA_CORE(wxFontList*)    wxTheFontList;
 //
 // to compile without warnings which it would otherwise provoke from some
 // compilers as it compares elements of different enums
-#if FUTURE_WXWIN_COMPATIBILITY_3_0
 
 // Unfortunately some compilers have ambiguity issues when enum comparisons are
 // overloaded so we have to disable the overloads in this case, see
 // wxCOMPILER_NO_OVERLOAD_ON_ENUM definition in wx/platform.h for more details.
 #ifndef wxCOMPILER_NO_OVERLOAD_ON_ENUM
 
+wxDEPRECATED_MSG("use wxFONTFAMILY_XXX constants") \
 inline bool operator==(wxFontFamily s, wxDeprecatedGUIConstants t)
-{ return static_cast<int>(s) == static_cast<int>(t); }
+    { return static_cast<int>(s) == static_cast<int>(t); }
+wxDEPRECATED_MSG("use wxFONTFAMILY_XXX constants") \
 inline bool operator!=(wxFontFamily s, wxDeprecatedGUIConstants t)
-{ return !(s == t); }
+    { return static_cast<int>(s) != static_cast<int>(t); }
+wxDEPRECATED_MSG("use wxFONTSTYLE_XXX constants") \
 inline bool operator==(wxFontStyle s, wxDeprecatedGUIConstants t)
-{ return static_cast<int>(s) == static_cast<int>(t); }
+    { return static_cast<int>(s) == static_cast<int>(t); }
+wxDEPRECATED_MSG("use wxFONTSTYLE_XXX constants") \
 inline bool operator!=(wxFontStyle s, wxDeprecatedGUIConstants t)
-{ return !(s == t); }
+    { return static_cast<int>(s) != static_cast<int>(t); }
+wxDEPRECATED_MSG("use wxFONTWEIGHT_XXX constants") \
 inline bool operator==(wxFontWeight s, wxDeprecatedGUIConstants t)
-{ return static_cast<int>(s) == static_cast<int>(t); }
+    { return static_cast<int>(s) == static_cast<int>(t); }
+wxDEPRECATED_MSG("use wxFONTWEIGHT_XXX constants") \
 inline bool operator!=(wxFontWeight s, wxDeprecatedGUIConstants t)
-{ return !(s == t); }
+    { return static_cast<int>(s) != static_cast<int>(t); }
 
 #endif // // wxCOMPILER_NO_OVERLOAD_ON_ENUM
 
-#endif // FUTURE_WXWIN_COMPATIBILITY_3_0
-
-#endif
-    // _WX_FONT_H_BASE_
+#endif // _WX_FONT_H_BASE_

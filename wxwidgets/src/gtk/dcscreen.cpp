@@ -11,13 +11,13 @@
 
 #include "wx/gtk/dcscreen.h"
 
-#include <gtk/gtk.h>
+#include "wx/gtk/private/wrapgtk.h"
 
 //-----------------------------------------------------------------------------
 // wxScreenDCImpl
 //-----------------------------------------------------------------------------
 
-IMPLEMENT_ABSTRACT_CLASS(wxScreenDCImpl, wxWindowDCImpl)
+wxIMPLEMENT_ABSTRACT_CLASS(wxScreenDCImpl, wxWindowDCImpl);
 
 wxScreenDCImpl::wxScreenDCImpl( wxScreenDC *owner )
   : wxWindowDCImpl( owner )

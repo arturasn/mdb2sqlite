@@ -77,7 +77,7 @@ public:
     virtual ~wxHIDJoystick();
 
     bool Create(int nWhich);
-    virtual void BuildCookies(CFArrayRef Array);
+    virtual void BuildCookies(CFArrayRef Array) wxOVERRIDE;
     void MakeCookies(CFArrayRef Array);
     IOHIDElementCookie* GetCookies();
     IOHIDQueueInterface** GetQueue();
@@ -95,7 +95,7 @@ class wxJoystickThread : public wxThread
 {
 public:
     wxJoystickThread(wxHIDJoystick* hid, int joystick);
-    void* Entry();
+    void* Entry() wxOVERRIDE;
     static void HIDCallback(void* target, IOReturn res, void* context, void* sender);
 
 private:
@@ -133,7 +133,7 @@ void wxGetIntFromCFDictionary(CFTypeRef cfDict, CFStringRef key, int* pOut)
 //
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-IMPLEMENT_DYNAMIC_CLASS(wxJoystick, wxObject)
+wxIMPLEMENT_DYNAMIC_CLASS(wxJoystick, wxObject);
 
 //---------------------------------------------------------------------------
 // wxJoystick Constructor
@@ -235,7 +235,7 @@ int wxJoystick::GetButtonState() const
 
 bool wxJoystick::GetButtonState(unsigned int id) const
 {
-    if (id > sizeof(int) * 8)
+    if (id >= sizeof(int) * 8)
         return false;
 
     return (GetButtonState() & (1 << id)) != 0;
@@ -859,20 +859,20 @@ void* wxJoystickThread::Entry()
 #endif
 
         //is the cookie a button?
-        if (nIndex < 40)
+        if (nIndex < 32)
         {
             if (hidevent.value)
             {
-                pThis->m_buttons |= (1 << nIndex);
+                pThis->m_buttons |= (1u << nIndex);
                 wxevent.SetEventType(wxEVT_JOY_BUTTON_DOWN);
             }
             else
             {
-                pThis->m_buttons &= ~(1 << nIndex);
+                pThis->m_buttons &= ~(1u << nIndex);
                 wxevent.SetEventType(wxEVT_JOY_BUTTON_UP);
             }
 
-            wxevent.SetButtonChange(nIndex+1);
+            wxevent.SetButtonChange(1u << nIndex);
         }
         else if (nIndex == wxJS_AXIS_X)
         {

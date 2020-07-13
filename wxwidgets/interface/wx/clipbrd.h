@@ -72,14 +72,9 @@ public:
     virtual ~wxClipboard();
 
     /**
-        Call this function to add the data object to the clipboard. You may
-        call this function repeatedly after having cleared the clipboard using
-        Clear().
+        Call this function to add the data object to the clipboard.
 
-        After this function has been called, the clipboard owns the data, so do
-        not delete the data explicitly.
-
-        @see SetData()
+        This is an obsolete synonym for SetData().
     */
     virtual bool AddData(wxDataObject* data);
 
@@ -101,8 +96,8 @@ public:
         (possibly eating memory), otherwise the clipboard will be emptied on
         exit.
 
-        Currently this method is not implemented in X11-based ports, i.e.
-        wxGTK, wxX11 and wxMotif and always returns @false there.
+        Currently this method is implemented in MSW and GTK and always returns @false
+        otherwise.
 
         @return @false if the operation is unsuccessful for any reason.
     */
@@ -149,14 +144,17 @@ public:
     virtual bool Open();
 
     /**
-        Call this function to set the data object to the clipboard. This
-        function will clear all previous contents in the clipboard, so calling
-        it several times does not make any sense.
+        Call this function to set the data object to the clipboard.
+
+        The new data object replaces any previously set one, so if the
+        application wants to provide clipboard data in several different
+        formats, it must use a composite data object supporting all of the
+        formats instead of calling this function several times with different
+        data objects as this would only leave data from the last one in the
+        clipboard.
 
         After this function has been called, the clipboard owns the data, so do
         not delete the data explicitly.
-
-        @see AddData()
     */
     virtual bool SetData(wxDataObject* data);
 
@@ -167,7 +165,7 @@ public:
         until this function is called again with @false.
 
         On the other platforms, there is no PRIMARY selection and so all
-        clipboard operations will fail. This allows to implement the standard
+        clipboard operations will fail. This allows implementing the standard
         X11 handling of the clipboard which consists in copying data to the
         CLIPBOARD selection only when the user explicitly requests it (i.e. by
         selecting the "Copy" menu command) but putting the currently selected

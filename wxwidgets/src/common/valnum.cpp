@@ -36,10 +36,10 @@
 // wxNumValidatorBase implementation
 // ============================================================================
 
-BEGIN_EVENT_TABLE(wxNumValidatorBase, wxValidator)
+wxBEGIN_EVENT_TABLE(wxNumValidatorBase, wxValidator)
     EVT_CHAR(wxNumValidatorBase::OnChar)
     EVT_KILL_FOCUS(wxNumValidatorBase::OnKillFocus)
-END_EVENT_TABLE()
+wxEND_EVENT_TABLE()
 
 int wxNumValidatorBase::GetFormatFlags() const
 {
@@ -50,6 +50,23 @@ int wxNumValidatorBase::GetFormatFlags() const
         flags |= wxNumberFormatter::Style_NoTrailingZeroes;
 
     return flags;
+}
+
+void wxNumValidatorBase::SetWindow(wxWindow *win)
+{
+    wxValidator::SetWindow(win);
+
+#if wxUSE_TEXTCTRL
+    if ( wxDynamicCast(m_validatorWindow, wxTextCtrl) )
+        return;
+#endif // wxUSE_TEXTCTRL
+
+#if wxUSE_COMBOBOX
+    if ( wxDynamicCast(m_validatorWindow, wxComboBox) )
+        return;
+#endif // wxUSE_COMBOBOX
+
+    wxFAIL_MSG("Can only be used with wxTextCtrl or wxComboBox");
 }
 
 wxTextEntry *wxNumValidatorBase::GetTextEntry() const
@@ -63,8 +80,6 @@ wxTextEntry *wxNumValidatorBase::GetTextEntry() const
     if ( wxComboBox *combo = wxDynamicCast(m_validatorWindow, wxComboBox) )
         return combo;
 #endif // wxUSE_COMBOBOX
-
-    wxFAIL_MSG("Can only be used with wxTextCtrl or wxComboBox");
 
     return NULL;
 }
@@ -163,9 +178,21 @@ void wxNumValidatorBase::OnChar(wxKeyEvent& event)
 
 void wxNumValidatorBase::OnKillFocus(wxFocusEvent& event)
 {
+    event.Skip();
+
     wxTextEntry * const control = GetTextEntry();
     if ( !control )
         return;
+
+    const wxString& valueNorm = NormalizeString(control->GetValue());
+    if ( control->GetValue() == valueNorm )
+    {
+        // Don't do anything at all if the value doesn't really change, even if
+        // the control optimizes away the calls to ChangeValue() which don't
+        // actually change it, it's easier to skip all the complications below
+        // if we don't need to do anything.
+        return;
+    }
 
     // When we change the control value below, its "modified" status is reset
     // so we need to explicitly keep it marked as modified if it was so in the
@@ -176,12 +203,10 @@ void wxNumValidatorBase::OnKillFocus(wxFocusEvent& event)
     wxTextCtrl * const text = wxDynamicCast(m_validatorWindow, wxTextCtrl);
     const bool wasModified = text ? text->IsModified() : false;
 
-    control->ChangeValue(NormalizeString(control->GetValue()));
+    control->ChangeValue(valueNorm);
 
     if ( wasModified )
         text->MarkDirty();
-
-    event.Skip();
 }
 
 // ============================================================================
@@ -236,14 +261,21 @@ wxIntegerValidatorBase::IsCharOk(const wxString& val, int pos, wxChar ch) const
 
 wxString wxFloatingPointValidatorBase::ToString(LongestValueType value) const
 {
-    return wxNumberFormatter::ToString(value, m_precision, GetFormatFlags());
+    return wxNumberFormatter::ToString(value*m_factor,
+                                       m_precision,
+                                       GetFormatFlags());
 }
 
 bool
 wxFloatingPointValidatorBase::FromString(const wxString& s,
-                                         LongestValueType *value)
+                                         LongestValueType *value) const
 {
-    return wxNumberFormatter::FromString(s, value);
+    if ( !wxNumberFormatter::FromString(s, value) )
+        return false;
+
+    *value /= m_factor;
+
+    return true;
 }
 
 bool

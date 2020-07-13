@@ -1,4 +1,3 @@
-
 /*
  * Copyright (c) 1988-1997 Sam Leffler
  * Copyright (c) 1991-1997 Silicon Graphics, Inc.
@@ -99,7 +98,8 @@ ThunderDecode(TIFF* tif, uint8* op, tmsize_t maxpixels)
 	while (cc > 0 && npixels < maxpixels) {
 		int n, delta;
 
-		n = *bp++, cc--;
+		n = *bp++;
+		cc--;
 		switch (n & THUNDER_CODE) {
 		case THUNDER_RUN:		/* pixel run */
 			/*

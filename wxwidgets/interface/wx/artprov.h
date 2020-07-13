@@ -29,64 +29,67 @@ wxArtClient wxART_LIST;
 wxArtClient wxART_OTHER;
 
 
-wxArtID wxART_ADD_BOOKMARK;         
-wxArtID wxART_DEL_BOOKMARK;         
-wxArtID wxART_HELP_SIDE_PANEL;      
-wxArtID wxART_HELP_SETTINGS;        
-wxArtID wxART_HELP_BOOK;            
-wxArtID wxART_HELP_FOLDER;          
-wxArtID wxART_HELP_PAGE;            
-wxArtID wxART_GO_BACK;              
-wxArtID wxART_GO_FORWARD;           
-wxArtID wxART_GO_UP;                
-wxArtID wxART_GO_DOWN;              
-wxArtID wxART_GO_TO_PARENT;         
-wxArtID wxART_GO_HOME;              
-wxArtID wxART_GOTO_FIRST;           
-wxArtID wxART_GOTO_LAST;            
-wxArtID wxART_FILE_OPEN;            
-wxArtID wxART_FILE_SAVE;            
-wxArtID wxART_FILE_SAVE_AS;         
-wxArtID wxART_PRINT;                
-wxArtID wxART_HELP;                 
-wxArtID wxART_TIP;                  
-wxArtID wxART_REPORT_VIEW;          
-wxArtID wxART_LIST_VIEW;            
-wxArtID wxART_NEW_DIR;              
-wxArtID wxART_HARDDISK;             
-wxArtID wxART_FLOPPY;               
-wxArtID wxART_CDROM;                
-wxArtID wxART_REMOVABLE;            
-wxArtID wxART_FOLDER;               
-wxArtID wxART_FOLDER_OPEN;          
-wxArtID wxART_GO_DIR_UP;            
-wxArtID wxART_EXECUTABLE_FILE;      
-wxArtID wxART_NORMAL_FILE;          
-wxArtID wxART_TICK_MARK;            
-wxArtID wxART_CROSS_MARK;           
-wxArtID wxART_ERROR;                
-wxArtID wxART_QUESTION;             
-wxArtID wxART_WARNING;              
-wxArtID wxART_INFORMATION;          
-wxArtID wxART_MISSING_IMAGE;        
+wxArtID wxART_ADD_BOOKMARK;
+wxArtID wxART_DEL_BOOKMARK;
+wxArtID wxART_HELP_SIDE_PANEL;
+wxArtID wxART_HELP_SETTINGS;
+wxArtID wxART_HELP_BOOK;
+wxArtID wxART_HELP_FOLDER;
+wxArtID wxART_HELP_PAGE;
+wxArtID wxART_GO_BACK;
+wxArtID wxART_GO_FORWARD;
+wxArtID wxART_GO_UP;
+wxArtID wxART_GO_DOWN;
+wxArtID wxART_GO_TO_PARENT;
+wxArtID wxART_GO_HOME;
+wxArtID wxART_GOTO_FIRST;
+wxArtID wxART_GOTO_LAST;
+wxArtID wxART_FILE_OPEN;
+wxArtID wxART_FILE_SAVE;
+wxArtID wxART_FILE_SAVE_AS;
+wxArtID wxART_PRINT;
+wxArtID wxART_HELP;
+wxArtID wxART_TIP;
+wxArtID wxART_REPORT_VIEW;
+wxArtID wxART_LIST_VIEW;
+wxArtID wxART_NEW_DIR;
+wxArtID wxART_HARDDISK;
+wxArtID wxART_FLOPPY;
+wxArtID wxART_CDROM;
+wxArtID wxART_REMOVABLE;
+wxArtID wxART_FOLDER;
+wxArtID wxART_FOLDER_OPEN;
+wxArtID wxART_GO_DIR_UP;
+wxArtID wxART_EXECUTABLE_FILE;
+wxArtID wxART_NORMAL_FILE;
+wxArtID wxART_TICK_MARK;
+wxArtID wxART_CROSS_MARK;
+wxArtID wxART_ERROR;
+wxArtID wxART_QUESTION;
+wxArtID wxART_WARNING;
+wxArtID wxART_INFORMATION;
+wxArtID wxART_MISSING_IMAGE;
 
-wxArtID wxART_COPY;                 
-wxArtID wxART_CUT;                  
-wxArtID wxART_PASTE;                
-wxArtID wxART_DELETE;               
-wxArtID wxART_NEW;                  
+wxArtID wxART_COPY;
+wxArtID wxART_CUT;
+wxArtID wxART_PASTE;
+wxArtID wxART_DELETE;
+wxArtID wxART_NEW;
 
-wxArtID wxART_UNDO;                 
-wxArtID wxART_REDO;                 
+wxArtID wxART_UNDO;
+wxArtID wxART_REDO;
 
-wxArtID wxART_PLUS;                 
-wxArtID wxART_MINUS;                
+wxArtID wxART_PLUS;
+wxArtID wxART_MINUS;
 
-wxArtID wxART_CLOSE;                
-wxArtID wxART_QUIT;                 
+wxArtID wxART_CLOSE;
+wxArtID wxART_QUIT;
 
-wxArtID wxART_FIND;                 
-wxArtID wxART_FIND_AND_REPLACE;     
+wxArtID wxART_FIND;
+wxArtID wxART_FIND_AND_REPLACE;
+
+wxArtID wxART_FULL_SCREEN;
+wxArtID wxART_EDIT;
 
 
 /**
@@ -188,6 +191,8 @@ wxArtID wxART_FIND_AND_REPLACE;
      @li @c wxART_QUIT
      @li @c wxART_FIND
      @li @c wxART_FIND_AND_REPLACE
+     @li @c wxART_FULL_SCREEN (since 3.1.0)
+     @li @c wxART_EDIT (since 3.1.0)
      @li @c wxART_HARDDISK
      @li @c wxART_FLOPPY
      @li @c wxART_CDROM
@@ -209,7 +214,7 @@ wxArtID wxART_FIND_AND_REPLACE;
     For a list of the GTK+ stock items please refer to the
     <a href="http://library.gnome.org/devel/gtk/stable/gtk-Stock-Items.html">GTK+ documentation
     page</a>.
-    It is also possible to load icons from the current icon theme by specifying their name 
+    It is also possible to load icons from the current icon theme by specifying their name
     (without extension and directory components).
     Icon themes recognized by GTK+ follow the freedesktop.org
     <a href="http://freedesktop.org/Standards/icon-theme-spec">Icon Themes specification</a>.
@@ -404,7 +409,7 @@ protected:
             wxArtID unique identifier of the bitmap.
         @param client
             wxArtClient identifier of the client (i.e. who is asking for the bitmap).
-            This only servers as a hint.
+            This only serves as a hint.
         @param size
             Preferred size of the bitmap. The function may return a bitmap of different
             dimensions, it will be automatically rescaled to meet client's request.

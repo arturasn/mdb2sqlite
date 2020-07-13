@@ -66,20 +66,20 @@ static void CheckGLError()
         // so check that we get a different error than the last time
         if ( err == errLast )
         {
-            wxLogError(wxT("OpenGL error state couldn't be reset."));
+            wxLogError("OpenGL error state couldn't be reset.");
             return;
         }
 
         errLast = err;
 
-        wxLogError(wxT("OpenGL error %d"), err);
+        wxLogError("OpenGL error %d", err);
     }
 }
 
 // function to draw the texture for cube faces
 static wxImage DrawDice(int size, unsigned num)
 {
-    wxASSERT_MSG( num >= 1 && num <= 6, wxT("invalid dice index") );
+    wxASSERT_MSG( num >= 1 && num <= 6, "invalid dice index" );
 
     const int dot = size/16;        // radius of a single dot
     const int gap = 5*size/32;      // gap between dots
@@ -253,7 +253,7 @@ void TestGLContext::DrawRotatedCube(float xangle, float yangle)
 // MyApp: the application object
 // ----------------------------------------------------------------------------
 
-IMPLEMENT_APP(MyApp)
+wxIMPLEMENT_APP(MyApp);
 
 bool MyApp::OnInit()
 {
@@ -349,7 +349,7 @@ void TestGLCanvas::OnPaint(wxPaintEvent& WXUNUSED(event))
     // multiple canvases: If we updated the viewport in the wxSizeEvent
     // handler, changing the size of one canvas causes a viewport setting that
     // is wrong when next another canvas is repainted.
-    const wxSize ClientSize = GetClientSize();
+    const wxSize ClientSize = GetClientSize() * GetContentScaleFactor();
 
     TestGLContext& canvas = wxGetApp().GetContext(this, m_useStereo);
     glViewport(0, 0, ClientSize.x, ClientSize.y);
@@ -459,7 +459,7 @@ wxBEGIN_EVENT_TABLE(MyFrame, wxFrame)
 wxEND_EVENT_TABLE()
 
 MyFrame::MyFrame( bool stereoWindow )
-       : wxFrame(NULL, wxID_ANY, wxT("wxWidgets OpenGL Cube Sample"))
+       : wxFrame(NULL, wxID_ANY, "wxWidgets OpenGL Cube Sample")
 {
     int stereoAttribList[] = { WX_GL_RGBA, WX_GL_DOUBLEBUFFER, WX_GL_STEREO, 0 };
 
@@ -474,7 +474,7 @@ MyFrame::MyFrame( bool stereoWindow )
     menu->AppendSeparator();
     menu->Append(wxID_CLOSE);
     wxMenuBar *menuBar = new wxMenuBar;
-    menuBar->Append(menu, wxT("&Cube"));
+    menuBar->Append(menu, "&Cube");
 
     SetMenuBar(menuBar);
 

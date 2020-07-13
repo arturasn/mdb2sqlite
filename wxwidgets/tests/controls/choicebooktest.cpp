@@ -27,16 +27,16 @@ class ChoicebookTestCase : public BookCtrlBaseTestCase, public CppUnit::TestCase
 public:
     ChoicebookTestCase() { }
 
-    virtual void setUp();
-    virtual void tearDown();
+    virtual void setUp() wxOVERRIDE;
+    virtual void tearDown() wxOVERRIDE;
 
 private:
-    virtual wxBookCtrlBase *GetBase() const { return m_choicebook; }
+    virtual wxBookCtrlBase *GetBase() const wxOVERRIDE { return m_choicebook; }
 
-    virtual wxEventType GetChangedEvent() const
+    virtual wxEventType GetChangedEvent() const wxOVERRIDE
     { return wxEVT_CHOICEBOOK_PAGE_CHANGED; }
 
-    virtual wxEventType GetChangingEvent() const
+    virtual wxEventType GetChangingEvent() const wxOVERRIDE
     { return wxEVT_CHOICEBOOK_PAGE_CHANGING; }
 
     CPPUNIT_TEST_SUITE( ChoicebookTestCase );
@@ -48,7 +48,7 @@ private:
 
     wxChoicebook *m_choicebook;
 
-    DECLARE_NO_COPY_CLASS(ChoicebookTestCase)
+    wxDECLARE_NO_COPY_CLASS(ChoicebookTestCase);
 };
 
 // register in the unnamed registry so that these tests are run by default

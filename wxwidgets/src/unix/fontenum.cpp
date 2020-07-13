@@ -41,12 +41,9 @@
 
 #if wxUSE_PANGO
 
-#include "pango/pango.h"
+#include <pango/pango.h>
 
-#ifdef __WXGTK20__
-#include "gtk/gtk.h"
-extern GtkWidget *wxGetRootWindow();
-#endif // __WXGTK20__
+PangoContext* wxGetPangoContext();
 
 extern "C"
 {
@@ -72,13 +69,8 @@ bool wxFontEnumerator::EnumerateFacenames(wxFontEncoding encoding,
 
     PangoFontFamily **families = NULL;
     gint n_families = 0;
-    pango_context_list_families (
-#ifdef __WXGTK20__
-        gtk_widget_get_pango_context( wxGetRootWindow() ),
-#else
-        wxTheApp->GetPangoContext(),
-#endif
-        &families, &n_families );
+    PangoContext* context = wxGetPangoContext();
+    pango_context_list_families(context, &families, &n_families);
     qsort (families, n_families, sizeof (PangoFontFamily *), wxCompareFamilies);
 
     for ( int i = 0; i < n_families; i++ )
@@ -89,10 +81,14 @@ bool wxFontEnumerator::EnumerateFacenames(wxFontEncoding encoding,
 #endif
         {
             const gchar *name = pango_font_family_get_name(families[i]);
-            OnFacename(wxString(name, wxConvUTF8));
+            if ( !OnFacename(wxString(name, wxConvUTF8)) )
+            {
+                break;
+            }
         }
     }
     g_free(families);
+    g_object_unref(context);
 
     return true;
 }

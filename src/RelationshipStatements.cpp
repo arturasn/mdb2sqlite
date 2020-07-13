@@ -1,10 +1,10 @@
 #define _AFXDLL
 #include "stdafx.h"
-#include <wx/textctrl.h>
 #include "RelationshipStatements.h"
 #include "FieldStatements.h"
 #include <afxdao.h>
 #include "mdb2sqlite.h"
+#include <wx/textctrl.h>
 
 #ifdef _DEBUG
 #undef THIS_FILE

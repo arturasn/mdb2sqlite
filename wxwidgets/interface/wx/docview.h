@@ -716,7 +716,7 @@ public:
         @beginWxPerlOnly
         In wxPerl @a templates is a reference to a list of templates.
         If you override this method in your document manager it must
-        return two values, eg:
+        return two values, e.g.:
 
         @code
         (doctemplate, path) = My::DocManager->SelectDocumentPath(...);
@@ -1302,7 +1302,7 @@ public:
         Calls wxView::Close() and deletes each view. Deleting the final view
         will implicitly delete the document itself, because the wxView
         destructor calls RemoveView(). This in turns calls OnChangedViewList(),
-        whose default implemention is to save and delete the document if no
+        whose default implementation is to save and delete the document if no
         views exist.
     */
     virtual bool DeleteAllViews();
@@ -1530,8 +1530,12 @@ public:
     virtual bool OnSaveModified();
 
     /**
-        Removes the view from the document's list of views, and calls
-        OnChangedViewList().
+        Removes the view from the document's list of views.
+
+        If the view was really removed, also calls OnChangedViewList().
+
+        @return @true if the view was removed or @false if the document didn't
+            have this view in the first place.
     */
     virtual bool RemoveView(wxView* view);
 

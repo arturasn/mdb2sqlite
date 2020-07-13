@@ -25,8 +25,7 @@
 #include "wx/hashmap.h"
 #include "wx/hashset.h"
 
-#if defined wxLongLong_t && !defined wxLongLongIsLong && \
-        (!defined __VISUALC__ || __VISUALC__ > 1100)    // doesn't work on VC5
+#if defined wxLongLong_t && !defined wxLongLongIsLong
     #define TEST_LONGLONG
 #endif
 
@@ -104,7 +103,7 @@ private:
 #endif
     void wxHashSetTest();
 
-    DECLARE_NO_COPY_CLASS(HashesTestCase)
+    wxDECLARE_NO_COPY_CLASS(HashesTestCase);
 };
 
 // register in the unnamed registry so that these tests are run by default
@@ -377,7 +376,15 @@ void MakeKeyValuePair(size_t i, size_t count, T*& key, ValueT& value)
 
 // the test
 template <class HashMapT>
-void HashMapTest()
+void
+#if defined(__GNUC__) && !defined(__clang__)
+// At least g++ 4.8.2 (included in Ubuntu 14.04) is known to miscompile the
+// code in this function and make all the loops below infinite when using -O2,
+// so we need to turn off optimizations for it to allow the tests to run at
+// all.
+__attribute__((optimize("O0")))
+#endif // g++
+HashMapTest()
 {
     typedef typename HashMapT::value_type::second_type value_type;
     typedef typename HashMapT::key_type key_type;
@@ -467,12 +474,6 @@ void HashesTestCase::UShortHashMapTest() { HashMapTest<myTestHashMap4>();    }
 void HashesTestCase::LLongHashMapTest()  { HashMapTest<myLLongHashMap>();    }
 void HashesTestCase::ULLongHashMapTest() { HashMapTest<myULLongHashMap>();   }
 #endif
-
-#ifdef __VISUALC__
-    #if __VISUALC__ <= 1200
-        #pragma warning(disable:4284) // operator->() returns a non-UDT
-    #endif
-#endif // __VISUALC__
 
 // test compilation of basic set types
 WX_DECLARE_HASH_SET( int*, wxPointerHash, wxPointerEqual, myPtrHashSet );

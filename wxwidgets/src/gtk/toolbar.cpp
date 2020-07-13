@@ -14,9 +14,8 @@
 
 #include "wx/toolbar.h"
 
-#include <gtk/gtk.h>
 #include "wx/gtk/private.h"
-#include "wx/gtk/private/gtk2-compat.h"
+#include "wx/gtk/private/gtk3-compat.h"
 
 // ----------------------------------------------------------------------------
 // globals
@@ -56,6 +55,7 @@ public:
     void SetImage();
     void CreateDropDown();
     void ShowDropdown(GtkToggleButton* button);
+    virtual void SetLabel(const wxString& label) wxOVERRIDE;
 
     GtkToolItem* m_item;
 };
@@ -64,7 +64,7 @@ public:
 // wxWin macros
 // ----------------------------------------------------------------------------
 
-IMPLEMENT_DYNAMIC_CLASS(wxToolBar, wxControl)
+wxIMPLEMENT_DYNAMIC_CLASS(wxToolBar, wxControl);
 
 // ============================================================================
 // implementation
@@ -180,22 +180,51 @@ image_draw(GtkWidget* widget, cairo_t* cr, wxToolBarTool* tool)
 image_expose_event(GtkWidget* widget, GdkEventExpose*, wxToolBarTool* tool)
 #endif
 {
+#ifdef __WXGTK3__
+    wxBitmap bitmap(tool->GetNormalBitmap());
+    if (!tool->IsEnabled())
+    {
+        wxBitmap disabled(tool->GetDisabledBitmap());
+        // if no disabled bitmap and normal bitmap is scaled
+        if (!disabled.IsOk() && bitmap.IsOk() && bitmap.GetScaleFactor() > 1)
+        {
+            // make scaled disabled bitmap from normal one
+
+            disabled.CreateScaled(bitmap.GetScaledHeight(), bitmap.GetScaledWidth(),
+                32, bitmap.GetScaleFactor());
+            cairo_t* cr2 = disabled.CairoCreate();
+            // clear to transparent
+            cairo_set_operator(cr2, CAIRO_OPERATOR_SOURCE);
+            cairo_set_source_rgba(cr2, 0, 0, 0, 0);
+            cairo_paint(cr2);
+            // draw in normal bitmap
+            bitmap.Draw(cr2, 0, 0);
+            // create disabled appearance, this seems to be how GTK does it
+            cairo_set_source_rgba(cr2, 0, 0, 0, 0);
+            cairo_paint_with_alpha(cr2, 0.5);
+            cairo_destroy(cr2);
+        }
+        bitmap = disabled;
+    }
+    if (!bitmap.IsOk() || (tool->IsEnabled() && bitmap.GetScaleFactor() <= 1))
+        return false;
+#else
     const wxBitmap& bitmap = tool->GetDisabledBitmap();
     if (tool->IsEnabled() || !bitmap.IsOk())
         return false;
+#endif
 
-    // draw disabled bitmap ourselves, GtkImage has no way to specify it
     GtkAllocation alloc;
     gtk_widget_get_allocation(widget, &alloc);
-    GtkRequisition req;
-    gtk_widget_get_requisition(widget, &req);
+    int x = (alloc.width - bitmap.GetScaledWidth()) / 2;
+    int y = (alloc.height - bitmap.GetScaledHeight()) / 2;
 #ifdef __WXGTK3__
-    const int x = (alloc.width - req.width) / 2;
-    const int y = (alloc.height - req.height) / 2;
+    gtk_render_background(gtk_widget_get_style_context(widget),
+        cr, 0, 0, alloc.width, alloc.height);
     bitmap.Draw(cr, x, y);
 #else
-    const int x = alloc.x + (alloc.width - req.width) / 2;
-    const int y = alloc.y + (alloc.height - req.height) / 2;
+    x += alloc.x;
+    y += alloc.y;
     gdk_draw_pixbuf(
         gtk_widget_get_window(widget), gtk_widget_get_style(widget)->black_gc, bitmap.GetPixbuf(),
         0, 0, x, y,
@@ -243,11 +272,17 @@ arrow_button_press_event(GtkToggleButton* button, GdkEventButton* event, wxToolB
 
 void wxToolBar::AddChildGTK(wxWindowGTK* child)
 {
+    GtkToolItem* item = gtk_tool_item_new();
+#ifdef __WXGTK3__
+    gtk_widget_set_valign(child->m_widget, GTK_ALIGN_CENTER);
+    gtk_widget_set_halign(child->m_widget, GTK_ALIGN_CENTER);
+    gtk_container_add(GTK_CONTAINER(item), child->m_widget);
+#else
     GtkWidget* align = gtk_alignment_new(0.5, 0.5, 0, 0);
     gtk_widget_show(align);
     gtk_container_add(GTK_CONTAINER(align), child->m_widget);
-    GtkToolItem* item = gtk_tool_item_new();
     gtk_container_add(GTK_CONTAINER(item), align);
+#endif
     // position will be corrected in DoInsertTool if necessary
     gtk_toolbar_insert(GTK_TOOLBAR(gtk_bin_get_child(GTK_BIN(m_widget))), item, -1);
 }
@@ -262,9 +297,23 @@ void wxToolBarTool::SetImage()
     wxCHECK_RET(bitmap.IsOk(), "invalid bitmap for wxToolBar icon");
 
     GtkWidget* image = gtk_tool_button_get_icon_widget(GTK_TOOL_BUTTON(m_item));
-    // always use pixbuf, because pixmap mask does not
-    // work with disabled images in some themes
-    gtk_image_set_from_pixbuf(GTK_IMAGE(image), bitmap.GetPixbuf());
+#ifdef __WXGTK3__
+    if (bitmap.GetScaleFactor() > 1)
+    {
+        // Use a placeholder pixbuf with the correct size.
+        // The original will be used by our "draw" signal handler.
+        GdkPixbuf* pixbuf = gdk_pixbuf_new(GDK_COLORSPACE_RGB, false, 8,
+            bitmap.GetScaledWidth(), bitmap.GetScaledHeight());
+        gtk_image_set_from_pixbuf(GTK_IMAGE(image), pixbuf);
+        g_object_unref(pixbuf);
+    }
+    else
+#endif
+    {
+        // always use pixbuf, because pixmap mask does not
+        // work with disabled images in some themes
+        gtk_image_set_from_pixbuf(GTK_IMAGE(image), bitmap.GetPixbuf());
+    }
 }
 
 // helper to create a dropdown menu item
@@ -272,16 +321,33 @@ void wxToolBarTool::CreateDropDown()
 {
     gtk_tool_item_set_homogeneous(m_item, false);
     GtkOrientation orient = GTK_ORIENTATION_HORIZONTAL;
-    GtkArrowType arrowType = GTK_ARROW_DOWN;
     if (GetToolBar()->HasFlag(wxTB_LEFT | wxTB_RIGHT))
-    {
         orient = GTK_ORIENTATION_VERTICAL;
-        arrowType = GTK_ARROW_RIGHT;
-    }
     GtkWidget* box = gtk_box_new(orient, 0);
-    GtkWidget* arrow = gtk_arrow_new(arrowType, GTK_SHADOW_NONE);
+    GtkWidget* arrow;
+    if (wx_is_at_least_gtk3(14))
+    {
+        const char* icon = "pan-down-symbolic";
+        if (orient == GTK_ORIENTATION_VERTICAL)
+            icon = "pan-end-symbolic";
+        arrow = gtk_image_new_from_icon_name(icon, GTK_ICON_SIZE_BUTTON);
+    }
+#ifndef __WXGTK4__
+    else
+    {
+        wxGCC_WARNING_SUPPRESS(deprecated-declarations)
+        GtkArrowType arrowType = GTK_ARROW_DOWN;
+        if (orient == GTK_ORIENTATION_VERTICAL)
+            arrowType = GTK_ARROW_RIGHT;
+        arrow = gtk_arrow_new(arrowType, GTK_SHADOW_NONE);
+        wxGCC_WARNING_RESTORE()
+    }
+#endif
     GtkWidget* tool_button = gtk_bin_get_child(GTK_BIN(m_item));
-    gtk_widget_reparent(tool_button, box);
+    g_object_ref(tool_button);
+    gtk_container_remove(GTK_CONTAINER(m_item), tool_button);
+    gtk_container_add(GTK_CONTAINER(box), tool_button);
+    g_object_unref(tool_button);
     GtkWidget* arrow_button = gtk_toggle_button_new();
     gtk_button_set_relief(GTK_BUTTON(arrow_button),
         gtk_tool_item_get_relief_style(GTK_TOOL_ITEM(m_item)));
@@ -315,6 +381,36 @@ void wxToolBarTool::ShowDropdown(GtkToggleButton* button)
             toolbar->PopupMenu(menu, x, y);
         }
     }
+}
+
+void wxToolBarTool::SetLabel(const wxString& label)
+{
+    wxASSERT_MSG( IsButton(),
+       wxS("Label can be set for button tool only") );
+
+    if ( label == m_label )
+        return;
+
+    wxToolBarToolBase::SetLabel(label);
+    if ( IsButton() )
+    {
+        if ( !label.empty() )
+        {
+            wxString newLabel = wxControl::RemoveMnemonics(label);
+            gtk_tool_button_set_label(GTK_TOOL_BUTTON(m_item),
+                                      wxGTK_CONV_SYS(newLabel));
+            // To show the label for toolbar with wxTB_HORZ_LAYOUT.
+            gtk_tool_item_set_is_important(m_item, true);
+        }
+        else
+        {
+            gtk_tool_button_set_label(GTK_TOOL_BUTTON(m_item), NULL);
+            // To hide the label for toolbar with wxTB_HORZ_LAYOUT.
+            gtk_tool_item_set_is_important(m_item, false);
+        }
+    }
+
+    // TODO: Set label for control tool, if it's possible.
 }
 
 wxToolBarToolBase *wxToolBar::CreateTool(int id,
@@ -376,7 +472,7 @@ bool wxToolBar::Create( wxWindow *parent,
 
     m_toolbar = GTK_TOOLBAR( gtk_toolbar_new() );
 #ifndef __WXGTK3__
-    if (gtk_check_version(2, 12, 0))
+    if (!wx_is_at_least_gtk2(12))
     {
         m_tooltips = gtk_tooltips_new();
         g_object_ref(m_tooltips);
@@ -385,7 +481,16 @@ bool wxToolBar::Create( wxWindow *parent,
 #endif
     GtkSetStyle();
 
-    if (style & wxTB_DOCKABLE)
+#ifdef __WXGTK4__
+    m_widget = m_toolbar;
+#else
+    wxGCC_WARNING_SUPPRESS(deprecated-declarations)
+    if ((style & wxTB_DOCKABLE)
+#ifdef __WXGTK3__
+        // using GtkHandleBox prevents toolbar from drawing with GTK+ >= 3.19.7
+        && gtk_check_version(3,19,7)
+#endif
+        )
     {
         m_widget = gtk_handle_box_new();
 
@@ -402,8 +507,10 @@ bool wxToolBar::Create( wxWindow *parent,
         m_widget = gtk_event_box_new();
         ConnectWidget( m_widget );
     }
-    g_object_ref(m_widget);
     gtk_container_add(GTK_CONTAINER(m_widget), GTK_WIDGET(m_toolbar));
+    wxGCC_WARNING_RESTORE()
+#endif // !__WXGTK4__
+    g_object_ref(m_widget);
     gtk_widget_show(GTK_WIDGET(m_toolbar));
 
     m_parent->DoAddChild( this );
@@ -532,15 +639,18 @@ bool wxToolBar::DoInsertTool(size_t pos, wxToolBarToolBase *toolBase)
             }
             if (!tool->GetLabel().empty())
             {
+                wxString const
+                    label = wxControl::RemoveMnemonics(tool->GetLabel());
+
                 gtk_tool_button_set_label(
-                    GTK_TOOL_BUTTON(tool->m_item), wxGTK_CONV(tool->GetLabel()));
+                    GTK_TOOL_BUTTON(tool->m_item), wxGTK_CONV(label));
                 // needed for labels in horizontal toolbar with wxTB_HORZ_LAYOUT
                 gtk_tool_item_set_is_important(tool->m_item, true);
             }
             if (!HasFlag(wxTB_NO_TOOLTIPS) && !tool->GetShortHelp().empty())
             {
 #if GTK_CHECK_VERSION(2, 12, 0)
-                if (GTK_CHECK_VERSION(3,0,0) || gtk_check_version(2,12,0) == NULL)
+                if (wx_is_at_least_gtk2(12))
                 {
                     gtk_tool_item_set_tooltip_text(tool->m_item,
                         wxGTK_CONV(tool->GetShortHelp()));
@@ -585,7 +695,11 @@ bool wxToolBar::DoInsertTool(size_t pos, wxToolBarToolBase *toolBase)
             wxWindow* control = tool->GetControl();
             if (gtk_widget_get_parent(control->m_widget) == NULL)
                 AddChildGTK(control);
+#ifdef __WXGTK3__
+            tool->m_item = GTK_TOOL_ITEM(gtk_widget_get_parent(control->m_widget));
+#else
             tool->m_item = GTK_TOOL_ITEM(gtk_widget_get_parent(gtk_widget_get_parent(control->m_widget)));
+#endif
             if (gtk_toolbar_get_item_index(m_toolbar, tool->m_item) != int(pos))
             {
                 g_object_ref(tool->m_item);
@@ -698,7 +812,7 @@ wxSize wxToolBar::DoGetBestSize() const
 wxToolBarToolBase *wxToolBar::FindToolForPosition(wxCoord WXUNUSED(x),
                                                   wxCoord WXUNUSED(y)) const
 {
-    // VZ: GTK+ doesn't seem to have such thing
+    // TODO: implement this using gtk_toolbar_get_drop_index()
     wxFAIL_MSG( wxT("wxToolBar::FindToolForPosition() not implemented") );
 
     return NULL;
@@ -714,7 +828,7 @@ void wxToolBar::SetToolShortHelp( int id, const wxString& helpString )
         if (tool->m_item)
         {
 #if GTK_CHECK_VERSION(2, 12, 0)
-            if (GTK_CHECK_VERSION(3,0,0) || gtk_check_version(2,12,0) == NULL)
+            if (wx_is_at_least_gtk2(12))
             {
                 gtk_tool_item_set_tooltip_text(tool->m_item,
                     wxGTK_CONV(helpString));

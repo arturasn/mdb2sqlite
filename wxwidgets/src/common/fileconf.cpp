@@ -48,10 +48,6 @@
 #if defined(__WINDOWS__)
     #include "wx/msw/private.h"
 #endif  //windows.h
-#if defined(__WXPM__)
-    #define INCL_DOS
-    #include <os2.h>
-#endif
 
 #include  <stdlib.h>
 #include  <ctype.h>
@@ -59,10 +55,6 @@
 // ----------------------------------------------------------------------------
 // constants
 // ----------------------------------------------------------------------------
-
-#ifndef MAX_PATH
-    #define MAX_PATH 512
-#endif
 
 #define FILECONF_TRACE_MASK wxT("fileconf")
 
@@ -255,26 +247,6 @@ public:
 // static functions
 // ----------------------------------------------------------------------------
 
-// this function modifies in place the given wxFileName object if it doesn't
-// already have an extension
-//
-// note that it's slightly misnamed under Mac as there it doesn't add an
-// extension but modifies the file name instead, so you shouldn't suppose that
-// fn.HasExt() is true after it returns
-static void AddConfFileExtIfNeeded(wxFileName& fn)
-{
-    if ( !fn.HasExt() )
-    {
-#if defined( __WXMAC__ )
-        fn.SetName(fn.GetName() + wxT(" Preferences"));
-#elif defined( __UNIX__ )
-        fn.SetExt(wxT("conf"));
-#else   // Windows
-        fn.SetExt(wxT("ini"));
-#endif  // UNIX/Win
-    }
-}
-
 wxString wxFileConfig::GetGlobalDir()
 {
     return wxStandardPaths::Get().GetConfigDir();
@@ -294,37 +266,34 @@ wxString wxFileConfig::GetLocalDir(int style)
 
 wxFileName wxFileConfig::GetGlobalFile(const wxString& szFile)
 {
-    wxFileName fn(GetGlobalDir(), szFile);
+    wxStandardPathsBase& stdp = wxStandardPaths::Get();
 
-    AddConfFileExtIfNeeded(fn);
-
-    return fn;
+    return wxFileName(GetGlobalDir(), stdp.MakeConfigFileName(szFile));
 }
 
 wxFileName wxFileConfig::GetLocalFile(const wxString& szFile, int style)
 {
-    wxFileName fn(GetLocalDir(style), szFile);
+    wxStandardPathsBase& stdp = wxStandardPaths::Get();
 
-#if defined( __UNIX__ ) && !defined( __WXMAC__ )
-    if ( !(style & wxCONFIG_USE_SUBDIR) )
-    {
-        // dot-files under Unix start with, well, a dot (but OTOH they usually
-        // don't have any specific extension)
-        fn.SetName(wxT('.') + fn.GetName());
-    }
-    else // we do append ".conf" extension to config files in subdirectories
-#endif // defined( __UNIX__ ) && !defined( __WXMAC__ )
-    {
-        AddConfFileExtIfNeeded(fn);
-    }
+    // If the config file is located in a subdirectory, we always use an
+    // extension for it, but we use just the leading dot if it is located
+    // directly in the home directory. Note that if wxStandardPaths is
+    // configured to follow XDG specification, all config files go to a
+    // subdirectory of XDG_CONFIG_HOME anyhow, so in this case we'll still end
+    // up using the extension even if wxCONFIG_USE_SUBDIR is not set, but this
+    // is the correct and expected (if a little confusing) behaviour.
+    const wxStandardPaths::ConfigFileConv
+        conv = style & wxCONFIG_USE_SUBDIR
+                ? wxStandardPaths::ConfigFileConv_Ext
+                : wxStandardPaths::ConfigFileConv_Dot;
 
-    return fn;
+    return wxFileName(GetLocalDir(style), stdp.MakeConfigFileName(szFile, conv));
 }
 
 // ----------------------------------------------------------------------------
 // ctor
 // ----------------------------------------------------------------------------
-IMPLEMENT_ABSTRACT_CLASS(wxFileConfig, wxConfigBase)
+wxIMPLEMENT_ABSTRACT_CLASS(wxFileConfig, wxConfigBase);
 
 void wxFileConfig::Init()
 {
@@ -377,6 +346,7 @@ void wxFileConfig::Init()
     }
 
     m_isDirty = false;
+    m_autosave = true;
 }
 
 // constructor supports creation of wxFileConfig objects of any type
@@ -518,7 +488,8 @@ void wxFileConfig::CleanUp()
 
 wxFileConfig::~wxFileConfig()
 {
-    Flush();
+    if ( m_autosave )
+        Flush();
 
     CleanUp();
 
@@ -571,7 +542,7 @@ void wxFileConfig::Parse(const wxTextBuffer& buffer, bool bLocal)
       }
 
       if ( *pEnd != wxT(']') ) {
-        wxLogError(_("file '%s': unexpected character %c at line %d."),
+        wxLogError(_("file '%s': unexpected character %c at line %zu."),
                    buffer.GetName(), *pEnd, n + 1);
         continue; // skip this line
       }
@@ -607,7 +578,7 @@ void wxFileConfig::Parse(const wxTextBuffer& buffer, bool bLocal)
             break;
 
           default:
-            wxLogWarning(_("file '%s', line %d: '%s' ignored after group header."),
+            wxLogWarning(_("file '%s', line %zu: '%s' ignored after group header."),
                          buffer.GetName(), n + 1, pEnd);
             bCont = false;
         }
@@ -636,7 +607,7 @@ void wxFileConfig::Parse(const wxTextBuffer& buffer, bool bLocal)
         pEnd++;
 
       if ( *pEnd++ != wxT('=') ) {
-        wxLogError(_("file '%s', line %d: '=' expected."),
+        wxLogError(_("file '%s', line %zu: '=' expected."),
                    buffer.GetName(), n + 1);
       }
       else {
@@ -649,7 +620,7 @@ void wxFileConfig::Parse(const wxTextBuffer& buffer, bool bLocal)
         else {
           if ( bLocal && pEntry->IsImmutable() ) {
             // immutable keys can't be changed by user
-            wxLogWarning(_("file '%s', line %d: value for immutable key '%s' ignored."),
+            wxLogWarning(_("file '%s', line %zu: value for immutable key '%s' ignored."),
                          buffer.GetName(), n + 1, strKey.c_str());
             continue;
           }
@@ -659,8 +630,8 @@ void wxFileConfig::Parse(const wxTextBuffer& buffer, bool bLocal)
           //  (c) key from global file now found in local one
           // which is exactly what we want.
           else if ( !bLocal || pEntry->IsLocal() ) {
-            wxLogWarning(_("file '%s', line %d: key '%s' was first found at line %d."),
-                         buffer.GetName(), (int)n + 1, strKey.c_str(), pEntry->Line());
+            wxLogWarning(_("file '%s', line %zu: key '%s' was first found at line %d."),
+                         buffer.GetName(), n + 1, strKey.c_str(), pEntry->Line());
 
           }
         }
@@ -1040,10 +1011,6 @@ bool wxFileConfig::Flush(bool /* bCurrentOnly */)
   }
 
   ResetDirty();
-
-#if defined( __WXOSX_MAC__ ) && wxOSX_USE_CARBON
-  m_fnLocalFile.MacSetTypeAndCreator('TEXT', 'ttxt');
-#endif // __WXMAC__
 
   return true;
 }
@@ -1570,16 +1537,17 @@ wxString wxFileConfigGroup::GetFullName() const
 wxFileConfigEntry *
 wxFileConfigGroup::FindEntry(const wxString& name) const
 {
-  size_t i,
+  size_t
        lo = 0,
        hi = m_aEntries.GetCount();
-  int res;
   wxFileConfigEntry *pEntry;
 
   while ( lo < hi ) {
+    size_t i;
     i = (lo + hi)/2;
     pEntry = m_aEntries[i];
 
+    int res;
     #if wxCONFIG_CASE_SENSITIVE
       res = pEntry->Name().compare(name);
     #else
@@ -1600,16 +1568,17 @@ wxFileConfigGroup::FindEntry(const wxString& name) const
 wxFileConfigGroup *
 wxFileConfigGroup::FindSubgroup(const wxString& name) const
 {
-  size_t i,
+  size_t
        lo = 0,
        hi = m_aSubgroups.GetCount();
-  int res;
   wxFileConfigGroup *pGroup;
 
   while ( lo < hi ) {
+    size_t i;
     i = (lo + hi)/2;
     pGroup = m_aSubgroups[i];
 
+    int res;
     #if wxCONFIG_CASE_SENSITIVE
       res = pGroup->Name().compare(name);
     #else
@@ -2060,7 +2029,7 @@ static wxString FilterOutValue(const wxString& str)
           c = wxT('"');
           break;
         }
-        //else: fall through
+        wxFALLTHROUGH;
 
       default:
         strResult += str[n];

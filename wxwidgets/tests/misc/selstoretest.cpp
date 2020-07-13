@@ -27,13 +27,13 @@ class SelStoreTestCase : public CppUnit::TestCase
 public:
     SelStoreTestCase() { m_store = NULL; }
 
-    virtual void setUp()
+    virtual void setUp() wxOVERRIDE
     {
         m_store = new wxSelectionStore;
         m_store->SetItemCount(NUM_ITEMS);
     }
 
-    virtual void tearDown()
+    virtual void tearDown() wxOVERRIDE
     {
         delete m_store;
         m_store = NULL;
@@ -45,19 +45,23 @@ private:
         CPPUNIT_TEST( SelectRange );
         CPPUNIT_TEST( SetItemCount );
         CPPUNIT_TEST( Clear );
+        CPPUNIT_TEST( Iterate );
+        CPPUNIT_TEST( ItemsAddDelete );
     CPPUNIT_TEST_SUITE_END();
 
     void SelectItem();
     void SelectRange();
     void SetItemCount();
     void Clear();
+    void Iterate();
+    void ItemsAddDelete();
 
     // NB: must be even
     static const unsigned NUM_ITEMS;
 
     wxSelectionStore *m_store;
 
-    DECLARE_NO_COPY_CLASS(SelStoreTestCase)
+    wxDECLARE_NO_COPY_CLASS(SelStoreTestCase);
 };
 
 // register in the unnamed registry so that these tests are run by default
@@ -123,11 +127,63 @@ void SelStoreTestCase::SetItemCount()
 
 void SelStoreTestCase::Clear()
 {
+    CPPUNIT_ASSERT(m_store->IsEmpty());
     CPPUNIT_ASSERT_EQUAL( 0u, m_store->GetSelectedCount() );
 
     m_store->SelectItem(0);
+
+    CPPUNIT_ASSERT(!m_store->IsEmpty());
+
     m_store->Clear();
 
+    CPPUNIT_ASSERT(m_store->IsEmpty());
     CPPUNIT_ASSERT_EQUAL( 0u, m_store->GetSelectedCount() );
 }
 
+void SelStoreTestCase::Iterate()
+{
+    m_store->SelectRange(NUM_ITEMS/2 - 1, NUM_ITEMS/2 + 1);
+
+    wxSelectionStore::IterationState cookie;
+    CPPUNIT_ASSERT_EQUAL(NUM_ITEMS/2 - 1, m_store->GetFirstSelectedItem(cookie));
+    CPPUNIT_ASSERT_EQUAL(NUM_ITEMS/2, m_store->GetNextSelectedItem(cookie));
+    CPPUNIT_ASSERT_EQUAL(NUM_ITEMS/2 + 1, m_store->GetNextSelectedItem(cookie));
+
+    CPPUNIT_ASSERT_EQUAL(wxSelectionStore::NO_SELECTION, m_store->GetNextSelectedItem(cookie));
+
+
+    m_store->SelectRange(0, NUM_ITEMS - 1);
+    m_store->SelectItem(0, false);
+    CPPUNIT_ASSERT_EQUAL(1, m_store->GetFirstSelectedItem(cookie));
+}
+
+void SelStoreTestCase::ItemsAddDelete()
+{
+    m_store->SelectItem(0);
+    m_store->SelectItem(NUM_ITEMS/2);
+    m_store->SelectItem(NUM_ITEMS - 1);
+
+    m_store->OnItemsInserted(NUM_ITEMS/2 + 1, 1);
+    CPPUNIT_ASSERT(m_store->IsSelected(0));
+    CPPUNIT_ASSERT(m_store->IsSelected(NUM_ITEMS/2));
+    CPPUNIT_ASSERT(m_store->IsSelected(NUM_ITEMS));
+    CPPUNIT_ASSERT_EQUAL(3, m_store->GetSelectedCount());
+
+    CPPUNIT_ASSERT(m_store->OnItemsDeleted(NUM_ITEMS/2 - 1, 2));
+    CPPUNIT_ASSERT(m_store->IsSelected(0));
+    CPPUNIT_ASSERT(m_store->IsSelected(NUM_ITEMS - 2));
+    CPPUNIT_ASSERT_EQUAL(2, m_store->GetSelectedCount());
+
+    m_store->OnItemsInserted(0, 2);
+    CPPUNIT_ASSERT(m_store->IsSelected(2));
+    CPPUNIT_ASSERT(m_store->IsSelected(NUM_ITEMS));
+    CPPUNIT_ASSERT_EQUAL(2, m_store->GetSelectedCount());
+
+    m_store->OnItemDelete(0);
+
+    m_store->SelectRange(0, NUM_ITEMS - 1);
+    CPPUNIT_ASSERT(m_store->OnItemsDeleted(0, NUM_ITEMS/2));
+    CPPUNIT_ASSERT_EQUAL(NUM_ITEMS/2, m_store->GetSelectedCount());
+    CPPUNIT_ASSERT(m_store->IsSelected(0));
+    CPPUNIT_ASSERT(m_store->IsSelected(NUM_ITEMS/2));
+}

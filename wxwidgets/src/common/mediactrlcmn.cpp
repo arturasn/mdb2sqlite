@@ -43,12 +43,12 @@
 // RTTI and Event implementations
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-IMPLEMENT_CLASS(wxMediaCtrl, wxControl)
+wxIMPLEMENT_CLASS(wxMediaCtrl, wxControl);
 wxDEFINE_EVENT( wxEVT_MEDIA_STATECHANGED, wxMediaEvent );
 wxDEFINE_EVENT( wxEVT_MEDIA_PLAY, wxMediaEvent );
 wxDEFINE_EVENT( wxEVT_MEDIA_PAUSE, wxMediaEvent );
-IMPLEMENT_CLASS(wxMediaBackend, wxObject)
-IMPLEMENT_DYNAMIC_CLASS(wxMediaEvent, wxEvent)
+wxIMPLEMENT_CLASS(wxMediaBackend, wxObject);
+wxIMPLEMENT_DYNAMIC_CLASS(wxMediaEvent, wxEvent);
 wxDEFINE_EVENT( wxEVT_MEDIA_FINISHED, wxMediaEvent );
 wxDEFINE_EVENT( wxEVT_MEDIA_LOADED, wxMediaEvent );
 wxDEFINE_EVENT( wxEVT_MEDIA_STOP, wxMediaEvent );
@@ -462,19 +462,6 @@ void wxMediaCtrl::DoMoveWindow(int x, int y, int w, int h)
         m_imp->Move(x, y, w, h);
 }
 
-//---------------------------------------------------------------------------
-// wxMediaCtrl::MacVisibilityChanged
-//---------------------------------------------------------------------------
-#ifdef __WXOSX_CARBON__
-void wxMediaCtrl::MacVisibilityChanged()
-{
-    wxControl::MacVisibilityChanged();
-
-    if(m_imp)
-        m_imp->MacVisibilityChanged();
-}
-#endif
-
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //
 //  wxMediaBackendCommonBase
@@ -539,7 +526,7 @@ void wxMediaBackendCommonBase::QueueStopEvent()
 
 //
 // Force link default backends in -
-// see http://wiki.wxwidgets.org/wiki.pl?RTTI
+// see https://wiki.wxwidgets.org/RTTI
 //
 #include "wx/html/forcelnk.h"
 

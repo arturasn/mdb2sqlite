@@ -18,7 +18,7 @@
 
 #if !USE_NATIVE_FONT_DIALOG_FOR_MACOSX && wxUSE_COLOURDLG
 
-IMPLEMENT_DYNAMIC_CLASS(wxColourDialog, wxDialog)
+wxIMPLEMENT_DYNAMIC_CLASS(wxColourDialog, wxDialog);
 
 #include "wx/osx/private.h"
 
@@ -31,12 +31,12 @@ wxColourDialog::wxColourDialog()
     m_dialogParent = NULL;
 }
 
-wxColourDialog::wxColourDialog(wxWindow *parent, wxColourData *data)
+wxColourDialog::wxColourDialog(wxWindow *parent, const wxColourData *data)
 {
     Create(parent, data);
 }
 
-bool wxColourDialog::Create(wxWindow *parent, wxColourData *data)
+bool wxColourDialog::Create(wxWindow *parent, const wxColourData *data)
 {
     m_dialogParent = parent;
 

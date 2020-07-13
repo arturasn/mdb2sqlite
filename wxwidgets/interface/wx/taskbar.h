@@ -6,7 +6,7 @@
 /////////////////////////////////////////////////////////////////////////////
 
 /**
-   On OSX Cocoa the taskbar icon can be in the doc or in the status area.
+   On wxOSX/Cocoa the taskbar icon can be in the doc or in the status area.
    This enumeration can be used to select which will be instantiated.
 */
 enum wxTaskBarIconType
@@ -25,7 +25,7 @@ enum wxTaskBarIconType
     For a list of the event macros meant to be used with wxTaskBarIconEvent,
     please look at wxTaskBarIcon description.
 
-    @library{wxadv}
+    @library{wxcore}
     @category{events}
 */
 class wxTaskBarIconEvent : public wxEvent
@@ -84,14 +84,14 @@ public:
         in the menu being displayed on the current platform.
     @endEventTable
 
-    @library{wxadv}
+    @library{wxcore}
     @category{misc}
 */
 class wxTaskBarIcon : public wxEvtHandler
 {
 public:
     /**
-        Default constructor.  The iconType is only applicable on wxOSX_Cocoa.
+        Default constructor.  The iconType is only applicable on wxOSX/Cocoa.
     */
     wxTaskBarIcon(wxTaskBarIconType iconType = wxTBI_DEFAULT_TYPE);
 
@@ -144,7 +144,7 @@ public:
         Returns true if system tray is available in the desktop environment the
         app runs under.
 
-        On Windows and Mac OS X, the tray is always available and this function
+        On Windows and OS X, the tray is always available and this function
         simply returns true.
 
         On Unix, X11 environment may or may not provide the tray, depending on

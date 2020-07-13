@@ -30,9 +30,9 @@
 #include <stdio.h>
 #include <string.h>
 
-IMPLEMENT_DYNAMIC_CLASS(wxMetafile, wxObject)
-IMPLEMENT_ABSTRACT_CLASS(wxMetafileDC, wxDC)
-IMPLEMENT_ABSTRACT_CLASS(wxMetafileDCImpl, wxGCDCImpl)
+wxIMPLEMENT_DYNAMIC_CLASS(wxMetafile, wxObject);
+wxIMPLEMENT_ABSTRACT_CLASS(wxMetafileDC, wxDC);
+wxIMPLEMENT_ABSTRACT_CLASS(wxMetafileDCImpl, wxGCDCImpl);
 
 #define M_METAFILEREFDATA( a ) ((wxMetafileRefData*)(a).GetRefData())
 
@@ -53,7 +53,7 @@ public:
 
     virtual ~wxMetafileRefData();
 
-    virtual bool IsOk() const { return m_data != NULL; }
+    virtual bool IsOk() const wxOVERRIDE { return m_data != NULL; }
 
     void Init();
 
@@ -95,9 +95,7 @@ wxMetafileRefData::wxMetafileRefData( const wxString& filename )
 
     if ( !filename.empty() )
     {
-        wxCFRef<CFMutableStringRef> cfMutableString(CFStringCreateMutableCopy(NULL, 0, wxCFStringRef(filename)));
-        CFStringNormalize(cfMutableString,kCFStringNormalizationFormD);
-        wxCFRef<CFURLRef> url(CFURLCreateWithFileSystemPath(kCFAllocatorDefault, cfMutableString , kCFURLPOSIXPathStyle, false));
+        wxCFRef<CFURLRef> url(wxOSXCreateURLFromFileSystemPath(filename));
         m_pdfDoc.reset(CGPDFDocumentCreateWithURL(url));
     }
 }

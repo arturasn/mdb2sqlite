@@ -16,8 +16,8 @@
 #include "wx/string.h"
 
 #ifndef __WX_SETUP_H__
-// For non-configure builds assume vsscanf is available, if not Visual C or DMC
-#if !defined (__VISUALC__) && !defined (__DMC__)
+// For non-configure builds assume vsscanf is available, if not Visual C
+#if !defined (__VISUALC__)
     #define HAVE_VSSCANF 1
 #endif
 #endif
@@ -95,7 +95,7 @@ WXDLLIMPEXP_BASE size_t wxWC2MB(char *buf, const wchar_t *psz, size_t n);
         return (wxChar*) memmove(szOut, szIn, len * sizeof(wxChar));
     }
 
-    inline wxChar* wxTmemset(wxChar* szOut, const wxChar cIn, size_t len)
+    inline wxChar* wxTmemset(wxChar* szOut, wxChar cIn, size_t len)
     {
         wxChar* szRet = szOut;
 
@@ -117,7 +117,7 @@ inline char* wxTmemcpy(char* szOut, const char* szIn, size_t len)
     { return (char*)memcpy(szOut, szIn, len); }
 inline char* wxTmemmove(char* szOut, const char* szIn, size_t len)
     { return (char*)memmove(szOut, szIn, len); }
-inline char* wxTmemset(char* szOut, const char cIn, size_t len)
+inline char* wxTmemset(char* szOut, char cIn, size_t len)
     { return (char*)memset(szOut, cIn, len); }
 
 
@@ -257,7 +257,7 @@ inline size_t wxStrlcpy(char *dest, const char *src, size_t n)
     {
         if ( n-- > len )
             n = len;
-        wxCRT_StrncpyA(dest, src, n);
+        memcpy(dest, src, n);
         dest[n] = '\0';
     }
 
@@ -270,7 +270,7 @@ inline size_t wxStrlcpy(wchar_t *dest, const wchar_t *src, size_t n)
     {
         if ( n-- > len )
             n = len;
-        wxCRT_StrncpyW(dest, src, n);
+        memcpy(dest, src, n * sizeof(wchar_t));
         dest[n] = L'\0';
     }
 
@@ -464,9 +464,8 @@ WX_STRCMP_FUNC(wxStricmp, wxCRT_StricmpA, wxCRT_StricmpW, wxStricmp_String)
 // the template's implementation uses overloaded function declared later (see
 // the wxStrcoll() call in wxStrcoll_String<T>()), so we have to
 // forward-declare the template and implement it below WX_STRCMP_FUNC. OTOH,
-// this fails to compile with VC6, so don't do it for VC. It also causes
-// problems with GCC visibility in newer GCC versions.
-#if !(defined(__VISUALC__) || (wxCHECK_GCC_VERSION(3,5) && !wxCHECK_GCC_VERSION(4,7))) || defined(__clang__)
+// this causes problems with GCC visibility in newer GCC versions.
+#if !(wxCHECK_GCC_VERSION(3,5) && !wxCHECK_GCC_VERSION(4,7)) || defined(__clang__)
     #define wxNEEDS_DECL_BEFORE_TEMPLATE
 #endif
 
@@ -906,10 +905,9 @@ WX_STRTOX_FUNC(wxULongLong_t, wxStrtoull, wxCRT_StrtoullA, wxCRT_StrtoullW)
 
 #undef WX_STRTOX_FUNC
 
-
-// there is no command interpreter under CE, hence no system()
-#ifndef __WXWINCE__
-
+// ios doesn't export system starting from iOS 11 anymore and usage was critical before
+#if defined(__WXOSX__) && wxOSX_USE_IPHONE
+#else
 // mingw32 doesn't provide _tsystem() even though it provides other stdlib.h
 // functions in their wide versions
 #ifdef wxCRT_SystemW
@@ -917,8 +915,7 @@ inline int wxSystem(const wxString& str) { return wxCRT_SystemW(str.wc_str()); }
 #else
 inline int wxSystem(const wxString& str) { return wxCRT_SystemA(str.mb_str()); }
 #endif
-
-#endif // !__WXWINCE__/__WXWINCE__
+#endif
 
 inline char* wxGetenv(const char *name) { return wxCRT_GetenvA(name); }
 inline wchar_t* wxGetenv(const wchar_t *name) { return wxCRT_GetenvW(name); }

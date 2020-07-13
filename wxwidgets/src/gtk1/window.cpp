@@ -2412,7 +2412,7 @@ wxMouseState wxGetMouseState()
 // in wxUniv/MSW this class is abstract because it doesn't have DoPopupMenu()
 // method
 #ifdef __WXUNIVERSAL__
-    IMPLEMENT_ABSTRACT_CLASS(wxWindowGTK, wxWindowBase)
+    wxIMPLEMENT_ABSTRACT_CLASS(wxWindowGTK, wxWindowBase);
 #endif // __WXUNIVERSAL__
 
 void wxWindowGTK::Init()
@@ -2918,7 +2918,7 @@ void wxWindowGTK::DoSetSize( int x, int y, int width, int height, int sizeFlags 
 void wxWindowGTK::OnInternalIdle()
 {
     // Update style if the window was not yet realized
-    // and SetBackgroundStyle(wxBG_STYLE_CUSTOM) was called
+    // and SetBackgroundStyle(wxBG_STYLE_PAINT) was called
     if (m_needsStyleChange)
     {
         SetBackgroundStyle(GetBackgroundStyle());
@@ -3583,7 +3583,7 @@ void wxWindowGTK::GtkSendPaintEvents()
         wxEraseEvent erase_event( GetId(), &dc );
         erase_event.SetEventObject( this );
 
-        if (!HandleWindowEvent(erase_event) && GetBackgroundStyle() != wxBG_STYLE_CUSTOM)
+        if (!HandleWindowEvent(erase_event) && GetBackgroundStyle() != wxBG_STYLE_PAINT)
         {
             if (!g_eraseGC)
             {
@@ -3705,7 +3705,7 @@ bool wxWindowGTK::SetBackgroundColour( const wxColour &colour )
 
     // apply style change (forceStyle=true so that new style is applied
     // even if the bg colour changed from valid to wxNullColour)
-    if (GetBackgroundStyle() != wxBG_STYLE_CUSTOM)
+    if (GetBackgroundStyle() != wxBG_STYLE_PAINT)
         ApplyWidgetStyle(true);
 
     return true;
@@ -3818,7 +3818,7 @@ bool wxWindowGTK::SetBackgroundStyle(wxBackgroundStyle style)
 {
     wxWindowBase::SetBackgroundStyle(style);
 
-    if (style == wxBG_STYLE_CUSTOM)
+    if (style == wxBG_STYLE_PAINT)
     {
         GdkWindow *window = NULL;
         if (m_wxwindow)
@@ -4198,10 +4198,10 @@ public:
     void OnExit();
 
 private:
-    DECLARE_DYNAMIC_CLASS(wxWinModule)
+    wxDECLARE_DYNAMIC_CLASS(wxWinModule);
 };
 
-IMPLEMENT_DYNAMIC_CLASS(wxWinModule, wxModule)
+wxIMPLEMENT_DYNAMIC_CLASS(wxWinModule, wxModule);
 
 bool wxWinModule::OnInit()
 {

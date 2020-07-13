@@ -31,8 +31,8 @@ class BitmapToggleButtonTestCase : public CppUnit::TestCase
 public:
     BitmapToggleButtonTestCase() { }
 
-    void setUp();
-    void tearDown();
+    void setUp() wxOVERRIDE;
+    void tearDown() wxOVERRIDE;
 
 private:
     CPPUNIT_TEST_SUITE( BitmapToggleButtonTestCase );
@@ -45,7 +45,7 @@ private:
 
     wxBitmapToggleButton* m_button;
 
-    DECLARE_NO_COPY_CLASS(BitmapToggleButtonTestCase)
+    wxDECLARE_NO_COPY_CLASS(BitmapToggleButtonTestCase);
 };
 
 // register in the unnamed registry so that these tests are run by default

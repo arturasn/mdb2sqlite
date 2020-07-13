@@ -64,7 +64,7 @@ public:
     int GetIndex() const
         { return m_parent->GetItemIndex(const_cast<wxListBoxItem*>(this)); }
 
-    wxString GetName() const
+    wxString GetName() const wxOVERRIDE
         { return m_parent->GetString(GetIndex()); }
 
 private:
@@ -177,7 +177,7 @@ WXDWORD wxListBox::MSWGetStyle(long style, WXDWORD *exstyle) const
     if ( m_windowStyle & wxLB_SORT )
         msStyle |= LBS_SORT;
 
-#if wxUSE_OWNER_DRAWN && !defined(__WXWINCE__)
+#if wxUSE_OWNER_DRAWN
     if ( m_windowStyle & wxLB_OWNERDRAW )
     {
         // we don't support LBS_OWNERDRAWVARIABLE yet and we also always put
@@ -188,6 +188,14 @@ WXDWORD wxListBox::MSWGetStyle(long style, WXDWORD *exstyle) const
 #endif // wxUSE_OWNER_DRAWN
 
     return msStyle;
+}
+
+void wxListBox::MSWUpdateFontOnDPIChange(const wxSize& newDPI)
+{
+    wxListBoxBase::MSWUpdateFontOnDPIChange(newDPI);
+
+    if ( m_font.IsOk() )
+        SetFont(m_font);
 }
 
 void wxListBox::OnInternalIdle()
@@ -220,6 +228,54 @@ void wxListBox::MSWOnItemsChanged()
 // ----------------------------------------------------------------------------
 // implementation of wxListBoxBase methods
 // ----------------------------------------------------------------------------
+
+void wxListBox::EnsureVisible(int n)
+{
+    wxCHECK_RET( IsValid(n),
+                 wxT("invalid index in wxListBox::EnsureVisible") );
+
+    // when item is before the first visible item, make the item the first visible item
+    const int firstItem = SendMessage(GetHwnd(), LB_GETTOPINDEX, 0, 0);
+    if ( n <= firstItem )
+    {
+        DoSetFirstItem(n);
+        return;
+    }
+
+    // retrieve item height in order to compute last visible item and scroll amount
+    const int itemHeight = SendMessage(GetHwnd(), LB_GETITEMHEIGHT, 0, 0);
+    if ( itemHeight == LB_ERR || itemHeight == 0)
+        return;
+
+    // compute the amount of fully visible items
+    int countVisible = GetClientSize().y / itemHeight;
+    if ( !countVisible )
+        countVisible = 1;
+
+    // when item is before the last fully visible item, it is already visible
+    const int lastItem = firstItem + countVisible - 1;
+    if ( n <= lastItem )
+        return;
+
+    // make the item the last visible item by setting the first visible item accordingly
+    DoSetFirstItem(n - countVisible + 1);
+}
+
+int wxListBox::GetTopItem() const
+{
+    return SendMessage(GetHwnd(), LB_GETTOPINDEX, 0, 0);
+}
+
+int wxListBox::GetCountPerPage() const
+{
+    const LRESULT lineHeight = SendMessage(GetHwnd(), LB_GETITEMHEIGHT, 0, 0);
+    if ( lineHeight == LB_ERR || lineHeight == 0 )
+        return -1;
+
+    const RECT r = wxGetClientRect(GetHwnd());
+
+    return (r.bottom - r.top) / lineHeight;
+}
 
 void wxListBox::DoSetFirstItem(int N)
 {
@@ -548,7 +604,10 @@ void wxListBox::SetHorizontalExtent(const wxString& s)
     }
 
     if ( largestExtent )
+    {
+        largestExtent = MSWGetFullItemSize(largestExtent, 0 /* height */).x;
         SendMessage(GetHwnd(), LB_SETHORIZONTALEXTENT, LOWORD(largestExtent), 0L);
+    }
     //else: it shouldn't change
 }
 
@@ -568,13 +627,13 @@ wxSize wxListBox::DoGetBestClientSize() const
     // give it some reasonable default value if there are no strings in the
     // list
     if ( wListbox == 0 )
-        wListbox = 100;
+        wListbox = 6*GetCharWidth();
 
     // the listbox should be slightly larger than the widest string
     wListbox += 3*GetCharWidth();
 
     // add room for the scrollbar
-    wListbox += wxSystemSettings::GetMetric(wxSYS_VSCROLL_X);
+    wListbox += wxSystemSettings::GetMetric(wxSYS_VSCROLL_X, m_parent);
 
     // don't make the listbox too tall (limit height to 10 items) but don't
     // make it too small neither
@@ -644,21 +703,21 @@ bool wxListBox::MSWCommand(WXUINT param, WXWORD WXUNUSED(id))
 
 bool wxListBox::SetFont(const wxFont &font)
 {
+    wxListBoxBase::SetFont(font);
+
     if ( HasFlag(wxLB_OWNERDRAW) )
     {
         const unsigned count = m_aItems.GetCount();
         for ( unsigned i = 0; i < count; i++ )
-            m_aItems[i]->SetFont(font);
+            m_aItems[i]->SetFont(m_font);
 
         // Non owner drawn list boxes update the item height on their own, but
         // we need to do it manually in the owner drawn case.
         wxClientDC dc(this);
-        dc.SetFont(font);
+        dc.SetFont(m_font);
         SendMessage(GetHwnd(), LB_SETITEMHEIGHT, 0,
                     dc.GetCharHeight() + 2 * LISTBOX_EXTRA_SPACE);
     }
-
-    wxListBoxBase::SetFont(font);
 
     return true;
 }
@@ -710,11 +769,7 @@ bool wxListBox::MSWOnMeasure(WXMEASUREITEMSTRUCT *item)
 
     MEASUREITEMSTRUCT *pStruct = (MEASUREITEMSTRUCT *)item;
 
-#ifdef __WXWINCE__
-    HDC hdc = GetDC(NULL);
-#else
     HDC hdc = CreateIC(wxT("DISPLAY"), NULL, NULL, 0);
-#endif
 
     {
         wxDCTemp dc((WXHDC)hdc);
@@ -724,11 +779,7 @@ bool wxListBox::MSWOnMeasure(WXMEASUREITEMSTRUCT *item)
         pStruct->itemWidth  = dc.GetCharWidth();
     }
 
-#ifdef __WXWINCE__
-    ReleaseDC(NULL, hdc);
-#else
     DeleteDC(hdc);
-#endif
 
     return true;
 }
@@ -745,7 +796,7 @@ bool wxListBox::MSWOnDraw(WXDRAWITEMSTRUCT *item)
     if ( pStruct->itemID == (UINT)-1 )
         return false;
 
-    wxListBoxItem *pItem = (wxListBoxItem *)m_aItems[pStruct->itemID];
+    wxOwnerDrawn *pItem = m_aItems[pStruct->itemID];
 
     wxDCTemp dc((WXHDC)pStruct->hDC);
 

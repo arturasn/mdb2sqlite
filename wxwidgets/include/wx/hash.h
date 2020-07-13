@@ -40,10 +40,13 @@ union wxHashKeyValue
 // enough, so provide a real forward declaration
 class WXDLLIMPEXP_FWD_BASE wxHashTableBase;
 
+// and clang doesn't like using WXDLLIMPEXP_FWD_BASE inside a typedef.
+class WXDLLIMPEXP_FWD_BASE wxHashTableBase_Node;
+
 class WXDLLIMPEXP_BASE wxHashTableBase_Node
 {
-    friend class WXDLLIMPEXP_FWD_BASE wxHashTableBase;
-    typedef class WXDLLIMPEXP_FWD_BASE wxHashTableBase_Node _Node;
+    friend class wxHashTableBase;
+    typedef class wxHashTableBase_Node _Node;
 public:
     wxHashTableBase_Node( long key, void* value,
                           wxHashTableBase* table );
@@ -241,7 +244,7 @@ protected:
     // m_curr to it and m_currBucket to its bucket
     void GetNextNode( size_t bucketStart );
 private:
-    virtual void DoDeleteContents( wxHashTableBase_Node* node );
+    virtual void DoDeleteContents( wxHashTableBase_Node* node ) wxOVERRIDE;
 
     // current node
     Node* m_curr;
@@ -272,10 +275,10 @@ private:
         eltype *Delete(long lhash, long key)                                  \
             { return (eltype*)DoDelete(key, lhash); }                         \
     private:                                                                  \
-        virtual void DoDeleteContents( wxHashTableBase_Node* node )           \
+        virtual void DoDeleteContents( wxHashTableBase_Node* node ) wxOVERRIDE\
             { delete (eltype*)node->GetData(); }                              \
                                                                               \
-        DECLARE_NO_COPY_CLASS(hashclass)                                      \
+        wxDECLARE_NO_COPY_CLASS(hashclass);                                   \
     }
 
 

@@ -79,7 +79,6 @@ operators and copy constructors since they are reference-counted:
 @li wxPalette
 @li wxPen
 @li wxRegion
-@li wxString
 @li wxVariant
 @li wxVariantData
 
@@ -109,7 +108,7 @@ class-specific shared data. For example:
 @code
 MyClassRefData* GetData() const
 {
-    return wx_static_cast(MyClassRefData*, m_refData);
+    return static_cast<MyClassRefData*>(m_refData);
 }
 @endcode
 

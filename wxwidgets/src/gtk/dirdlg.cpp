@@ -29,6 +29,8 @@
 #endif
 
 #include "wx/gtk/private.h"
+#include "wx/gtk/private/mnemonics.h"
+#include "wx/stockitem.h"
 
 extern "C" {
 static void gtk_dirdialog_response_callback(GtkWidget * WXUNUSED(w),
@@ -46,7 +48,7 @@ static void gtk_dirdialog_response_callback(GtkWidget * WXUNUSED(w),
 // wxDirDialog
 //-----------------------------------------------------------------------------
 
-IMPLEMENT_DYNAMIC_CLASS(wxDirDialog, wxDialog)
+wxIMPLEMENT_DYNAMIC_CLASS(wxDirDialog, wxDialog);
 
 wxDirDialog::wxDirDialog(wxWindow* parent,
                          const wxString& title,
@@ -83,20 +85,34 @@ bool wxDirDialog::Create(wxWindow* parent,
     if (parent)
         gtk_parent = GTK_WINDOW( gtk_widget_get_toplevel(parent->m_widget) );
 
+#ifndef __WXGTK4__
+    wxGCC_WARNING_SUPPRESS(deprecated-declarations)
+#endif
     m_widget = gtk_file_chooser_dialog_new(
                    wxGTK_CONV(m_message),
                    gtk_parent,
                    GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER,
-                   GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
-                   GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,
+#ifdef __WXGTK4__
+                   static_cast<const char*>(wxGTK_CONV(wxConvertMnemonicsToGTK(wxGetStockLabel(wxID_CANCEL)))),
+#else
+                   GTK_STOCK_CANCEL,
+#endif
+                   GTK_RESPONSE_CANCEL,
+#ifdef __WXGTK4__
+                   static_cast<const char*>(wxGTK_CONV(wxConvertMnemonicsToGTK(wxGetStockLabel(wxID_OPEN)))),
+#else
+                   GTK_STOCK_OPEN,
+#endif
+                   GTK_RESPONSE_ACCEPT,
                    NULL);
+#ifndef __WXGTK4__
+    wxGCC_WARNING_RESTORE()
+#endif
     g_object_ref(m_widget);
 
     gtk_dialog_set_default_response(GTK_DIALOG(m_widget), GTK_RESPONSE_ACCEPT);
 #if GTK_CHECK_VERSION(2,18,0)
-#ifndef __WXGTK3__
-    if (gtk_check_version(2,18,0) == NULL)
-#endif
+    if (wx_is_at_least_gtk2(18))
     {
         gtk_file_chooser_set_create_folders(
             GTK_FILE_CHOOSER(m_widget), (style & wxDD_DIR_MUST_EXIST) == 0);

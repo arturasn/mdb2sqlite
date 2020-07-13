@@ -1,5 +1,4 @@
 #ifndef __INCLUDED_INDEXSTATEMENTS_H__
-
 #define __INCLUDED_INDEXSTATEMENTS_H__
 
 #pragma once
@@ -10,6 +9,10 @@ struct CDaoIndexInfo;
 class wxTextCtrl;
 
 #include <vector>
+
+#ifndef _WX_WIDGETS_LINK_H_
+	#include "wxWidgetsLink.h"
+#endif
 
 #ifndef __DB_FIELD_H__
 	#include "DBField.h"

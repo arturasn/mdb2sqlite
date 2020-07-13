@@ -4,7 +4,7 @@
 // Author:      Vadim Zeitlin
 // Modified by: Brad Anderson, David Warkentin
 // Created:     30.05.03
-// Copyright:   (c) 2003 Vadim Zeitlin <vadim@wxwindows.org>
+// Copyright:   (c) 2003 Vadim Zeitlin <vadim@wxwidgets.org>
 // Licence:     wxWindows licence
 /////////////////////////////////////////////////////////////////////////////
 
@@ -49,7 +49,7 @@ public:
         m_scrollHelper = scrollHelper;
     }
 
-    virtual bool ProcessEvent(wxEvent& event);
+    virtual bool ProcessEvent(wxEvent& event) wxOVERRIDE;
 
 private:
     wxVarScrollHelperBase *m_scrollHelper;
@@ -89,9 +89,6 @@ bool wxVarScrollHelperEvtHandler::ProcessEvent(wxEvent& event)
         return true;
     }
 
-    if ( processed && event.IsCommandEvent())
-        return true;
-
     // For wxEVT_PAINT the user code can either handle this event as usual or
     // override virtual OnDraw(), so if the event hasn't been handled we need
     // to call this virtual function ourselves.
@@ -109,6 +106,11 @@ bool wxVarScrollHelperEvtHandler::ProcessEvent(wxEvent& event)
         m_scrollHelper->HandleOnPaint((wxPaintEvent &)event);
         return true;
     }
+
+    // If the user code handled this event, it should prevent the default
+    // handling from taking place, so don't do anything else in this case.
+    if ( processed )
+        return true;
 
     // reset the skipped flag (which might have been set to true in
     // ProcessEvent() above) to be able to test it below
@@ -994,9 +996,9 @@ bool wxVarHVScrollHelper::IsVisible(size_t row, size_t column) const
 // wx[V/H/HV]ScrolledWindow implementations
 // ============================================================================
 
-IMPLEMENT_ABSTRACT_CLASS(wxVScrolledWindow, wxPanel)
-IMPLEMENT_ABSTRACT_CLASS(wxHScrolledWindow, wxPanel)
-IMPLEMENT_ABSTRACT_CLASS(wxHVScrolledWindow, wxPanel)
+wxIMPLEMENT_ABSTRACT_CLASS(wxVScrolledWindow, wxPanel);
+wxIMPLEMENT_ABSTRACT_CLASS(wxHScrolledWindow, wxPanel);
+wxIMPLEMENT_ABSTRACT_CLASS(wxHVScrolledWindow, wxPanel);
 
 
 #if WXWIN_COMPATIBILITY_2_8

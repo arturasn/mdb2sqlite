@@ -38,12 +38,12 @@ public:
                  const wxString &name = wxStaticLineNameStr );
 
     // overridden base class virtuals
-    virtual bool AcceptsFocus() const { return false; }
+    virtual bool AcceptsFocus() const wxOVERRIDE { return false; }
 
     // usually overridden base class virtuals
-    virtual WXDWORD MSWGetStyle(long style, WXDWORD *exstyle) const;
+    virtual WXDWORD MSWGetStyle(long style, WXDWORD *exstyle) const wxOVERRIDE;
 
-    DECLARE_DYNAMIC_CLASS_NO_COPY(wxStaticLine)
+    wxDECLARE_DYNAMIC_CLASS_NO_COPY(wxStaticLine);
 };
 
 #endif // _WX_MSW_STATLINE_H_

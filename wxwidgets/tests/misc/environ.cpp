@@ -35,8 +35,8 @@ private:
 
     void GetSet();
     void Path();
-    
-    DECLARE_NO_COPY_CLASS(EnvTestCase)
+
+    wxDECLARE_NO_COPY_CLASS(EnvTestCase);
 };
 
 // register in the unnamed registry so that these tests are run by default
@@ -68,7 +68,7 @@ void EnvTestCase::GetSet()
 void EnvTestCase::Path()
 {
     wxString contents;
-    
+
     CPPUNIT_ASSERT(wxGetEnv(wxT("PATH"), &contents));
     CPPUNIT_ASSERT(!contents.empty());
 }

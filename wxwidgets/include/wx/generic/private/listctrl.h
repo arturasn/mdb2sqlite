@@ -85,8 +85,8 @@ public:
 
     void GetItem( wxListItem &info ) const;
 
-    void SetAttr(wxListItemAttr *attr) { m_attr = attr; }
-    wxListItemAttr *GetAttr() const { return m_attr; }
+    void SetAttr(wxItemAttr *attr) { m_attr = attr; }
+    wxItemAttr *GetAttr() const { return m_attr; }
 
 public:
     // the item image or -1
@@ -103,7 +103,7 @@ public:
     wxListMainWindow *m_owner;
 
     // custom attributes or NULL
-    wxListItemAttr *m_attr;
+    wxItemAttr *m_attr;
 
 protected:
     // common part of all ctors
@@ -200,6 +200,8 @@ public:
     // is this item selected? [NB: not used in virtual mode]
     bool m_highlighted;
 
+    bool m_checked;
+
     // back pointer to the list ctrl
     wxListMainWindow *m_owner;
 
@@ -249,17 +251,20 @@ public:
     void SetImage( int index, int image );
     int GetImage( int index ) const;
 
+    void Check(bool check) { m_checked = check; }
+    bool IsChecked() { return m_checked; }
+
     bool HasImage() const { return GetImage() != -1; }
     bool HasText() const { return !GetText(0).empty(); }
 
     void SetItem( int index, const wxListItem &info );
-    void GetItem( int index, wxListItem &info );
+    void GetItem( int index, wxListItem &info ) const;
 
     wxString GetText(int index) const;
     void SetText( int index, const wxString& s );
 
-    wxListItemAttr *GetAttr() const;
-    void SetAttr(wxListItemAttr *attr);
+    wxItemAttr *GetAttr() const;
+    void SetAttr(wxItemAttr *attr);
 
     // return true if the highlighting really changed
     bool Highlight( bool on );
@@ -308,7 +313,18 @@ private:
                            int width);
 };
 
-WX_DECLARE_OBJARRAY(wxListLineData, wxListLineDataArray);
+class wxListLineDataArray : public wxVector<wxListLineData*>
+{
+public:
+    void Clear()
+    {
+        for ( size_t n = 0; n < size(); ++n )
+            delete (*this)[n];
+        clear();
+    }
+
+    ~wxListLineDataArray() { Clear(); }
+};
 
 //-----------------------------------------------------------------------------
 //  wxListHeaderWindow (internal)
@@ -349,7 +365,7 @@ public:
     virtual ~wxListHeaderWindow();
 
     // We never need focus as we don't have any keyboard interface.
-    virtual bool AcceptsFocus() const { return false; }
+    virtual bool AcceptsFocus() const wxOVERRIDE { return false; }
 
     void DrawCurrent();
     void AdjustDC( wxDC& dc );
@@ -365,7 +381,9 @@ public:
     int m_colToSend;
     int m_widthToSend;
 
-    virtual void OnInternalIdle();
+    virtual wxWindow *GetMainWindowOfCompositeControl() wxOVERRIDE { return GetParent(); }
+
+    virtual void OnInternalIdle() wxOVERRIDE;
 
 private:
     // common part of all ctors
@@ -375,7 +393,7 @@ private:
     // it wasn't vetoed, i.e. if we should proceed
     bool SendListEvent(wxEventType type, const wxPoint& pos);
 
-    DECLARE_EVENT_TABLE()
+    wxDECLARE_EVENT_TABLE();
 };
 
 //-----------------------------------------------------------------------------
@@ -389,7 +407,7 @@ private:
 
 public:
     wxListRenameTimer( wxListMainWindow *owner );
-    void Notify();
+    void Notify() wxOVERRIDE;
 };
 
 //-----------------------------------------------------------------------------
@@ -407,7 +425,7 @@ public:
     {
     }
 
-    virtual void Notify();
+    virtual void Notify() wxOVERRIDE;
 
 private:
     wxListMainWindow *m_owner;
@@ -458,7 +476,7 @@ private:
     size_t              m_itemEdited;
     bool                m_aboutToFinish;
 
-    DECLARE_EVENT_TABLE()
+    wxDECLARE_EVENT_TABLE();
 };
 
 //-----------------------------------------------------------------------------
@@ -631,10 +649,16 @@ public:
     {
         return GetSubItemRect(item, wxLIST_GETSUBITEMRECT_WHOLEITEM, rect);
     }
-    bool GetSubItemRect( long item, long subItem, wxRect& rect ) const;
+    bool GetSubItemRect( long item, long subItem, wxRect& rect,
+                         int code = wxLIST_RECT_BOUNDS ) const;
     wxRect GetViewRect() const;
     bool GetItemPosition( long item, wxPoint& pos ) const;
     int GetSelectedItemCount() const;
+
+    bool HasCheckBoxes() const;
+    bool EnableCheckBoxes(bool enable = true);
+    bool IsItemChecked(long item) const;
+    void CheckItem(long item, bool check);
 
     wxString GetItemText(long item, int col = 0) const
     {
@@ -694,7 +718,7 @@ public:
                      const wxPoint& point = wxDefaultPosition );
 
     // override base class virtual to reset m_lineHeight when the font changes
-    virtual bool SetFont(const wxFont& font)
+    virtual bool SetFont(const wxFont& font) wxOVERRIDE
     {
         if ( !wxWindow::SetFont(font) )
             return false;
@@ -724,7 +748,7 @@ public:
         return m_hasFocus ? m_highlightBrush : m_highlightUnfocusedBrush;
     }
 
-    bool HasFocus() const
+    bool HasFocus() const wxOVERRIDE
     {
         return m_hasFocus;
     }
@@ -779,8 +803,10 @@ protected:
            m_lineBeforeLastClicked,
            m_lineSelectSingleOnUp;
 
+    bool m_hasCheckBoxes;
+
 protected:
-    wxWindow *GetMainWindowOfCompositeControl() { return GetParent(); }
+    wxWindow *GetMainWindowOfCompositeControl() wxOVERRIDE { return GetParent(); }
 
     // the total count of items in a virtual list control
     size_t m_countVirt;
@@ -803,7 +829,7 @@ protected:
             n = 0;
         }
 
-        return &m_lines[n];
+        return m_lines[n];
     }
 
     // get a dummy line which can be used for geometry calculations and such:
@@ -838,6 +864,10 @@ private:
     // Compute the minimal width needed to fully display the column header.
     int ComputeMinHeaderWidth(const wxListHeaderData* header) const;
 
+    // Check if the given point is inside the checkbox of this item.
+    //
+    // Always returns false if there are no checkboxes.
+    bool IsInsideCheckBox(long item, int x, int y);
 
     // the height of one line using the current font
     wxCoord m_lineHeight;
@@ -860,9 +890,10 @@ private:
     wxListTextCtrlWrapper *m_textctrlWrapper;
 
 
-    DECLARE_EVENT_TABLE()
+    wxDECLARE_EVENT_TABLE();
 
     friend class wxGenericListCtrl;
+    friend class wxListCtrlMaxWidthCalculator;
 };
 
 #endif // wxUSE_LISTCTRL

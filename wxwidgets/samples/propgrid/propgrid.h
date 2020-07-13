@@ -23,13 +23,13 @@ public:
                             const wxString& value = wxEmptyString );
     virtual ~wxAdvImageFileProperty ();
 
-    virtual void OnSetValue();  // Override to allow image loading.
+    virtual void OnSetValue() wxOVERRIDE;  // Override to allow image loading.
 
-    virtual bool IntToValue( wxVariant& variant, int number, int argFlags = 0 ) const;
-    virtual bool OnEvent( wxPropertyGrid* propgrid, wxWindow* primary, wxEvent& event );
-    virtual wxSize OnMeasureImage( int item ) const;
+    virtual bool IntToValue( wxVariant& variant, int number, int argFlags = 0 ) const wxOVERRIDE;
+    virtual bool OnEvent( wxPropertyGrid* propgrid, wxWindow* primary, wxEvent& event ) wxOVERRIDE;
+    virtual wxSize OnMeasureImage( int item ) const wxOVERRIDE;
     virtual void OnCustomPaint( wxDC& dc,
-                                const wxRect& rect, wxPGPaintData& paintdata );
+                                const wxRect& rect, wxPGPaintData& paintdata ) wxOVERRIDE;
 
     void LoadThumbnails( size_t n );
 
@@ -51,8 +51,8 @@ public:
         x = y = z = 0.0;
     }
     wxVector3f( double x, double y, double z )
+        : x(x), y(y), z(z)
     {
-        x = x; y = y; z = z;
     }
 
     double x, y, z;
@@ -77,8 +77,8 @@ public:
 
     virtual wxVariant ChildChanged( wxVariant& thisValue,
                                     int childIndex,
-                                    wxVariant& childValue ) const;
-    virtual void RefreshChildren();
+                                    wxVariant& childValue ) const wxOVERRIDE;
+    virtual void RefreshChildren() wxOVERRIDE;
 
 protected:
 };
@@ -110,8 +110,8 @@ public:
 
     virtual wxVariant ChildChanged( wxVariant& thisValue,
                                     int childIndex,
-                                    wxVariant& childValue ) const;
-    virtual void RefreshChildren();
+                                    wxVariant& childValue ) const wxOVERRIDE;
+    virtual void RefreshChildren() wxOVERRIDE;
 
 protected:
 };
@@ -153,6 +153,8 @@ public:
     wxVariant       m_storedValues;
 
     wxString        m_savedState;
+    bool            m_hasHeader;
+    bool            m_labelEditingEnabled;
 
 
     void CreateGrid( int style, int extraStyle );
@@ -186,14 +188,19 @@ public:
     void OnEnableDisable( wxCommandEvent& event );
     void OnSetReadOnly( wxCommandEvent& event );
     void OnHide( wxCommandEvent& event );
+    void OnBoolCheckbox( wxCommandEvent& evt );
     void OnSetBackgroundColour( wxCommandEvent& event );
     void OnClearModifyStatusClick( wxCommandEvent& event );
     void OnFreezeClick( wxCommandEvent& event );
     void OnEnableLabelEditing( wxCommandEvent& event );
+#if wxUSE_HEADERCTRL
     void OnShowHeader( wxCommandEvent& event );
+#endif
     void OnDumpList( wxCommandEvent& event );
+    void OnCatColoursUpdateUI( wxUpdateUIEvent& event );
     void OnCatColours( wxCommandEvent& event );
     void OnSetColumns( wxCommandEvent& event );
+    void OnSetVirtualWidth(wxCommandEvent& evt);
     void OnMisc( wxCommandEvent& event );
     void OnPopulateClick( wxCommandEvent& event );
     void OnSetSpinCtrlEditorClick( wxCommandEvent& event );
@@ -269,13 +276,13 @@ class cxApplication : public wxApp
 {
 public:
 
-    virtual bool OnInit();
+    virtual bool OnInit() wxOVERRIDE;
 
 private:
     FormMain    *Form1;
 };
 
-DECLARE_APP(cxApplication)
+wxDECLARE_APP(cxApplication);
 
 // -----------------------------------------------------------------------
 

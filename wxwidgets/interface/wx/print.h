@@ -262,7 +262,7 @@ public:
 
         @since 2.9.2
     */
-    virtual void InitializeWithModality(wxPreviewFrameModalityKind kind);
+    void InitializeWithModality(wxPreviewFrameModalityKind kind);
 
     /**
         Enables any disabled frames in the application, and deletes the print preview
@@ -526,8 +526,8 @@ public:
     /**
         Invokes the print setup dialog.
 
-        @remarks
-        The setup dialog is obsolete from Windows 95, though retained
+        @deprecated
+        The setup dialog is obsolete, though retained
         for backward compatibility.
     */
     virtual bool Setup(wxWindow* parent);
@@ -805,7 +805,7 @@ public:
         page rectangle, or page margins rectangle to perform your own scaling.
 
         @note
-        While the underlying drawing model of Mac OS X is floating-point,
+        While the underlying drawing model of OS X is floating-point,
         wxWidgets's drawing model scales from integer coordinates.
     */
     void MapScreenSizeToDevice();

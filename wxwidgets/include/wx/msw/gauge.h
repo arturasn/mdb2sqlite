@@ -33,6 +33,8 @@ public:
         (void)Create(parent, id, range, pos, size, style, validator, name);
     }
 
+    virtual ~wxGauge();
+
     bool Create(wxWindow *parent,
                 wxWindowID id,
                 int range,
@@ -43,22 +45,22 @@ public:
                 const wxString& name = wxGaugeNameStr);
 
     // set gauge range/value
-    virtual void SetRange(int range);
-    virtual void SetValue(int pos);
+    virtual void SetRange(int range) wxOVERRIDE;
+    virtual void SetValue(int pos) wxOVERRIDE;
 
     // overridden base class virtuals
-    virtual bool SetForegroundColour(const wxColour& col);
-    virtual bool SetBackgroundColour(const wxColour& col);
+    virtual bool SetForegroundColour(const wxColour& col) wxOVERRIDE;
+    virtual bool SetBackgroundColour(const wxColour& col) wxOVERRIDE;
 
-    virtual void Pulse();
+    virtual void Pulse() wxOVERRIDE;
 
-    WXDWORD MSWGetStyle(long style, WXDWORD *exstyle) const;
+    WXDWORD MSWGetStyle(long style, WXDWORD *exstyle) const wxOVERRIDE;
 
     // returns true if the platform should explicitly apply a theme border
-    virtual bool CanApplyThemeBorder() const { return false; }
+    virtual bool CanApplyThemeBorder() const wxOVERRIDE { return false; }
 
 protected:
-    virtual wxSize DoGetBestSize() const;
+    virtual wxSize DoGetBestSize() const wxOVERRIDE;
 
 private:
     // returns true if the control is currently in indeterminate (a.k.a.
@@ -69,7 +71,7 @@ private:
     void SetIndeterminateMode();
     void SetDeterminateMode();
 
-    DECLARE_DYNAMIC_CLASS_NO_COPY(wxGauge)
+    wxDECLARE_DYNAMIC_CLASS_NO_COPY(wxGauge);
 };
 
 #endif // wxUSE_GAUGE

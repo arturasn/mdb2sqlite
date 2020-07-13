@@ -29,16 +29,22 @@ public:
 
 private:
     CPPUNIT_TEST_SUITE( ModalDialogsTestCase );
+// wxInfoBar has bug under x11. It will cause the dialog crash
+// Disable it for now.
+#if !defined (__WXX11__)
         CPPUNIT_TEST( MessageDialog );
+#endif
         CPPUNIT_TEST( FileDialog );
         CPPUNIT_TEST( CustomDialog );
+        CPPUNIT_TEST( InitDialog );
     CPPUNIT_TEST_SUITE_END();
 
     void MessageDialog();
     void FileDialog();
     void CustomDialog();
+    void InitDialog();
 
-    DECLARE_NO_COPY_CLASS(ModalDialogsTestCase)
+    wxDECLARE_NO_COPY_CLASS(ModalDialogsTestCase);
 };
 
 // register in the unnamed registry so that these tests are run by default
@@ -75,6 +81,13 @@ void ModalDialogsTestCase::FileDialog()
     CPPUNIT_ASSERT_EQUAL((int)wxID_OK, rc);
 
     CPPUNIT_ASSERT_EQUAL("test.txt", dlg.GetFilename());
+
+#ifdef __WXGTK3__
+    // The native file dialog in GTK+ 3 launches an async operation which tries
+    // to dereference the already deleted dialog object if we don't let it to
+    // complete before leaving this function.
+    wxYield();
+#endif
 }
 
 
@@ -98,7 +111,7 @@ public:
     wxExpectModal(int valueToSet) : m_valueToSet(valueToSet) {}
 
 protected:
-    virtual int OnInvoked(MyDialog *dlg) const
+    virtual int OnInvoked(MyDialog *dlg) const wxOVERRIDE
     {
         // Simulate the user entering the expected number:
         dlg->m_value = m_valueToSet;
@@ -119,6 +132,38 @@ void ModalDialogsTestCase::CustomDialog()
     );
 
     CPPUNIT_ASSERT_EQUAL( 42, dlg.m_value );
+}
+
+
+class MyModalDialog : public wxDialog
+{
+public:
+    MyModalDialog() : wxDialog (NULL, wxID_ANY, "Modal Dialog")
+    {
+        m_wasModal = false;
+        Bind( wxEVT_INIT_DIALOG, &MyModalDialog::OnInit, this );
+    }
+
+    void OnInit(wxInitDialogEvent& WXUNUSED(event))
+    {
+        m_wasModal = IsModal();
+        CallAfter( &MyModalDialog::EndModal, wxID_OK );
+    }
+
+    bool WasModal() const
+    {
+        return m_wasModal;
+    }
+
+private:
+    bool m_wasModal;
+};
+
+void ModalDialogsTestCase::InitDialog()
+{
+    MyModalDialog dlg;
+    dlg.ShowModal();
+    CPPUNIT_ASSERT( dlg.WasModal() );
 }
 
 #endif // HAVE_VARIADIC_MACROS

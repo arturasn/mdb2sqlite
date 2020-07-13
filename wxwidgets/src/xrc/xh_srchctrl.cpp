@@ -19,7 +19,7 @@
 #include "wx/xrc/xh_srchctrl.h"
 #include "wx/srchctrl.h"
 
-IMPLEMENT_DYNAMIC_CLASS(wxSearchCtrlXmlHandler, wxXmlResourceHandler)
+wxIMPLEMENT_DYNAMIC_CLASS(wxSearchCtrlXmlHandler, wxXmlResourceHandler);
 
 wxSearchCtrlXmlHandler::wxSearchCtrlXmlHandler() : wxXmlResourceHandler()
 {
@@ -48,6 +48,10 @@ wxObject *wxSearchCtrlXmlHandler::DoCreateResource()
                  GetName());
 
     SetupWindow(ctrl);
+
+    const wxString& hint = GetText(wxS("hint"));
+    if ( !hint.empty() )
+        ctrl->SetDescriptiveText(hint);
 
     return ctrl;
 }

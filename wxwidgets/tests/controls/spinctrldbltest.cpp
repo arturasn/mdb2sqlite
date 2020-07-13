@@ -25,8 +25,8 @@ class SpinCtrlDoubleTestCase : public CppUnit::TestCase
 public:
     SpinCtrlDoubleTestCase() { }
 
-    void setUp();
-    void tearDown();
+    void setUp() wxOVERRIDE;
+    void tearDown() wxOVERRIDE;
 
 private:
     CPPUNIT_TEST_SUITE( SpinCtrlDoubleTestCase );
@@ -49,7 +49,7 @@ private:
 
     wxSpinCtrlDouble* m_spin;
 
-    DECLARE_NO_COPY_CLASS(SpinCtrlDoubleTestCase)
+    wxDECLARE_NO_COPY_CLASS(SpinCtrlDoubleTestCase);
 };
 
 // register in the unnamed registry so that these tests are run by default
@@ -89,7 +89,7 @@ void SpinCtrlDoubleTestCase::NoEventsInCtor()
 
 void SpinCtrlDoubleTestCase::Arrows()
 {
-#ifndef __WXGTK__
+#if wxUSE_UIACTIONSIMULATOR && !defined(__WXGTK__)
     EventCounter updated(m_spin, wxEVT_SPINCTRLDOUBLE);
 
     wxUIActionSimulator sim;
@@ -123,6 +123,7 @@ void SpinCtrlDoubleTestCase::Wrap()
     wxUIActionSimulator sim;
 
     m_spin->SetFocus();
+    wxYield();
 
     sim.Char(WXK_DOWN);
 
@@ -203,6 +204,7 @@ void SpinCtrlDoubleTestCase::Increment()
     wxUIActionSimulator sim;
 
     m_spin->SetFocus();
+    wxYield();
 
     sim.Char(WXK_UP);
 

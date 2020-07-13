@@ -44,7 +44,7 @@ CMainDlg::CMainDlg(const wxString sTitle, const int nX, const int nY, const int 
        : wxDialog(nullptr, wxID_ANY, sTitle, wxPoint(nX, nY), wxSize(nSizeX, 235), wxRESIZE_BORDER|wxCAPTION|wxCLOSE_BOX)
 {
 	wxIcon icon;
-	icon.LoadFile("sqliteicon.ico", wxBITMAP_TYPE_ICO);
+	icon.LoadFile("../img/sqliteicon.ico", wxBITMAP_TYPE_ICO);
 	SetIcon(icon);
 
 	m_pGauge = nullptr;

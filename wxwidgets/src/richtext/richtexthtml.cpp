@@ -32,7 +32,7 @@
 #include "wx/fs_mem.h"
 #endif
 
-IMPLEMENT_DYNAMIC_CLASS(wxRichTextHTMLHandler, wxRichTextFileHandler)
+wxIMPLEMENT_DYNAMIC_CLASS(wxRichTextHTMLHandler, wxRichTextFileHandler);
 
 int wxRichTextHTMLHandler::sm_fileCounter = 1;
 
@@ -166,7 +166,8 @@ bool wxRichTextHTMLHandler::DoSaveFile(wxRichTextBuffer *buffer, wxOutputStream&
 
         CloseLists(-1, str);
 
-        str << wxT("</font>");
+        if (currentParaStyle.HasFont())
+            str << wxT("</font>");
 
         if ((GetFlags() & wxRICHTEXT_HANDLER_NO_HEADER_FOOTER) == 0)
             str << wxT("</body></html>");
@@ -324,29 +325,29 @@ void wxRichTextHTMLHandler::BeginParagraphFormatting(const wxRichTextAttr& WXUNU
 
             if ((GetFlags() & wxRICHTEXT_HANDLER_USE_CSS) && thisStyle.HasParagraphSpacingBefore())
             {
-                float spacingBeforeMM = thisStyle.GetParagraphSpacingBefore() / 10.0;
+                float spacingBeforeMM = thisStyle.GetParagraphSpacingBefore() / 10.0f;
 
                 styleStr += wxString::Format(wxT("margin-top: %.2fmm; "), spacingBeforeMM);
             }
             if ((GetFlags() & wxRICHTEXT_HANDLER_USE_CSS) && thisStyle.HasParagraphSpacingAfter())
             {
-                float spacingAfterMM = thisStyle.GetParagraphSpacingAfter() / 10.0;
+                float spacingAfterMM = thisStyle.GetParagraphSpacingAfter() / 10.0f;
 
                 styleStr += wxString::Format(wxT("margin-bottom: %.2fmm; "), spacingAfterMM);
             }
 
-            float indentLeftMM = (thisStyle.GetLeftIndent() + thisStyle.GetLeftSubIndent())/10.0;
+            float indentLeftMM = (thisStyle.GetLeftIndent() + thisStyle.GetLeftSubIndent())/10.0f;
             if ((GetFlags() & wxRICHTEXT_HANDLER_USE_CSS) && (indentLeftMM > 0.0))
             {
                 styleStr += wxString::Format(wxT("margin-left: %.2fmm; "), indentLeftMM);
             }
-            float indentRightMM = thisStyle.GetRightIndent()/10.0;
+            float indentRightMM = thisStyle.GetRightIndent()/10.0f;
             if ((GetFlags() & wxRICHTEXT_HANDLER_USE_CSS) && thisStyle.HasRightIndent() && (indentRightMM > 0.0))
             {
                 styleStr += wxString::Format(wxT("margin-right: %.2fmm; "), indentRightMM);
             }
             // First line indentation
-            float firstLineIndentMM = - thisStyle.GetLeftSubIndent() / 10.0;
+            float firstLineIndentMM = - thisStyle.GetLeftSubIndent() / 10.0f;
             if ((GetFlags() & wxRICHTEXT_HANDLER_USE_CSS) && (firstLineIndentMM > 0.0))
             {
                 styleStr += wxString::Format(wxT("text-indent: %.2fmm; "), firstLineIndentMM);
@@ -384,13 +385,13 @@ void wxRichTextHTMLHandler::BeginParagraphFormatting(const wxRichTextAttr& WXUNU
 
         if ((GetFlags() & wxRICHTEXT_HANDLER_USE_CSS) && thisStyle.HasParagraphSpacingBefore())
         {
-            float spacingBeforeMM = thisStyle.GetParagraphSpacingBefore() / 10.0;
+            float spacingBeforeMM = thisStyle.GetParagraphSpacingBefore() / 10.0f;
 
             styleStr += wxString::Format(wxT("margin-top: %.2fmm; "), spacingBeforeMM);
         }
         if ((GetFlags() & wxRICHTEXT_HANDLER_USE_CSS) && thisStyle.HasParagraphSpacingAfter())
         {
-            float spacingAfterMM = thisStyle.GetParagraphSpacingAfter() / 10.0;
+            float spacingAfterMM = thisStyle.GetParagraphSpacingAfter() / 10.0f;
 
             styleStr += wxString::Format(wxT("margin-bottom: %.2fmm; "), spacingAfterMM);
         }

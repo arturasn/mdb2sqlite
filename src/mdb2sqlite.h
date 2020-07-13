@@ -2,6 +2,10 @@
 #define __MDB2SQLITE_H__ 
 #pragma once
 
+#ifndef _WX_WIDGETS_LINK_H_
+	#include "wxWidgetsLink.h"
+#endif
+
 #ifndef _WX_DIALOG_H_
 	#include "wx/dialog.h"
 #endif

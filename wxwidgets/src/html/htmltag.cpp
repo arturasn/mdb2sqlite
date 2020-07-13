@@ -276,7 +276,7 @@ void wxHtmlTagsCache::QueryTag(const wxString::const_iterator& at,
 
         case wxHtmlCacheItem::Type_EndingTag:
             wxFAIL_MSG("QueryTag called for ending tag - can't be");
-            // but if it does happen, fall through, better than crashing
+            wxFALLTHROUGH;// but if it does happen, fall through, better than crashing
 
         case wxHtmlCacheItem::Type_NoMatchingEndingTag:
             // If input HTML is invalid and there's no closing tag for this
@@ -464,6 +464,9 @@ wxHtmlTag::wxHtmlTag(wxHtmlTag *parent,
         { "vertical-align",     "VALIGN"        },
         { "background",         "BGCOLOR"       },
         { "background-color",   "BGCOLOR"       },
+        { "color",              "COLOR"         },
+        { "size",               "SIZE"          },
+        { "face",               "FACE"          },
     };
 
     wxHtmlStyleParams styleParams(*this);
@@ -612,6 +615,10 @@ wxHtmlTag::GetParamAsIntOrPercent(const wxString& par,
     if ( param.EndsWith("%", &num) )
     {
         isPercent = true;
+    }
+    else if ( param.EndsWith("px", &num) )
+    {
+        isPercent = false;
     }
     else
     {

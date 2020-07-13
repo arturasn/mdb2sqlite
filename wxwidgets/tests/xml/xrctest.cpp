@@ -20,6 +20,8 @@
     #include "wx/wx.h"
 #endif // WX_PRECOMP
 
+#if wxUSE_XRC
+
 #include "wx/xml/xml.h"
 #include "wx/sstream.h"
 #include "wx/wfstream.h"
@@ -137,8 +139,8 @@ class XrcTestCase : public CppUnit::TestCase
 public:
     XrcTestCase() {}
 
-    virtual void setUp() { CreateXrc(); }
-    virtual void tearDown() { wxRemoveFile(TEST_XRC_FILE); }
+    virtual void setUp() wxOVERRIDE { CreateXrc(); }
+    virtual void tearDown() wxOVERRIDE { wxRemoveFile(TEST_XRC_FILE); }
 
 private:
     CPPUNIT_TEST_SUITE( XrcTestCase );
@@ -149,7 +151,7 @@ private:
     void ObjectReferences();
     void IDRanges();
 
-    DECLARE_NO_COPY_CLASS(XrcTestCase)
+    wxDECLARE_NO_COPY_CLASS(XrcTestCase);
 };
 
 // register in the unnamed registry so that these tests are run by default
@@ -226,3 +228,5 @@ void XrcTestCase::IDRanges()
         CPPUNIT_ASSERT( wxXmlResource::Get()->Unload(TEST_XRC_FILE) );
     }
 }
+
+#endif // wxUSE_XRC

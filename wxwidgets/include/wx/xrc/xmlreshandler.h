@@ -3,7 +3,6 @@
 // Purpose:     XML resource handler
 // Author:      Steven Lamerton
 // Created:     2011/01/26
-// RCS-ID:      $id$
 // Copyright:   (c) 2011 Steven Lamerton
 // Licence:     wxWindows licence
 /////////////////////////////////////////////////////////////////////////////
@@ -22,7 +21,7 @@
 #include "wx/imaglist.h"
 #include "wx/window.h"
 
-class WXDLLIMPEXP_FWD_ADV wxAnimation;
+class WXDLLIMPEXP_FWD_CORE wxAnimation;
 
 class WXDLLIMPEXP_FWD_XML wxXmlNode;
 class WXDLLIMPEXP_FWD_XML wxXmlResource;
@@ -32,6 +31,13 @@ class WXDLLIMPEXP_FWD_CORE wxXmlResourceHandler;
 // Helper macro used by the classes derived from wxXmlResourceHandler but also
 // by wxXmlResourceHandler implementation itself.
 #define XRC_ADD_STYLE(style) AddStyle(wxT(#style), style)
+
+// Flags for GetNodeText().
+enum
+{
+    wxXRC_TEXT_NO_TRANSLATE = 1,
+    wxXRC_TEXT_NO_ESCAPE    = 2
+};
 
 // Abstract base class for the implementation object used by
 // wxXmlResourceHandlerImpl. The real implementation is in
@@ -52,13 +58,17 @@ public:
     virtual wxObject *CreateResource(wxXmlNode *node, wxObject *parent,
                                      wxObject *instance) = 0;
     virtual bool IsOfClass(wxXmlNode *node, const wxString& classname) const = 0;
+    virtual bool IsObjectNode(const wxXmlNode *node) const = 0;
     virtual wxString GetNodeContent(const wxXmlNode *node) = 0;
+    virtual wxXmlNode *GetNodeParent(const wxXmlNode *node) const = 0;
+    virtual wxXmlNode *GetNodeNext(const wxXmlNode *node) const = 0;
+    virtual wxXmlNode *GetNodeChildren(const wxXmlNode *node) const = 0;
     virtual bool HasParam(const wxString& param) = 0;
     virtual wxXmlNode *GetParamNode(const wxString& param) = 0;
     virtual wxString GetParamValue(const wxString& param) = 0;
     virtual wxString GetParamValue(const wxXmlNode* node) = 0;
     virtual int GetStyle(const wxString& param = wxT("style"), int defaults = 0) = 0;
-    virtual wxString GetText(const wxString& param, bool translate = true) = 0;
+    virtual wxString GetNodeText(const wxXmlNode *node, int flags = 0) = 0;
     virtual int GetID() = 0;
     virtual wxString GetName() = 0;
     virtual bool GetBool(const wxString& param, bool defaultv = false) = 0;
@@ -71,6 +81,7 @@ public:
     virtual wxPoint GetPosition(const wxString& param = wxT("pos")) = 0;
     virtual wxCoord GetDimension(const wxString& param, wxCoord defaultv = 0,
                                  wxWindow *windowToUse = NULL) = 0;
+    virtual wxSize GetPairInts(const wxString& param) = 0;
     virtual wxDirection GetDirection(const wxString& param, wxDirection dir = wxLEFT) = 0;
     virtual wxBitmap GetBitmap(const wxString& param = wxT("bitmap"),
                                const wxArtClient& defaultArtClient = wxART_OTHER,
@@ -206,10 +217,29 @@ protected:
     {
         return GetImpl()->IsOfClass(node, classname);
     }
+
+    bool IsObjectNode(const wxXmlNode *node) const
+    {
+        return GetImpl()->IsObjectNode(node);
+    }
     wxString GetNodeContent(const wxXmlNode *node)
     {
         return GetImpl()->GetNodeContent(node);
     }
+
+    wxXmlNode *GetNodeParent(const wxXmlNode *node) const
+    {
+        return GetImpl()->GetNodeParent(node);
+    }
+    wxXmlNode *GetNodeNext(const wxXmlNode *node) const
+    {
+        return GetImpl()->GetNodeNext(node);
+    }
+    wxXmlNode *GetNodeChildren(const wxXmlNode *node) const
+    {
+        return GetImpl()->GetNodeChildren(node);
+    }
+
     bool HasParam(const wxString& param)
     {
         return GetImpl()->HasParam(param);
@@ -231,9 +261,14 @@ protected:
     {
         return GetImpl()->GetStyle(param, defaults);
     }
+    wxString GetNodeText(const wxXmlNode *node, int flags = 0)
+    {
+        return GetImpl()->GetNodeText(node, flags);
+    }
     wxString GetText(const wxString& param, bool translate = true)
     {
-        return GetImpl()->GetText(param, translate);
+        return GetImpl()->GetNodeText(GetImpl()->GetParamNode(param),
+                                      translate ? 0 : wxXRC_TEXT_NO_TRANSLATE);
     }
     int GetID() const
     {
@@ -273,6 +308,10 @@ protected:
                          wxWindow *windowToUse = NULL)
     {
         return GetImpl()->GetDimension(param, defaultv, windowToUse);
+    }
+    wxSize GetPairInts(const wxString& param)
+    {
+        return GetImpl()->GetPairInts(param);
     }
     wxDirection GetDirection(const wxString& param, wxDirection dir = wxLEFT)
     {
@@ -368,7 +407,7 @@ protected:
     wxObject* GetInstance() const             { return m_instance; }
     wxWindow* GetParentAsWindow() const       { return m_parentAsWindow; }
 
-    
+
     wxArrayString m_styleNames;
     wxArrayInt m_styleValues;
 

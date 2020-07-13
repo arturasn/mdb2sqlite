@@ -58,7 +58,8 @@ unbind, the handlers dynamically, i.e. during run-time depending on some
 conditions. It also allows the direct binding of events to:
 @li A handler method in another object.
 @li An ordinary function like a static method or a global function.
-@li An arbitrary functor like boost::function<>.
+@li An arbitrary functor such as boost::function<> or, in C++11,
+std::function<> or a lambda expression.
 
 The static event tables can only handle events in the object where they are
 defined so using Bind<>() is more flexible than using the event tables. On the
@@ -97,10 +98,11 @@ First define one or more <em>event handlers</em>. They
 are just simple methods of the class that take as a parameter a
 reference to an object of a wxEvent-derived class and have no return value (any
 return information is passed via the argument, which is why it is non-const).
-You also need to insert a macro
+You also need to insert a line with the macro indicating that the class uses an
+event table, like this:
 
 @code
-wxDECLARE_EVENT_TABLE()
+wxDECLARE_EVENT_TABLE();
 @endcode
 
 somewhere in the class declaration. It doesn't matter where it appears but
@@ -131,7 +133,7 @@ private:
     // obligation to do that; this one is an event handler too:
     void DoTest(wxCommandEvent& event);
 
-    wxDECLARE_EVENT_TABLE()
+    wxDECLARE_EVENT_TABLE();
 };
 @endcode
 
@@ -223,7 +225,7 @@ global scope as with the event tables), call its Bind<>() method like this:
 @code
 MyFrame::MyFrame(...)
 {
-      Bind(wxEVT_COMMAND_MENU_SELECTED, &MyFrame::OnExit, this, wxID_EXIT);
+      Bind(wxEVT_MENU, &MyFrame::OnExit, this, wxID_EXIT);
 }
 @endcode
 
@@ -254,7 +256,8 @@ Now let us describe the semantic differences:
         which allows to bind an event to:
         @li A method in another object.
         @li An ordinary function like a static method or a global function.
-        @li An arbitrary functor like boost::function<>.
+        @li An arbitrary functor such as boost::function<> or, in C++11,
+        std::function<> or a lambda expression.
 
         This is impossible to do with the event tables because it is not
         possible to specify these handlers to dispatch the event to, so it
@@ -321,7 +324,7 @@ MyFrameHandler myFrameHandler;
 
 MyFrame::MyFrame()
 {
-      Bind( wxEVT_COMMAND_MENU_SELECTED, &MyFrameHandler::OnFrameExit,
+      Bind( wxEVT_MENU, &MyFrameHandler::OnFrameExit,
               &myFrameHandler, wxID_EXIT );
 }
 @endcode
@@ -343,7 +346,7 @@ void HandleExit( wxCommandEvent & )
 
 MyFrame::MyFrame()
 {
-    Bind( wxEVT_COMMAND_MENU_SELECTED, &HandleExit, wxID_EXIT );
+    Bind( wxEVT_MENU, &HandleExit, wxID_EXIT );
 }
 @endcode
 
@@ -364,14 +367,34 @@ MyFunctor myFunctor;
 
 MyFrame::MyFrame()
 {
-    Bind( wxEVT_COMMAND_MENU_SELECTED, myFunctor, wxID_EXIT );
+    Bind( wxEVT_MENU, myFunctor, wxID_EXIT );
 }
 @endcode
 
-A common example of a functor is boost::function<>:
+In C++11 a lambda expression can be used directly, without having to define a
+separate functor class:
 
 @code
+MyFrame::MyFrame()
+{
+    Bind(wxEVT_MENU,
+         [](wxCommandEvent&) {
+            // Do something useful
+         },
+         wxID_EXIT);
+}
+@endcode
+
+Another common example of a generic functor is boost::function<> or, since
+C++11, std::function<>:
+
+@code
+#if __cplusplus >= 201103L || wxCHECK_VISUALC_VERSION(10)
+using namespace std;
+using namespace std::placeholders;
+#else // Pre C++11 compiler
 using namespace boost;
+#endif
 
 void MyHandler::OnExit( wxCommandEvent & )
 {
@@ -384,12 +407,12 @@ MyFrame::MyFrame()
 {
     function< void ( wxCommandEvent & ) > exitHandler( bind( &MyHandler::OnExit, &myHandler, _1 ));
 
-    Bind( wxEVT_COMMAND_MENU_SELECTED, exitHandler, wxID_EXIT );
+    Bind( wxEVT_MENU, exitHandler, wxID_EXIT );
 }
 @endcode
 
 
-With the aid of boost::bind<>() you can even use methods or functions which
+With the aid of @c bind<>() you can even use methods or functions which
 don't quite have the correct signature:
 
 @code
@@ -405,7 +428,7 @@ MyFrame::MyFrame()
     function< void ( wxCommandEvent & ) > exitHandler(
             bind( &MyHandler::OnExit, &myHandler, EXIT_FAILURE, _1, "Bye" ));
 
-    Bind( wxEVT_COMMAND_MENU_SELECTED, exitHandler, wxID_EXIT );
+    Bind( wxEVT_MENU, exitHandler, wxID_EXIT );
 }
 @endcode
 
@@ -438,14 +461,14 @@ doesn't count as having handled the event and the search continues):
     </li>
 
     <li value="1">
-    If this event handler is disabled via a call to
-    wxEvtHandler::SetEvtHandlerEnabled() the next three steps are skipped and
-    the event handler resumes at step (5).
+    If the object is a wxWindow and has an associated validator, wxValidator
+    gets a chance to process the event.
     </li>
 
     <li value="2">
-    If the object is a wxWindow and has an associated validator, wxValidator
-    gets a chance to process the event.
+    If this event handler is disabled via a call to
+    wxEvtHandler::SetEvtHandlerEnabled() the two next steps are skipped and
+    the event handler resumes at step (5).
     </li>
 
     <li value="3">
@@ -453,14 +476,19 @@ doesn't count as having handled the event and the search continues):
     Bind<>() was called, is consulted. Notice that this is done before
     checking the static event table entries, so if both a dynamic and a static
     event handler match the same event, the static one is never going to be
-    used unless wxEvent::Skip() is called in the dynamic one.
+    used unless wxEvent::Skip() is called in the dynamic one. Also note that
+    the dynamically bound handlers are searched in order of their registration
+    during program run-time, i.e. later bound handlers take priority over the
+    previously bound ones.
     </li>
 
     <li value="4">
     The event table containing all the handlers defined using the event table
-    macros in this class and its base classes is examined. Notice that this
-    means that any event handler defined in a base class will be executed at
-    this step.
+    macros in this class and its base classes is examined. The search in an
+    event table respects the order of the event macros appearance in the source
+    code, i.e. earlier occurring entries take precedence over later occurring
+    ones. Notice that this means that any event handler defined in a base class
+    will be executed at this step.
     </li>
 
     <li value="5">
@@ -548,7 +576,7 @@ all events (or any selection of them) to the parent window.
 
 @subsection overview_events_nexthandler Event Handlers Chain
 
-The step 4 of the event propagation algorithm checks for the next handler in
+The step 5 of the event propagation algorithm checks for the next handler in
 the event handler chain. This chain can be formed using
 wxEvtHandler::SetNextHandler():
         @image html overview_events_chain.png
@@ -587,7 +615,7 @@ custom event types.
 Finally, you will need to generate and post your custom events.
 Generation is as simple as instancing your custom event class and initializing
 its internal fields.
-For posting events to a certain event handler there are two possibilities: 
+For posting events to a certain event handler there are two possibilities:
 using wxEvtHandler::AddPendingEvent or using wxEvtHandler::QueueEvent.
 Basically you will need to use the latter when doing inter-thread communication;
 when you use only the main thread you can also safely use the former.
@@ -835,6 +863,32 @@ define your own identifiers. Or, you can use identifiers below wxID_LOWEST.
 Finally, you can allocate identifiers dynamically using wxNewId() function too.
 If you use wxNewId() consistently in your application, you can be sure that
 your identifiers don't conflict accidentally.
+
+
+@subsection overview_events_with_mouse_capture Event Handlers and Mouse Capture
+
+Some events are generated in response to a user action performed using the
+mouse and, often, the mouse will be captured (see wxWindow::CaptureMouse()) by
+the window generating the event in this case. This happens when the user is
+dragging the mouse, i.e. for all events involving resizing something (e.g. @c
+EVT_SPLITTER_SASH_POS_CHANGING), but also, perhaps less obviously, when
+selecting items (e.g. @c EVT_LIST_ITEM_SELECTED).
+
+When the mouse is captured, the control sending events will continue receiving
+all mouse events, meaning that the event handler can't do anything relying on
+getting them in any other window. Most notably, simply showing a modal dialog
+won't work as expected, as the dialog won't receive any mouse input and appear
+unresponsive to the user.
+
+The best solution is to avoid showing modal dialogs from such event handlers
+entirely, as it can be jarring for the user to be interrupted in their workflow
+by a dialog suddenly popping up. However if it's really indispensable to show a
+dialog, you need to forcefully break the existing mouse capture by capturing
+(and then releasing, because you don't really need the capture) it yourself:
+@code
+    dialog.CaptureMouse();
+    dialog.ReleaseMouse();
+@endcode
 
 
 @subsection overview_events_custom_generic Generic Event Table Macros

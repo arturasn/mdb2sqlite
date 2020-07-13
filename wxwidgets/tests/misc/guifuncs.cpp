@@ -55,7 +55,7 @@ private:
     void ClientToScreen();
     void FindWindowAtPoint();
 
-    DECLARE_NO_COPY_CLASS(MiscGUIFuncsTestCase)
+    wxDECLARE_NO_COPY_CLASS(MiscGUIFuncsTestCase);
 };
 
 // register in the unnamed registry so that these tests are run by default
@@ -84,11 +84,13 @@ void MiscGUIFuncsTestCase::DisplaySize()
 
     // test that display PPI is something reasonable
     sz = wxGetDisplayPPI();
-    CPPUNIT_ASSERT( sz.x < 1000 && sz.y < 1000 );
+    CPPUNIT_ASSERT( sz.x < 1000 );
+    CPPUNIT_ASSERT( sz.y < 1000 );
 }
 
 void MiscGUIFuncsTestCase::URLDataObject()
 {
+#if wxUSE_DATAOBJ
     // this tests for buffer overflow, see #11102
     const char * const
         url = "http://something.long.to.overwrite.plenty.memory.example.com";
@@ -98,6 +100,7 @@ void MiscGUIFuncsTestCase::URLDataObject()
     wxClipboardLocker lockClip;
     CPPUNIT_ASSERT( wxTheClipboard->SetData(dobj) );
     wxTheClipboard->Flush();
+#endif // wxUSE_DATAOBJ
 }
 
 void MiscGUIFuncsTestCase::ParseFileDialogFilter()

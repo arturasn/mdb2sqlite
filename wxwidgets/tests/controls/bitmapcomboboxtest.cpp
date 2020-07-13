@@ -34,17 +34,17 @@ class BitmapComboBoxTestCase : public TextEntryTestCase,
 public:
     BitmapComboBoxTestCase() { }
 
-    virtual void setUp();
-    virtual void tearDown();
+    virtual void setUp() wxOVERRIDE;
+    virtual void tearDown() wxOVERRIDE;
 
 private:
-    virtual wxTextEntry *GetTestEntry() const { return m_combo; }
-    virtual wxWindow *GetTestWindow() const { return m_combo; }
+    virtual wxTextEntry *GetTestEntry() const wxOVERRIDE { return m_combo; }
+    virtual wxWindow *GetTestWindow() const wxOVERRIDE { return m_combo; }
 
-    virtual wxItemContainer *GetContainer() const { return m_combo; }
-    virtual wxWindow *GetContainerWindow() const { return m_combo; }
+    virtual wxItemContainer *GetContainer() const wxOVERRIDE { return m_combo; }
+    virtual wxWindow *GetContainerWindow() const wxOVERRIDE { return m_combo; }
 
-    virtual void CheckStringSelection(const char * WXUNUSED(sel))
+    virtual void CheckStringSelection(const char * WXUNUSED(sel)) wxOVERRIDE
     {
         // do nothing here, as explained in TextEntryTestCase comment, our
         // GetStringSelection() is the wxChoice, not wxTextEntry, one and there
@@ -59,17 +59,26 @@ private:
 
     void Bitmap();
 
+#if defined(__WXGTK__) && wxUSE_UIACTIONSIMULATOR
+    virtual void SimSelect() wxOVERRIDE
+    {
+        // There is an inexplicable and locally irreproducible failure in this
+        // test for wxBitmapComboBox when it runs on the Linux buildbot slaves:
+        // wxUIActionSimulator::Select() fails there for some reason, so skip
+        // the test. If you ever manage to reproduce this locally, please try
+        // to debug it to understand what goes on!
+        if ( !IsAutomaticTest() )
+            ItemContainerTestCase::SimSelect();
+    }
+#endif // __WXGTK__
+
     wxBitmapComboBox *m_combo;
 
-    DECLARE_NO_COPY_CLASS(BitmapComboBoxTestCase)
+    wxDECLARE_NO_COPY_CLASS(BitmapComboBoxTestCase);
 };
 
-// register in the unnamed registry so that these tests are run by default
-CPPUNIT_TEST_SUITE_REGISTRATION( BitmapComboBoxTestCase );
-
-// also include in its own registry so that these tests can be run alone
-CPPUNIT_TEST_SUITE_NAMED_REGISTRATION( BitmapComboBoxTestCase,
-                                      "BitmapComboBoxTestCase" );
+wxREGISTER_UNIT_TEST_WITH_TAGS(BitmapComboBoxTestCase,
+                               "[BitmapComboBoxTestCase][item-container]");
 
 void BitmapComboBoxTestCase::setUp()
 {

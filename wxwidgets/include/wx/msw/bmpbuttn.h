@@ -25,7 +25,7 @@ public:
                    const wxBitmap& bitmap,
                    const wxPoint& pos = wxDefaultPosition,
                    const wxSize& size = wxDefaultSize,
-                   long style = wxBU_AUTODRAW,
+                   long style = 0,
                    const wxValidator& validator = wxDefaultValidator,
                    const wxString& name = wxButtonNameStr)
     {
@@ -37,13 +37,13 @@ public:
                 const wxBitmap& bitmap,
                 const wxPoint& pos = wxDefaultPosition,
                 const wxSize& size = wxDefaultSize,
-                long style = wxBU_AUTODRAW,
+                long style = 0,
                 const wxValidator& validator = wxDefaultValidator,
                 const wxString& name = wxButtonNameStr);
 
 protected:
-    DECLARE_EVENT_TABLE()
-    DECLARE_DYNAMIC_CLASS_NO_COPY(wxBitmapButton)
+    wxDECLARE_EVENT_TABLE();
+    wxDECLARE_DYNAMIC_CLASS_NO_COPY(wxBitmapButton);
 };
 
 #endif // _WX_BMPBUTTN_H_

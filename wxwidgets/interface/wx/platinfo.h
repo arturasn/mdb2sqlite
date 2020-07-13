@@ -11,33 +11,27 @@
     whose version can be detected at run-time.
 
     The values of the constants are chosen so that they can be combined as flags;
-    this allows to check for operating system families like e.g. @c wxOS_MAC and @c wxOS_UNIX.
-    
+    this allows checking for operating system families like e.g. @c wxOS_MAC and @c wxOS_UNIX.
+
     Note that you can obtain more detailed information about the current OS
-    version in use by checking the major and minor version numbers returned
-    by ::wxGetOsVersion() or by wxPlatformInfo::GetOSMajorVersion(), 
-    wxPlatformInfo::GetOSMinorVersion().
+    version in use by checking the major, minor, and micro version numbers
+    returned by ::wxGetOsVersion() or by wxPlatformInfo::GetOSMajorVersion(),
+    wxPlatformInfo::GetOSMinorVersion(), and wxPlatformInfo::GetOSMicroVersion().
 */
 enum wxOperatingSystemId
 {
     wxOS_UNKNOWN = 0,                 //!< returned on error
 
     wxOS_MAC_OS         = 1 << 0,     //!< Apple Mac OS 8/9/X with Mac paths
-    wxOS_MAC_OSX_DARWIN = 1 << 1,     //!< Apple Mac OS X with Unix paths
-    
+    wxOS_MAC_OSX_DARWIN = 1 << 1,     //!< Apple OS X with Unix paths
+
     //! A combination of all @c wxOS_MAC_* values previously listed.
     wxOS_MAC = wxOS_MAC_OS|wxOS_MAC_OSX_DARWIN,
 
-    wxOS_WINDOWS_9X     = 1 << 2,     //!< Windows 9x family (95/98/ME)
-    wxOS_WINDOWS_NT     = 1 << 3,     //!< Windows NT family (NT/2000/XP/Vista/7)
-    wxOS_WINDOWS_MICRO  = 1 << 4,     //!< MicroWindows
-    wxOS_WINDOWS_CE     = 1 << 5,     //!< Windows CE (Window Mobile)
-    
-    //! A combination of all @c wxOS_WINDOWS_* values previously listed.
-    wxOS_WINDOWS = wxOS_WINDOWS_9X       |
-                    wxOS_WINDOWS_NT      |
-                    wxOS_WINDOWS_MICRO   |
-                    wxOS_WINDOWS_CE,
+    wxOS_WINDOWS_NT     = 1 << 3,     //!< Windows NT family (XP/Vista/7/8/10)
+
+    //! Any Windows system, currently can be only wxOS_WINDOWS_NT.
+    wxOS_WINDOWS = wxOS_WINDOWS_NT,
 
     wxOS_UNIX_LINUX     = 1 << 6,       //!< Linux
     wxOS_UNIX_FREEBSD   = 1 << 7,       //!< FreeBSD
@@ -46,7 +40,7 @@ enum wxOperatingSystemId
     wxOS_UNIX_SOLARIS   = 1 << 10,      //!< SunOS
     wxOS_UNIX_AIX       = 1 << 11,      //!< AIX
     wxOS_UNIX_HPUX      = 1 << 12,      //!< HP/UX
-    
+
     //! A combination of all @c wxOS_UNIX_* values previously listed.
     wxOS_UNIX = wxOS_UNIX_LINUX     |
                 wxOS_UNIX_FREEBSD   |
@@ -54,18 +48,13 @@ enum wxOperatingSystemId
                 wxOS_UNIX_NETBSD    |
                 wxOS_UNIX_SOLARIS   |
                 wxOS_UNIX_AIX       |
-                wxOS_UNIX_HPUX,
-
-    wxOS_DOS            = 1 << 15,      //!< Microsoft DOS
-    wxOS_OS2            = 1 << 16       //!< OS/2
+                wxOS_UNIX_HPUX
 };
 
 /**
     The list of wxWidgets ports.
 
-    Some of them can be used with more than a single (native) toolkit;
-    e.g. wxWinCE port sources can be used with smartphones, pocket PCs
-    and handheld devices SDKs.
+    Some of them can be used with more than a single (native) toolkit.
 */
 enum wxPortId
 {
@@ -75,13 +64,12 @@ enum wxPortId
 
     wxPORT_MSW      = 1 << 1,       //!< wxMSW, native toolkit is Windows API
     wxPORT_MOTIF    = 1 << 2,       //!< wxMotif, using [Open]Motif or Lesstif
-    wxPORT_GTK      = 1 << 3,       //!< wxGTK, using GTK+ 1.x, 2.x, GPE or Maemo
+    wxPORT_GTK      = 1 << 3,       //!< wxGTK, using GTK+ 1.x, 2.x, 3.x, GPE
     wxPORT_DFB      = 1 << 4,       //!< wxDFB, using wxUniversal
     wxPORT_X11      = 1 << 5,       //!< wxX11, using wxUniversal
-    wxPORT_OS2      = 1 << 6,       //!< wxOS2, using OS/2 Presentation Manager
     wxPORT_MAC      = 1 << 7,       //!< wxMac, using Carbon or Classic Mac API
     wxPORT_COCOA    = 1 << 8,       //!< wxCocoa, using Cocoa NextStep/Mac API
-    wxPORT_WINCE    = 1 << 9        //!< wxWinCE, toolkit is WinCE SDK API
+    wxPORT_QT       = 1 << 10       //!< wxQT, using Qt 5+
 };
 
 
@@ -116,9 +104,9 @@ enum wxEndianness
 };
 
 /**
-    A structure containing information about a Linux distribution as returned 
+    A structure containing information about a Linux distribution as returned
     by the @c lsb_release utility.
-    
+
     See wxGetLinuxDistributionInfo() or wxPlatformInfo::GetLinuxDistributionInfo()
     for more info.
 */
@@ -128,7 +116,7 @@ struct wxLinuxDistributionInfo
     wxString Release;           //!< The version of the distribution; e.g. "9.04"
     wxString CodeName;          //!< The code name of the distribution; e.g. "jaunty"
     wxString Description;       //!< The description of the distribution; e.g. "Ubuntu 9.04"
-    
+
     bool operator==(const wxLinuxDistributionInfo& ldi) const;
     bool operator!=(const wxLinuxDistributionInfo& ldi) const;
 };
@@ -137,16 +125,16 @@ struct wxLinuxDistributionInfo
 /**
     @class wxPlatformInfo
 
-    This class holds information about the operating system, the toolkit and the 
+    This class holds information about the operating system, the toolkit and the
     basic architecture of the machine where the application is currently running.
-    
+
     This class does not only have @e getters for the information above, it also has
-    @e setters. This allows you to e.g. save the current platform information in a 
+    @e setters. This allows you to e.g. save the current platform information in a
     data file (maybe in string form) so that when you later load it, you can easily
     retrieve (see the static getters for string->enum conversion functions) and store
-    inside a wxPlatformInfo instance (using its setters) the signature of the system 
+    inside a wxPlatformInfo instance (using its setters) the signature of the system
     which generated it.
-    
+
     In general however you only need to use the static Get() function and then
     access the various information for the current platform:
     @code
@@ -160,7 +148,7 @@ struct wxLinuxDistributionInfo
     @see ::wxGetOsVersion(), wxIsPlatformLittleEndian(), wxIsPlatform64Bit(),
          wxAppTraits, @ref group_funcmacro_networkuseros
 */
-class wxPlatformInfo 
+class wxPlatformInfo
 {
 public:
 
@@ -189,21 +177,20 @@ public:
 
 
     /**
-        Returns @true if the OS version is at least @c major.minor.
+        Returns @true if the OS version is at least @c major.minor.micro.
 
-        @see GetOSMajorVersion(), GetOSMinorVersion(),
+        @see GetOSMajorVersion(), GetOSMinorVersion(), GetOSMicroVersion(),
              CheckToolkitVersion()
     */
-    bool CheckOSVersion(int major, int minor) const;
+    bool CheckOSVersion(int major, int minor, int micro = 0) const;
 
     /**
-        Returns @true if the toolkit version is at least @c major.minor.
+        Returns @true if the toolkit version is at least @c major.minor.micro.
 
-        @see GetToolkitMajorVersion(),
-             GetToolkitMinorVersion(), CheckOSVersion()
+        @see GetToolkitMajorVersion(), GetToolkitMinorVersion(),
+             GetToolkitMicroVersion(), CheckOSVersion()
     */
-    bool CheckToolkitVersion(int major, int minor) const;
-    
+    bool CheckToolkitVersion(int major, int minor, int micro = 0) const;
 
     /**
         Returns @true if this instance is fully initialized with valid values.
@@ -224,16 +211,16 @@ public:
         Equality operator. Tests all class' internal variables.
     */
     bool operator==(const wxPlatformInfo& t) const;
-        
+
     /**
         Returns the global wxPlatformInfo object, initialized with the values
         for the currently running platform.
     */
     static const wxPlatformInfo& Get();
-    
+
     /**
         @name Static enum getters
-        
+
         These getters allow for easy string-to-enumeration-value conversion.
     */
     //@{
@@ -264,13 +251,13 @@ public:
         ("wxGTK", "wxMSW", etc) nor any of the short wxWidgets name ports ("gtk", "msw", etc).
     */
     static wxPortId GetPortId(const wxString& portname);
-    
+
     //@}
-    
-    
+
+
     /**
         @name Static string-form getters
-        
+
         These getters allow for easy enumeration-value-to-string conversion.
     */
     //@{
@@ -284,11 +271,11 @@ public:
         Returns name for the given wxEndianness enumeration value.
     */
     static wxString GetEndiannessName(wxEndianness end);
-    
+
     /**
         Returns the operating system family name for the given wxOperatingSystemId
-        enumeration value: @c Unix for @c wxOS_UNIX, @c Macintosh for @c wxOS_MAC,
-        @c Windows for @c wxOS_WINDOWS, @c DOS for @c wxOS_DOS, @c OS/2 for @c wxOS_OS2.
+        enumeration value: @c Unix for @c wxOS_UNIX, @c OSX for @c wxOS_MAC_OS,
+        @c Windows for @c wxOS_WINDOWS.
     */
     static wxString GetOperatingSystemFamilyName(wxOperatingSystemId os);
 
@@ -321,14 +308,14 @@ public:
 
     /**
         Returns the operating system directory.
-        
+
         See wxGetOSDirectory() for more info.
     */
     static wxString GetOperatingSystemDirectory();
 
     //@}
-    
-    
+
+
     /**
         @name Getters
     */
@@ -361,16 +348,26 @@ public:
     int GetOSMinorVersion() const;
 
     /**
+        Returns the run-time micro version of the OS associated with this
+        wxPlatformInfo instance.
+
+        @see ::wxGetOsVersion(), CheckOSVersion()
+
+        @since 3.1.1
+    */
+    int GetOSMicroVersion() const;
+
+    /**
         Returns the operating system ID of this wxPlatformInfo instance.
-        
+
         See wxGetOsVersion() for more info.
     */
     wxOperatingSystemId GetOperatingSystemId() const;
-    
+
     /**
         Returns the description of the operating system of this wxPlatformInfo instance.
-        
-        See wxGetOSDescription() for more info.
+
+        See wxGetOsDescription() for more info.
     */
     wxString GetOperatingSystemDescription() const;
 
@@ -378,17 +375,17 @@ public:
         Returns the wxWidgets port ID associated with this wxPlatformInfo instance.
     */
     wxPortId GetPortId() const;
-    
+
     /**
         Returns the Linux distribution info associated with this wxPlatformInfo instance.
-        
+
         See wxGetLinuxDistributionInfo() for more info.
     */
     wxLinuxDistributionInfo GetLinuxDistributionInfo() const;
-    
+
     /**
         Returns the desktop environment associated with this wxPlatformInfo instance.
-        
+
         See wxAppTraits::GetDesktopEnvironment() for more info.
     */
     wxString GetDesktopEnvironment() const;
@@ -418,7 +415,22 @@ public:
         @see CheckToolkitVersion()
     */
     int GetToolkitMinorVersion() const;
-    
+
+    /**
+        Returns the run-time micro version of the toolkit associated with this
+        wxPlatformInfo instance.
+
+        Note that if GetPortId() returns @c wxPORT_BASE, then this value is zero
+        (unless externally modified with SetToolkitVersion()); that is, no native
+        toolkit is in use.
+        See wxAppTraits::GetToolkitVersion() for more info.
+
+        @see CheckToolkitVersion()
+
+        @since 3.1.1
+    */
+    int GetToolkitMicroVersion() const;
+
     //@}
 
 
@@ -442,7 +454,7 @@ public:
         wxPlatformInfo instance.
     */
     wxString GetOperatingSystemFamilyName() const;
-    
+
     /**
         Returns the operating system name of the OS associated with this wxPlatformInfo
         instance.
@@ -460,16 +472,16 @@ public:
         wxPlatformInfo instance.
     */
     wxString GetPortIdShortName() const;
-    
-    //@}
-    
 
-    
+    //@}
+
+
+
     /**
         @name Setters
     */
     //@{
-    
+
     /**
         Sets the architecture enum value associated with this wxPlatformInfo instance.
     */
@@ -484,7 +496,7 @@ public:
         Sets the version of the operating system associated with this wxPlatformInfo
         instance.
     */
-    void SetOSVersion(int major, int minor);
+    void SetOSVersion(int major, int minor, int micro = 0);
 
     /**
         Sets the operating system associated with this wxPlatformInfo instance.
@@ -499,23 +511,23 @@ public:
     /**
         Sets the version of the toolkit associated with this wxPlatformInfo instance.
     */
-    void SetToolkitVersion(int major, int minor);
+    void SetToolkitVersion(int major, int minor, int micro = 0);
 
     /**
         Sets the operating system description associated with this wxPlatformInfo instance.
     */
     void SetOperatingSystemDescription(const wxString& desc);
- 
+
     /**
         Sets the desktop environment associated with this wxPlatformInfo instance.
     */
     void SetDesktopEnvironment(const wxString& de);
-    
+
     /**
         Sets the linux distribution info associated with this wxPlatformInfo instance.
     */
     void SetLinuxDistributionInfo(const wxLinuxDistributionInfo& di);
-    
+
     //@}
 };
 

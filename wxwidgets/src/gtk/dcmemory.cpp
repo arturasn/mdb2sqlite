@@ -11,13 +11,13 @@
 
 #include "wx/gtk/dcmemory.h"
 
-#include <gtk/gtk.h>
+#include "wx/gtk/private/wrapgtk.h"
 
 //-----------------------------------------------------------------------------
 // wxMemoryDCImpl
 //-----------------------------------------------------------------------------
 
-IMPLEMENT_ABSTRACT_CLASS(wxMemoryDCImpl, wxWindowDCImpl)
+wxIMPLEMENT_ABSTRACT_CLASS(wxMemoryDCImpl, wxWindowDCImpl);
 
 wxMemoryDCImpl::wxMemoryDCImpl( wxMemoryDC *owner )
   : wxWindowDCImpl( owner )

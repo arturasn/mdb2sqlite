@@ -4,7 +4,7 @@
 // Author:      Vadim Zeitlin
 // Modified by:
 // Created:     2005-01-09
-// Copyright:   (c) 2005 Vadim Zeitlin <vadim@wxwindows.org>
+// Copyright:   (c) 2005 Vadim Zeitlin <vadim@wxwidgets.org>
 // Licence:     wxWindows licence
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -103,7 +103,7 @@ public:
         }
 
     private:
-        DECLARE_DYNAMIC_CLASS_NO_COPY(wxDatePickerCtrl)
+        wxDECLARE_DYNAMIC_CLASS_NO_COPY(wxDatePickerCtrl);
     };
 #endif
 

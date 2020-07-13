@@ -72,10 +72,14 @@ private:
         CPPUNIT_TEST( CompareLoadedImage );
         CPPUNIT_TEST( CompareSavedImage );
         CPPUNIT_TEST( SavePNG );
+#if wxUSE_LIBTIFF
         CPPUNIT_TEST( SaveTIFF );
-        CPPUNIT_TEST( SaveAnimatedGIF );
+#endif // wxUSE_LIBTIFF
         CPPUNIT_TEST( ReadCorruptedTGA );
+#if wxUSE_GIF
+        CPPUNIT_TEST( SaveAnimatedGIF );
         CPPUNIT_TEST( GIFComment );
+#endif // wxUSE_GIF
         CPPUNIT_TEST( DibPadding );
         CPPUNIT_TEST( BMPFlippingAndRLECompression );
         CPPUNIT_TEST( ScaleCompare );
@@ -88,15 +92,19 @@ private:
     void CompareLoadedImage();
     void CompareSavedImage();
     void SavePNG();
+#if wxUSE_LIBTIFF
     void SaveTIFF();
-    void SaveAnimatedGIF();
+#endif // wxUSE_LIBTIFF
     void ReadCorruptedTGA();
+#if wxUSE_GIF
+    void SaveAnimatedGIF();
     void GIFComment();
+#endif // wxUSE_GIF
     void DibPadding();
     void BMPFlippingAndRLECompression();
     void ScaleCompare();
 
-    DECLARE_NO_COPY_CLASS(ImageTestCase)
+    wxDECLARE_NO_COPY_CLASS(ImageTestCase);
 };
 
 CPPUNIT_TEST_SUITE_REGISTRATION( ImageTestCase );
@@ -113,12 +121,16 @@ ImageTestCase::ImageTestCase()
     wxImage::AddHandler(new wxANIHandler);
     wxImage::AddHandler(new wxBMPHandler);
     wxImage::AddHandler(new wxCURHandler);
+#if wxUSE_GIF
     wxImage::AddHandler(new wxGIFHandler);
+#endif // wxUSE_GIF
     wxImage::AddHandler(new wxJPEGHandler);
     wxImage::AddHandler(new wxPCXHandler);
     wxImage::AddHandler(new wxPNMHandler);
     wxImage::AddHandler(new wxTGAHandler);
+#if wxUSE_LIBTIFF
     wxImage::AddHandler(new wxTIFFHandler);
+#endif // wxUSE_LIBTIFF
 }
 
 ImageTestCase::~ImageTestCase()
@@ -835,14 +847,9 @@ void ImageTestCase::SizeImage()
        //actual.SaveFile(wxString::Format("imagetest-%02d-actual.png", i), wxBITMAP_TYPE_PNG);
        //expected.SaveFile(wxString::Format("imagetest-%02d-exp.png", i), wxBITMAP_TYPE_PNG);
 
-       CPPUNIT_ASSERT_EQUAL( actual.GetSize().x, expected.GetSize().x );
-       CPPUNIT_ASSERT_EQUAL( actual.GetSize().y, expected.GetSize().y );
-
-       WX_ASSERT_EQUAL_MESSAGE
-       (
-         ("Resize test #%u: (%d, %d), (%d, %d)", i, st.w, st.h, st.dx, st.dy),
-         expected, actual
-       );
+       wxINFO_FMT("Resize test #%u: (%d, %d), (%d, %d)",
+                   i, st.w, st.h, st.dx, st.dy);
+       CHECK_THAT( actual, RGBSameAs(expected) );
    }
 }
 
@@ -870,12 +877,10 @@ void ImageTestCase::CompareLoadedImage()
         }
 
 
-        WX_ASSERT_EQUAL_MESSAGE
-        (
-            ("Compare test '%s' for loading failed", g_testfiles[i].file),
-            g_testfiles[i].bitDepth == 8 ? expected8 : expected24,
-            actual
-        );
+        wxINFO_FMT("Compare test '%s' for loading", g_testfiles[i].file);
+        CHECK_THAT( actual,
+                    RGBSameAs(g_testfiles[i].bitDepth == 8 ? expected8
+                                                           : expected24) );
     }
 
 }
@@ -936,16 +941,11 @@ void CompareImage(const wxImageHandler& handler, const wxImage& image,
     CPPUNIT_ASSERT(actual.IsOk());
 
     const wxImage *expected = compareTo ? compareTo : &image;
-    CPPUNIT_ASSERT( actual.GetSize() == expected->GetSize() );
 
     unsigned bitsPerPixel = testPalette ? 8 : (testAlpha ? 32 : 24);
-    WX_ASSERT_EQUAL_MESSAGE
-    (
-        ("Compare test '%s (%d-bit)' for saving failed",
-            handler.GetExtension(), bitsPerPixel),
-        *expected,
-        actual
-    );
+    wxINFO_FMT("Compare test '%s (%d-bit)' for saving",
+               handler.GetExtension(), bitsPerPixel);
+    CHECK_THAT(actual, RGBSameAs(*expected));
 
 #if wxUSE_PALETTE
     CPPUNIT_ASSERT(actual.HasPalette()
@@ -959,12 +959,8 @@ void CompareImage(const wxImageHandler& handler, const wxImage& image,
         return;
     }
 
-    WX_ASSERT_EQUAL_MESSAGE
-    (
-        ("Compare alpha test '%s' for saving failed", handler.GetExtension()),
-        *expected,
-        actual
-    );
+    wxINFO_FMT("Compare alpha test '%s' for saving", handler.GetExtension());
+    CHECK_THAT(actual, RGBSameAs(*expected));
 }
 
 static void SetAlpha(wxImage *image)
@@ -985,11 +981,6 @@ static void SetAlpha(wxImage *image)
 
 void ImageTestCase::CompareSavedImage()
 {
-    // FIXME-VC6: Pre-declare the loop variables for compatibility with
-    // pre-standard compilers such as MSVC6 that don't implement proper scope
-    // for the variables declared in the for loops.
-    int i;
-
     wxImage expected24("horse.png");
     CPPUNIT_ASSERT( expected24.IsOk() );
     CPPUNIT_ASSERT( !expected24.HasAlpha() );
@@ -998,7 +989,7 @@ void ImageTestCase::CompareSavedImage()
 
 #if wxUSE_PALETTE
     unsigned char greys[256];
-    for (i = 0; i < 256; ++i)
+    for (int i = 0; i < 256; ++i)
     {
         greys[i] = i;
     }
@@ -1099,6 +1090,7 @@ void ImageTestCase::SavePNG()
 
 }
 
+#if wxUSE_LIBTIFF
 static void TestTIFFImage(const wxString& option, int value,
     const wxImage *compareImage = NULL)
 {
@@ -1154,47 +1146,7 @@ void ImageTestCase::SaveTIFF()
     alphaImage.SetOption(wxIMAGE_OPTION_TIFF_BITSPERSAMPLE, 1);
     TestTIFFImage(wxIMAGE_OPTION_TIFF_SAMPLESPERPIXEL, 2, &alphaImage);
 }
-
-void ImageTestCase::SaveAnimatedGIF()
-{
-#if wxUSE_PALETTE
-    wxImage image("horse.gif");
-    CPPUNIT_ASSERT( image.IsOk() );
-
-    wxImageArray images;
-    images.Add(image);
-    int i;
-    for (i = 0; i < 4-1; ++i)
-    {
-        images.Add( images[i].Rotate90() );
-
-        images[i+1].SetPalette(images[0].GetPalette());
-    }
-
-    wxMemoryOutputStream memOut;
-    CPPUNIT_ASSERT( wxGIFHandler().SaveAnimation(images, &memOut) );
-
-    wxGIFHandler handler;
-    wxMemoryInputStream memIn(memOut);
-    CPPUNIT_ASSERT(memIn.IsOk());
-    const int imageCount = handler.GetImageCount(memIn);
-    CPPUNIT_ASSERT_EQUAL(4, imageCount);
-
-    for (i = 0; i < imageCount; ++i)
-    {
-        wxFileOffset pos = memIn.TellI();
-        CPPUNIT_ASSERT( handler.LoadFile(&image, memIn, true, i) );
-        memIn.SeekI(pos);
-
-        WX_ASSERT_EQUAL_MESSAGE
-        (
-            ("Compare test for GIF frame number %d failed", i),
-            images[i],
-            image
-        );
-    }
-#endif // #if wxUSE_PALETTE
-}
+#endif // wxUSE_LIBTIFF
 
 void ImageTestCase::ReadCorruptedTGA()
 {
@@ -1230,6 +1182,44 @@ void ImageTestCase::ReadCorruptedTGA()
     */
     corruptTGA[18] = 0x7f;
     CPPUNIT_ASSERT( !tgaImage.LoadFile(memIn) );
+}
+
+#if wxUSE_GIF
+
+void ImageTestCase::SaveAnimatedGIF()
+{
+#if wxUSE_PALETTE
+    wxImage image("horse.gif");
+    CPPUNIT_ASSERT( image.IsOk() );
+
+    wxImageArray images;
+    images.Add(image);
+    for (int i = 0; i < 4-1; ++i)
+    {
+        images.Add( images[i].Rotate90() );
+
+        images[i+1].SetPalette(images[0].GetPalette());
+    }
+
+    wxMemoryOutputStream memOut;
+    CPPUNIT_ASSERT( wxGIFHandler().SaveAnimation(images, &memOut) );
+
+    wxGIFHandler handler;
+    wxMemoryInputStream memIn(memOut);
+    CPPUNIT_ASSERT(memIn.IsOk());
+    const int imageCount = handler.GetImageCount(memIn);
+    CPPUNIT_ASSERT_EQUAL(4, imageCount);
+
+    for (int i = 0; i < imageCount; ++i)
+    {
+        wxFileOffset pos = memIn.TellI();
+        CPPUNIT_ASSERT( handler.LoadFile(&image, memIn, true, i) );
+        memIn.SeekI(pos);
+
+        wxINFO_FMT("Compare test for GIF frame number %d failed", i);
+        CHECK_THAT(image, RGBSameAs(images[i]));
+    }
+#endif // #if wxUSE_PALETTE
 }
 
 static void TestGIFComment(const wxString& comment)
@@ -1268,6 +1258,7 @@ void ImageTestCase::GIFComment()
     // Test writing comments in an animated GIF and reading them back.
     CPPUNIT_ASSERT( image.LoadFile("horse.gif") );
 
+#if wxUSE_PALETTE
     wxImageArray images;
     int i;
     for (i = 0; i < 4; ++i)
@@ -1305,7 +1296,10 @@ void ImageTestCase::GIFComment()
             image.GetOption(wxIMAGE_OPTION_GIF_COMMENT));
         memIn.SeekI(pos);
     }
+#endif //wxUSE_PALETTE
 }
+
+#endif // wxUSE_GIF
 
 void ImageTestCase::DibPadding()
 {
@@ -1346,11 +1340,53 @@ void ImageTestCase::BMPFlippingAndRLECompression()
 }
 
 
+static int
+FindMaxChannelDiff(const wxImage& i1, const wxImage& i2)
+{
+    if ( i1.GetWidth() != i2.GetWidth() )
+        return false;
+
+    if ( i1.GetHeight() != i2.GetHeight() )
+        return false;
+
+    const unsigned char* p1 = i1.GetData();
+    const unsigned char* p2 = i2.GetData();
+    const int numBytes = i1.GetWidth()*i1.GetHeight()*3;
+    int maxDiff = 0;
+    for ( int n = 0; n < numBytes; n++, p1++, p2++ )
+    {
+        const int diff = std::abs(*p1 - *p2);
+        if ( diff > maxDiff )
+            maxDiff = diff;
+    }
+
+    return maxDiff;
+}
+
+// Note that we accept up to one pixel difference, this happens because of
+// different rounding behaviours in different compiler versions
+// even under the same architecture, see the example in
+// http://thread.gmane.org/gmane.comp.lib.wxwidgets.devel/151149/focus=151154
+
+// The 0 below can be replaced with 1 to generate, instead of comparing with,
+// the test files.
 #define ASSERT_IMAGE_EQUAL_TO_FILE(image, file) \
+    if ( 0 ) \
     { \
-        wxImage imageFromFile(file); \
-        CPPUNIT_ASSERT_MESSAGE( "Failed to load " file, imageFromFile.IsOk() ); \
-        CPPUNIT_ASSERT_EQUAL( imageFromFile, image ); \
+        CPPUNIT_ASSERT_MESSAGE( "Failed to save " file, image.SaveFile(file) ); \
+    } \
+    else \
+    { \
+        const wxImage imageFromFile(file); \
+        if ( imageFromFile.IsOk() ) \
+        { \
+            INFO("Wrong scaled \"" << file << "\" " << Catch::toString(image)); \
+            CHECK(FindMaxChannelDiff(imageFromFile, image) <= 1); \
+        } \
+        else \
+        { \
+            FAIL("Failed to load \"" << file << "\""); \
+        } \
     }
 
 void ImageTestCase::ScaleCompare()
@@ -1384,6 +1420,36 @@ void ImageTestCase::ScaleCompare()
                                "image/horse_bilinear_150x150.png");
     ASSERT_IMAGE_EQUAL_TO_FILE(original.Scale(300, 300, wxIMAGE_QUALITY_BILINEAR),
                                "image/horse_bilinear_300x300.png");
+
+    // Test scaling symmetric image
+    const static char* cross_xpm[] =
+    {
+        "9 9 5 1",
+        "   c None",
+        "r  c #FF0000",
+        "g  c #00FF00",
+        "b  c #0000FF",
+        "w  c #FFFFFF",
+        "    r    ",
+        "    g    ",
+        "    b    ",
+        "    w    ",
+        "rgbw wbgr",
+        "    w    ",
+        "    b    ",
+        "    g    ",
+        "    r    "
+    };
+
+    wxImage imgCross(cross_xpm);
+    ASSERT_IMAGE_EQUAL_TO_FILE(imgCross.Scale(256, 256, wxIMAGE_QUALITY_BILINEAR),
+                               "image/cross_bilinear_256x256.png");
+    ASSERT_IMAGE_EQUAL_TO_FILE(imgCross.Scale(256, 256, wxIMAGE_QUALITY_BICUBIC),
+                               "image/cross_bicubic_256x256.png");
+    ASSERT_IMAGE_EQUAL_TO_FILE(imgCross.Scale(256, 256, wxIMAGE_QUALITY_BOX_AVERAGE),
+                               "image/cross_box_average_256x256.png");
+    ASSERT_IMAGE_EQUAL_TO_FILE(imgCross.Scale(256, 256, wxIMAGE_QUALITY_NEAREST),
+                               "image/cross_nearest_neighb_256x256.png");
 }
 
 #endif //wxUSE_IMAGE

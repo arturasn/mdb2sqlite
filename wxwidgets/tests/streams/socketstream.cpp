@@ -66,9 +66,10 @@ public:
     }
 
 protected:
-    virtual void *Entry()
+    virtual void *Entry() wxOVERRIDE
     {
         wxSocketServer srv(LocalAddress(m_port), wxSOCKET_REUSEADDR);
+        CPPUNIT_ASSERT( srv.IsOk() );
 
         // FIXME: this is still not atomic, of course and the main thread could
         //        call Connect() before we have time to Accept() but there is
@@ -91,7 +92,7 @@ protected:
     int m_port;
     void (*m_accept)(wxSocketBase&);
 
-    DECLARE_NO_COPY_CLASS(SocketServerThread)
+    wxDECLARE_NO_COPY_CLASS(SocketServerThread);
 };
 
 // The test case for socket streams
@@ -102,8 +103,8 @@ public:
     socketStream();
     virtual ~socketStream();
 
-    virtual void setUp();
-    virtual void tearDown();
+    virtual void setUp() wxOVERRIDE;
+    virtual void tearDown() wxOVERRIDE;
 
     // repeat all socket tests several times with different socket flags, so we
     // define this macro which is used several times in the test suite
@@ -136,8 +137,8 @@ public:
 
 private:
     // Implement base class functions.
-    virtual wxSocketInputStream  *DoCreateInStream();
-    virtual wxSocketOutputStream *DoCreateOutStream();
+    virtual wxSocketInputStream  *DoCreateInStream() wxOVERRIDE;
+    virtual wxSocketOutputStream *DoCreateOutStream() wxOVERRIDE;
 
     // socket thread functions
     static void WriteSocket(wxSocketBase& socket)

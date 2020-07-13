@@ -131,9 +131,9 @@ static int str16len(const char *s)
 // event tables
 // ----------------------------------------------------------------------------
 
-    BEGIN_EVENT_TABLE(wxWindow, wxWindowBase)
-        EVT_SYS_COLOUR_CHANGED(wxWindow::OnSysColourChanged)
-    END_EVENT_TABLE()
+wxBEGIN_EVENT_TABLE(wxWindow, wxWindowBase)
+    EVT_SYS_COLOUR_CHANGED(wxWindow::OnSysColourChanged)
+wxEND_EVENT_TABLE()
 
 // ============================================================================
 // implementation
@@ -886,7 +886,7 @@ void wxWindow::ScrollWindow(int dx, int dy, const wxRect *rect)
     XCopyArea(display, window, window, gc, x1, y1, w1, h1, x2, y2);
 
     dcimpl->SetAutoSetting(true);
-    wxBrush brush(GetBackgroundColour(), wxSOLID);
+    wxBrush brush(GetBackgroundColour(), wxBRUSHSTYLE_SOLID);
     dc.SetBrush(brush); // FIXME: needed?
 
     wxWindowList::compatibility_iterator cnode = m_children.GetFirst();
@@ -1252,8 +1252,8 @@ void wxWindow::DoSetSizeIntr(int x, int y, int width, int height,
 
     if (x == -1)
         x = oldX;
-    if (x == -1)
-        x = oldY;
+    if (y == -1)
+        y = oldY;
 
     if ( !(sizeFlags & wxSIZE_ALLOW_MINUS_ONE) )
     {
@@ -1537,7 +1537,7 @@ void wxWindow::Refresh(bool eraseBack, const wxRect *rect)
     if (eraseBack)
     {
         wxClientDC dc(this);
-        wxBrush backgroundBrush(GetBackgroundColour(), wxSOLID);
+        wxBrush backgroundBrush(GetBackgroundColour(), wxBRUSHSTYLE_SOLID);
         dc.SetBackground(backgroundBrush);
 
         wxClientDCImpl * const

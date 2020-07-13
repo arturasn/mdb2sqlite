@@ -429,7 +429,7 @@ async_targets_selection_received( GtkWidget *WXUNUSED(widget),
 // wxClipboard ctor/dtor
 // ----------------------------------------------------------------------------
 
-IMPLEMENT_DYNAMIC_CLASS(wxClipboard,wxObject)
+wxIMPLEMENT_DYNAMIC_CLASS(wxClipboard,wxObject);
 
 wxClipboard::wxClipboard()
 {
@@ -593,6 +593,12 @@ void wxClipboard::Clear()
     m_formatSupported = false;
 }
 
+bool wxClipboard::Flush()
+{
+    gtk_clipboard_store( gtk_clipboard_get( GTKGetClipboardAtom() ) );
+    return true;
+}
+
 bool wxClipboard::Open()
 {
     wxCHECK_MSG( !m_open, false, wxT("clipboard already open") );
@@ -626,7 +632,7 @@ bool wxClipboard::AddData( wxDataObject *data )
 
     // get formats from wxDataObjects
     const size_t count = data->GetFormatCount();
-    wxDataFormatArray formats(new wxDataFormat[count]);
+    wxDataFormatArray formats(count);
     data->GetAllFormats(formats.get());
 
     // always provide TIMESTAMP as a target, see comments in selection_handler
@@ -690,7 +696,7 @@ bool wxClipboard::GetData( wxDataObject& data )
     // get all supported formats from wxDataObjects: notice that we are setting
     // the object data, so we need them in "Set" direction
     const size_t count = data.GetFormatCount(wxDataObject::Set);
-    wxDataFormatArray formats(new wxDataFormat[count]);
+    wxDataFormatArray formats(count);
     data.GetAllFormats(formats.get(), wxDataObject::Set);
 
     for ( size_t i = 0; i < count; i++ )

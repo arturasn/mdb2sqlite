@@ -46,7 +46,7 @@ public:
     // this one is called on application startup and is a good place for the app
     // initialization (doing it here and not in the ctor allows to have an error
     // return: if OnInit() returns false, the application terminates)
-    virtual bool OnInit();
+    virtual bool OnInit() wxOVERRIDE;
 };
 
 // Define a new frame type: this is going to be our main frame
@@ -82,7 +82,7 @@ wxEND_EVENT_TABLE()
 // static object for many reasons) and also declares the accessor function
 // wxGetApp() which will return the reference of the right type (i.e. MyApp and
 // not wxApp)
-IMPLEMENT_APP(MyApp)
+wxIMPLEMENT_APP(MyApp);
 
 // ============================================================================
 // implementation
@@ -154,9 +154,9 @@ void MyFrame::OnAbout(wxCommandEvent& WXUNUSED(event))
 
     html = new wxHtmlWindow(&dlg, wxID_ANY, wxDefaultPosition, wxSize(380, 160), wxHW_SCROLLBAR_NEVER);
     html -> SetBorders(0);
-    html -> LoadPage(wxT("data/about.htm"));
-    html -> SetSize(html -> GetInternalRepresentation() -> GetWidth(),
-                    html -> GetInternalRepresentation() -> GetHeight());
+    html -> LoadPage("data/about.htm");
+    html -> SetInitialSize(wxSize(html -> GetInternalRepresentation() -> GetWidth(),
+                                  html -> GetInternalRepresentation() -> GetHeight()));
 
     topsizer -> Add(html, 1, wxALL, 10);
 

@@ -25,21 +25,16 @@
 
 #include "wx/osx/private.h"
 
-BEGIN_EVENT_TABLE(wxFrame, wxFrameBase)
+wxBEGIN_EVENT_TABLE(wxFrame, wxFrameBase)
   EVT_ACTIVATE(wxFrame::OnActivate)
   EVT_SYS_COLOUR_CHANGED(wxFrame::OnSysColourChanged)
-END_EVENT_TABLE()
+wxEND_EVENT_TABLE()
 
-#define WX_MAC_STATUSBAR_HEIGHT 18
+#define WX_MAC_STATUSBAR_HEIGHT 24
 
 // ----------------------------------------------------------------------------
 // creation/destruction
 // ----------------------------------------------------------------------------
-
-void wxFrame::Init()
-{
-    m_winLastFocused = NULL;
-}
 
 bool wxFrame::Create(wxWindow *parent,
            wxWindowID id,
@@ -53,13 +48,6 @@ bool wxFrame::Create(wxWindow *parent,
         return false;
 
     return true;
-}
-
-wxFrame::~wxFrame()
-{
-    SendDestroyEvent();
-
-    DeleteAllBars();
 }
 
 // get the origin of the client area in the client coordinates
@@ -163,38 +151,10 @@ void wxFrame::OnActivate(wxActivateEvent& event)
 {
     if ( !event.GetActive() )
     {
-       // remember the last focused child if it is our child
-        m_winLastFocused = FindFocus();
-
-        // so we NULL it out if it's a child from some other frame
-        wxWindow *win = m_winLastFocused;
-        while ( win )
-        {
-            if ( win->IsTopLevel() )
-            {
-                if ( win != this )
-                    m_winLastFocused = NULL;
-
-                break;
-            }
-
-            win = win->GetParent();
-        }
-
         event.Skip();
     }
     else
     {
-        // restore focus to the child which was last focused
-        wxWindow *parent = m_winLastFocused
-            ? m_winLastFocused->GetParent()
-            : NULL;
-
-        if (parent == NULL)
-            parent = this;
-
-        wxSetFocusToChild(parent, &m_winLastFocused);
-
 #if wxUSE_MENUS
         if (m_frameMenuBar != NULL)
         {
@@ -212,6 +172,11 @@ void wxFrame::OnActivate(wxActivateEvent& event)
         }
 #endif
     }
+
+#if wxUSE_STATUSBAR
+    if ( GetStatusBar() && GetStatusBar()->IsShown() )
+        GetStatusBar()->Refresh();
+#endif
 }
 
 #if wxUSE_MENUS
@@ -222,9 +187,7 @@ void wxFrame::DetachMenuBar()
 
 void wxFrame::AttachMenuBar( wxMenuBar *menuBar )
 {
-#if wxOSX_USE_CARBON
-    wxFrame* tlf = wxDynamicCast( wxNonOwnedWindow::GetFromWXWindow( (WXWindow) FrontNonFloatingWindow() ) , wxFrame );
-#elif wxOSX_USE_COCOA
+#if wxOSX_USE_COCOA
     wxFrame* tlf = wxDynamicCast( wxNonOwnedWindow::GetFromWXWindow( wxOSXGetMainWindow() ) , wxFrame );
 #else
     wxFrame* tlf = wxDynamicCast( wxTheApp->GetTopWindow(), wxFrame );
@@ -356,12 +319,12 @@ void wxFrame::PositionToolBar()
 
     wxTopLevelWindow::DoGetClientSize( &cw , &ch );
 
-    int statusX = 0 ;
-    int statusY = 0 ;
-
 #if wxUSE_STATUSBAR
     if (GetStatusBar() && GetStatusBar()->IsShown())
     {
+        int statusX = 0 ;
+        int statusY = 0 ;
+
         GetStatusBar()->GetSize(&statusX, &statusY);
         ch -= statusY;
     }
@@ -421,4 +384,17 @@ void wxFrame::PositionBars()
 #endif
 }
 
+bool wxFrame::Show(bool show)
+{
+    if ( !show )
+    {
+#if wxUSE_MENUS
+        if (m_frameMenuBar != NULL)
+        {
+          m_frameMenuBar->MacUninstallMenuBar();
+        }
+#endif
+    }
+    return wxFrameBase::Show(show);
+}
 

@@ -24,7 +24,7 @@
 
 #include "wx/calctrl.h"
 
-IMPLEMENT_DYNAMIC_CLASS(wxCalendarCtrlXmlHandler, wxXmlResourceHandler)
+wxIMPLEMENT_DYNAMIC_CLASS(wxCalendarCtrlXmlHandler, wxXmlResourceHandler);
 
 wxCalendarCtrlXmlHandler::wxCalendarCtrlXmlHandler()
 : wxXmlResourceHandler()
@@ -43,7 +43,7 @@ wxCalendarCtrlXmlHandler::wxCalendarCtrlXmlHandler()
 
 wxObject *wxCalendarCtrlXmlHandler::DoCreateResource()
 {
-    XRC_MAKE_INSTANCE(calendar, wxCalendarCtrl);
+    XRC_MAKE_INSTANCE(calendar, wxCalendarCtrl)
 
     calendar->Create(m_parentAsWindow,
                      GetID(),

@@ -54,7 +54,7 @@ private:
     void GetSetRGB();
     void FromString();
 
-    DECLARE_NO_COPY_CLASS(ColourTestCase)
+    wxDECLARE_NO_COPY_CLASS(ColourTestCase);
 };
 
 // register in the unnamed registry so that these tests are run by default
@@ -99,8 +99,11 @@ void ColourTestCase::GetSetRGB()
 void ColourTestCase::FromString()
 {
     ASSERT_EQUAL_RGB( wxColour("rgb(11, 22, 33)"), 11, 22, 33 );
+    // wxX11 doesn't support alpha at all currently.
+#ifndef __WXX11__
     ASSERT_EQUAL_RGBA( wxColour("rgba(11, 22, 33, 0.5)"), 11, 22, 33, 128 );
     ASSERT_EQUAL_RGBA( wxColour("rgba( 11, 22, 33, 0.5 )"), 11, 22, 33, 128 );
+#endif // __WXX11__
 
     ASSERT_EQUAL_RGB( wxColour("#aabbcc"), 0xaa, 0xbb, 0xcc );
 
@@ -112,3 +115,10 @@ void ColourTestCase::FromString()
     CPPUNIT_ASSERT( !wxFromString("rgba(1, 2, 3.456, foo)", &col) );
 }
 
+TEST_CASE("wxColour::GetLuminance", "[colour][luminance]")
+{
+    CHECK( wxBLACK->GetLuminance() == Approx(0.0) );
+    CHECK( wxWHITE->GetLuminance() == Approx(1.0) );
+    CHECK( wxRED->GetLuminance() > 0 );
+    CHECK( wxRED->GetLuminance() < 1 );
+}

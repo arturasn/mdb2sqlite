@@ -29,15 +29,15 @@ public:
                       wxDC& dc,
                       const wxRect& rect,
                       int row, int col,
-                      bool isSelected);
+                      bool isSelected) wxOVERRIDE;
 
     // return the string extent
     virtual wxSize GetBestSize(wxGrid& grid,
                                wxGridCellAttr& attr,
                                wxDC& dc,
-                               int row, int col);
+                               int row, int col) wxOVERRIDE;
 
-    virtual wxGridCellRenderer *Clone() const
+    virtual wxGridCellRenderer *Clone() const wxOVERRIDE
         { return new wxGridCellStringRenderer; }
 
 protected:
@@ -63,14 +63,14 @@ public:
                       wxDC& dc,
                       const wxRect& rect,
                       int row, int col,
-                      bool isSelected);
+                      bool isSelected) wxOVERRIDE;
 
     virtual wxSize GetBestSize(wxGrid& grid,
                                wxGridCellAttr& attr,
                                wxDC& dc,
-                               int row, int col);
+                               int row, int col) wxOVERRIDE;
 
-    virtual wxGridCellRenderer *Clone() const
+    virtual wxGridCellRenderer *Clone() const wxOVERRIDE
         { return new wxGridCellNumberRenderer; }
 
 protected:
@@ -98,18 +98,18 @@ public:
                       wxDC& dc,
                       const wxRect& rect,
                       int row, int col,
-                      bool isSelected);
+                      bool isSelected) wxOVERRIDE;
 
     virtual wxSize GetBestSize(wxGrid& grid,
                                wxGridCellAttr& attr,
                                wxDC& dc,
-                               int row, int col);
+                               int row, int col) wxOVERRIDE;
 
     // parameters string format is "width[,precision[,format]]"
     // with format being one of f|e|g|E|F|G
-    virtual void SetParameters(const wxString& params);
+    virtual void SetParameters(const wxString& params) wxOVERRIDE;
 
-    virtual wxGridCellRenderer *Clone() const;
+    virtual wxGridCellRenderer *Clone() const wxOVERRIDE;
 
 protected:
     wxString GetString(const wxGrid& grid, int row, int col);
@@ -133,15 +133,15 @@ public:
                       wxDC& dc,
                       const wxRect& rect,
                       int row, int col,
-                      bool isSelected);
+                      bool isSelected) wxOVERRIDE;
 
     // return the checkmark size
     virtual wxSize GetBestSize(wxGrid& grid,
                                wxGridCellAttr& attr,
                                wxDC& dc,
-                               int row, int col);
+                               int row, int col) wxOVERRIDE;
 
-    virtual wxGridCellRenderer *Clone() const
+    virtual wxGridCellRenderer *Clone() const wxOVERRIDE
         { return new wxGridCellBoolRenderer; }
 
 private:
@@ -153,12 +153,17 @@ private:
 
 #include "wx/datetime.h"
 
-// the default renderer for the cells containing times and dates
-class WXDLLIMPEXP_ADV wxGridCellDateTimeRenderer : public wxGridCellStringRenderer
+// renderer for the cells containing dates only, without time component
+class WXDLLIMPEXP_ADV wxGridCellDateRenderer : public wxGridCellStringRenderer
 {
 public:
-    wxGridCellDateTimeRenderer(const wxString& outformat = wxDefaultDateTimeFormat,
-                               const wxString& informat = wxDefaultDateTimeFormat);
+    explicit wxGridCellDateRenderer(const wxString& outformat = wxString());
+
+    wxGridCellDateRenderer(const wxGridCellDateRenderer& other)
+        : m_oformat(other.m_oformat),
+          m_tz(other.m_tz)
+    {
+    }
 
     // draw the string right aligned
     virtual void Draw(wxGrid& grid,
@@ -166,25 +171,47 @@ public:
                       wxDC& dc,
                       const wxRect& rect,
                       int row, int col,
-                      bool isSelected);
+                      bool isSelected) wxOVERRIDE;
 
     virtual wxSize GetBestSize(wxGrid& grid,
                                wxGridCellAttr& attr,
                                wxDC& dc,
-                               int row, int col);
+                               int row, int col) wxOVERRIDE;
 
-    virtual wxGridCellRenderer *Clone() const;
+    virtual wxGridCellRenderer *Clone() const wxOVERRIDE;
 
     // output strptime()-like format string
-    virtual void SetParameters(const wxString& params);
+    virtual void SetParameters(const wxString& params) wxOVERRIDE;
 
 protected:
     wxString GetString(const wxGrid& grid, int row, int col);
+    virtual bool Parse(const wxString& text, wxDateTime& result);
+
+    wxString m_oformat;
+    wxDateTime::TimeZone m_tz;
+};
+
+// the default renderer for the cells containing times and dates
+class WXDLLIMPEXP_ADV wxGridCellDateTimeRenderer : public wxGridCellDateRenderer
+{
+public:
+    wxGridCellDateTimeRenderer(const wxString& outformat = wxDefaultDateTimeFormat,
+                               const wxString& informat = wxDefaultDateTimeFormat);
+
+    wxGridCellDateTimeRenderer(const wxGridCellDateTimeRenderer& other)
+        : wxGridCellDateRenderer(other),
+          m_iformat(other.m_iformat),
+          m_dateDef(other.m_dateDef)
+    {
+    }
+
+    virtual wxGridCellRenderer *Clone() const wxOVERRIDE;
+
+protected:
+    virtual bool Parse(const wxString& text, wxDateTime& result) wxOVERRIDE;
 
     wxString m_iformat;
-    wxString m_oformat;
     wxDateTime m_dateDef;
-    wxDateTime::TimeZone m_tz;
 };
 
 #endif // wxUSE_DATETIME
@@ -201,18 +228,18 @@ public:
                       wxDC& dc,
                       const wxRect& rect,
                       int row, int col,
-                      bool isSelected);
+                      bool isSelected) wxOVERRIDE;
 
     virtual wxSize GetBestSize(wxGrid& grid,
                                wxGridCellAttr& attr,
                                wxDC& dc,
-                               int row, int col);
+                               int row, int col) wxOVERRIDE;
 
-    virtual wxGridCellRenderer *Clone() const;
+    virtual wxGridCellRenderer *Clone() const wxOVERRIDE;
 
     // parameters string format is "item1[,item2[...,itemN]]" where itemN will
     // be used if the cell value is N-1
-    virtual void SetParameters(const wxString& params);
+    virtual void SetParameters(const wxString& params) wxOVERRIDE;
 
 protected:
     wxString GetString(const wxGrid& grid, int row, int col);
@@ -231,14 +258,26 @@ public:
                       wxDC& dc,
                       const wxRect& rect,
                       int row, int col,
-                      bool isSelected);
+                      bool isSelected) wxOVERRIDE;
 
     virtual wxSize GetBestSize(wxGrid& grid,
                                wxGridCellAttr& attr,
                                wxDC& dc,
-                               int row, int col);
+                               int row, int col) wxOVERRIDE;
 
-    virtual wxGridCellRenderer *Clone() const
+    virtual int GetBestHeight(wxGrid& grid,
+                              wxGridCellAttr& attr,
+                              wxDC& dc,
+                              int row, int col,
+                              int width) wxOVERRIDE;
+
+    virtual int GetBestWidth(wxGrid& grid,
+                              wxGridCellAttr& attr,
+                              wxDC& dc,
+                              int row, int col,
+                              int height) wxOVERRIDE;
+
+    virtual wxGridCellRenderer *Clone() const wxOVERRIDE
         { return new wxGridCellAutoWrapStringRenderer; }
 
 private:

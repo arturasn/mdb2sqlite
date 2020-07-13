@@ -32,11 +32,11 @@ class WXDLLIMPEXP_HTML wxHtmlBookRecord
 public:
     wxHtmlBookRecord(const wxString& bookfile, const wxString& basepath,
                      const wxString& title, const wxString& start)
+        : m_BookFile(bookfile)
+        , m_BasePath(basepath)
+        , m_Title(title)
+        , m_Start(start)
     {
-        m_BookFile = bookfile;
-        m_BasePath = basepath;
-        m_Title = title;
-        m_Start = start;
         // for debugging, give the contents index obvious default values
         m_ContentsStart = m_ContentsEnd = -1;
     }
@@ -161,7 +161,7 @@ private:
 
 class WXDLLIMPEXP_HTML wxHtmlHelpData : public wxObject
 {
-    DECLARE_DYNAMIC_CLASS(wxHtmlHelpData)
+    wxDECLARE_DYNAMIC_CLASS(wxHtmlHelpData);
     friend class wxHtmlSearchStatus;
 
 public:

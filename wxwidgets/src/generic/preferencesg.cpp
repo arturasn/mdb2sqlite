@@ -48,11 +48,9 @@ public:
                    wxDefaultPosition, wxDefaultSize,
                    wxDEFAULT_FRAME_STYLE & ~(wxRESIZE_BORDER | wxMAXIMIZE_BOX | wxMINIMIZE_BOX))
     {
-        SetExtraStyle(wxWS_EX_VALIDATE_RECURSIVELY);
-
         wxSizer *sizer = new wxBoxSizer(wxVERTICAL);
 
-        m_notebook = new wxNotebook(this, wxID_ANY);
+        m_notebook = new wxNotebook(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxNB_MULTILINE);
         sizer->Add(m_notebook, wxSizerFlags(1).Expand().DoubleBorder());
 
 #ifdef __WXGTK__
@@ -81,10 +79,10 @@ public:
         m_notebook->ChangeSelection(page);
     }
 
-    bool ShouldPreventAppExit() const
-    {
-        return false;
-    }
+     bool ShouldPreventAppExit() const wxOVERRIDE
+     {
+         return false;
+     }
 
 private:
     wxNotebook *m_notebook;
@@ -99,7 +97,7 @@ public:
         m_title = title;
     }
 
-    virtual void AddPage(wxPreferencesPage* page)
+    virtual void AddPage(wxPreferencesPage* page) wxOVERRIDE
     {
         m_pages.push_back(wxSharedPtr<wxPreferencesPage>(page));
     }
@@ -158,7 +156,7 @@ public:
             m_win->Destroy();
     }
 
-    virtual void Show(wxWindow* parent)
+    virtual void Show(wxWindow* parent) wxOVERRIDE
     {
         if ( !m_win )
         {
@@ -176,7 +174,7 @@ public:
         }
     }
 
-    virtual void Dismiss()
+    virtual void Dismiss() wxOVERRIDE
     {
         if ( m_win )
         {
@@ -206,7 +204,7 @@ public:
         m_currentPage = -1;
     }
 
-    virtual void Show(wxWindow* parent)
+    virtual void Show(wxWindow* parent) wxOVERRIDE
     {
         wxScopedPtr<wxGenericPrefsDialog> dlg(CreateDialog(parent));
 
@@ -224,7 +222,7 @@ public:
             m_currentPage = dlg->GetSelectedPage();
     }
 
-    virtual void Dismiss()
+    virtual void Dismiss() wxOVERRIDE
     {
         if ( m_dlg )
         {

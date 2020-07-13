@@ -14,6 +14,7 @@
 #endif // WX_PRECOMP
 
 #include "wx/scopeguard.h"
+#include "wx/uiaction.h"
 
 #include "itemcontainertest.h"
 
@@ -269,6 +270,33 @@ void ItemContainerTestCase::SetString()
 #endif
 }
 
+void ItemContainerTestCase::SelectionAfterDelete()
+{
+    wxItemContainer * const container = GetContainer();
+
+    container->Append("item 0");
+    container->Append("item 1");
+    container->Append("item 2");
+    container->Append("item 3");
+
+    container->SetSelection(1);
+    CHECK( container->GetSelection() == 1 );
+
+    container->Delete(3);
+    CHECK( container->GetSelection() == 1 );
+
+    container->Delete(1);
+    CHECK( container->GetSelection() == wxNOT_FOUND );
+
+    container->SetSelection(1);
+    container->Delete(1);
+    CHECK( container->GetSelection() == wxNOT_FOUND );
+
+    container->SetSelection(0);
+    container->Delete(0);
+    CHECK( container->GetSelection() == wxNOT_FOUND );
+}
+
 void ItemContainerTestCase::SetSelection()
 {
     wxItemContainer * const container = GetContainer();
@@ -281,7 +309,7 @@ void ItemContainerTestCase::SetSelection()
     class CommandEventHandler : public wxEvtHandler
     {
     public:
-        virtual bool ProcessEvent(wxEvent& event)
+        virtual bool ProcessEvent(wxEvent& event) wxOVERRIDE
         {
             CPPUNIT_ASSERT_MESSAGE
             (
@@ -303,3 +331,27 @@ void ItemContainerTestCase::SetSelection()
     container->SetSelection(1);
     CPPUNIT_ASSERT_EQUAL( 1, container->GetSelection() );
 }
+
+#if wxUSE_UIACTIONSIMULATOR
+
+void ItemContainerTestCase::SimSelect()
+{
+    wxItemContainer * const container = GetContainer();
+
+    container->Append("first");
+    container->Append("second");
+    container->Append("third");
+
+    GetContainerWindow()->SetFocus();
+
+    wxUIActionSimulator sim;
+    CPPUNIT_ASSERT( sim.Select("third") );
+    CPPUNIT_ASSERT_EQUAL( 2, container->GetSelection() );
+
+    CPPUNIT_ASSERT( sim.Select("first") );
+    CPPUNIT_ASSERT_EQUAL( 0, container->GetSelection() );
+
+    CPPUNIT_ASSERT( !sim.Select("tenth") );
+}
+
+#endif // wxUSE_UIACTIONSIMULATOR

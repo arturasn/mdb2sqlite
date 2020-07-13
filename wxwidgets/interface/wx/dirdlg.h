@@ -34,7 +34,7 @@ const char wxDirDialogNameStr[] = "wxDirCtrl";
     @beginStyleTable
     @style{wxDD_DEFAULT_STYLE}
            Equivalent to a combination of wxDEFAULT_DIALOG_STYLE and
-           wxRESIZE_BORDER (the last one is not used under wxWinCE).
+           wxRESIZE_BORDER.
     @style{wxDD_DIR_MUST_EXIST}
            The dialog will allow the user to choose only an existing folder.
            When this style is not given, a "Create new directory" button is
@@ -45,11 +45,11 @@ const char wxDirDialogNameStr[] = "wxDirCtrl";
            user.
     @endStyleTable
 
-    Notice that @c wxRESIZE_BORDER has special side effect under recent (i.e.
-    later than Win9x) Windows where two different directory selection dialogs
-    are available and this style also implicitly selects the new version as the
-    old one always has fixed size. As the new version is almost always
-    preferable, it is recommended that @c wxRESIZE_BORDER style be always used.
+    Notice that @c wxRESIZE_BORDER has special side effect under Windows
+    where two different directory selection dialogs are available and this
+    style also implicitly selects the new version as the old one always has
+    fixed size. As the new version is almost always preferable, it is
+    recommended that @c wxRESIZE_BORDER style be always used.
     This is the case if the dialog is created with the default style value but
     if you need to use any additional styles you should still specify @c
     wxDD_DEFAULT_STYLE unless you explicitly need to use the old dialog version

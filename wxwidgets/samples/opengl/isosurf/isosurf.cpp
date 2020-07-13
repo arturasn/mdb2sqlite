@@ -48,7 +48,7 @@ GLboolean g_lighting = GL_TRUE;
 // MyApp
 //---------------------------------------------------------------------------
 
-IMPLEMENT_APP(MyApp)
+wxIMPLEMENT_APP(MyApp);
 
 bool MyApp::OnInit()
 {
@@ -56,7 +56,7 @@ bool MyApp::OnInit()
         return false;
 
     // Create the main frame window
-    new MyFrame(NULL, wxT("wxWidgets OpenGL Isosurf Sample"));
+    new MyFrame(NULL, "wxWidgets OpenGL Isosurf Sample");
 
     return true;
 }
@@ -102,9 +102,9 @@ MyFrame::MyFrame(wxFrame *frame, const wxString& title, const wxPoint& pos,
     // Make a menubar
     wxMenu *fileMenu = new wxMenu;
 
-    fileMenu->Append(wxID_EXIT, wxT("E&xit"));
+    fileMenu->Append(wxID_EXIT, "E&xit");
     wxMenuBar *menuBar = new wxMenuBar;
-    menuBar->Append(fileMenu, wxT("&File"));
+    menuBar->Append(fileMenu, "&File");
     SetMenuBar(menuBar);
 
 
@@ -118,11 +118,7 @@ MyFrame::MyFrame(wxFrame *frame, const wxString& title, const wxPoint& pos,
         { WX_GL_RGBA, WX_GL_MIN_RED, 1, WX_GL_MIN_GREEN, 1,
         WX_GL_MIN_BLUE, 1, WX_GL_DEPTH_SIZE, 1,
         WX_GL_DOUBLEBUFFER,
-#  if defined(__WXMAC__) || defined(__WXCOCOA__)
-        GL_NONE };
-#  else
-        None };
-#  endif
+        0 };
 #endif
 
     if (!g_doubleBuffer)
@@ -130,7 +126,7 @@ MyFrame::MyFrame(wxFrame *frame, const wxString& title, const wxPoint& pos,
         wxLogWarning("Disabling double buffering");
 
 #ifdef __WXGTK__
-        gl_attrib[9] = None;
+        gl_attrib[9] = 0;
 #endif
         g_doubleBuffer = GL_FALSE;
     }
@@ -198,7 +194,7 @@ void TestGLCanvas::LoadSurface(const wxString& filename)
         new wxZlibInputStream(new wxFFileInputStream(filename));
     if (!stream || !stream->IsOk())
     {
-        wxLogError("Cannot load '%s' type of files!", filename.c_str());
+        wxLogError("Cannot load '%s' type of files!", filename);
         delete stream;
         return;
     }
@@ -225,8 +221,8 @@ void TestGLCanvas::LoadSurface(const wxString& filename)
 
     delete stream;
 
-    wxLogMessage(wxT("Loaded %d vertices, %d triangles from '%s'"),
-                 m_numverts, m_numverts-2, filename.c_str());
+    wxLogMessage("Loaded %d vertices, %d triangles from '%s'",
+                 m_numverts, m_numverts-2, filename);
 
     // NOTE: for some reason under wxGTK the following is required to avoid that
     //       the surface gets rendered in a small rectangle in the top-left corner of the frame
@@ -284,7 +280,8 @@ void TestGLCanvas::OnSize(wxSizeEvent& event)
     // This is OK here only because there is only one canvas that uses the
     // context. See the cube sample for that case that multiple canvases are
     // made current with one context.
-    glViewport(0, 0, event.GetSize().x, event.GetSize().y);
+    const wxSize size = event.GetSize() * GetContentScaleFactor();
+    glViewport(0, 0, size.x, size.y);
 }
 
 void TestGLCanvas::OnChar(wxKeyEvent& event)

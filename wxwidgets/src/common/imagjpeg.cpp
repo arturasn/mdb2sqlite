@@ -37,17 +37,7 @@
     #define boolean wxHACK_BOOLEAN
 #endif
 
-extern "C"
-{
-    #if defined(__WXMSW__)
-        #define XMD_H
-    #endif
-    #include "jpeglib.h"
-}
-
-#ifndef HAVE_WXJPEG_BOOLEAN
-typedef boolean wxjpeg_boolean;
-#endif
+#include "jpeglib.h"
 
 #include "wx/filefn.h"
 #include "wx/wfstream.h"
@@ -79,7 +69,7 @@ typedef boolean wxjpeg_boolean;
 // wxJPEGHandler
 //-----------------------------------------------------------------------------
 
-IMPLEMENT_DYNAMIC_CLASS(wxJPEGHandler,wxImageHandler)
+wxIMPLEMENT_DYNAMIC_CLASS(wxJPEGHandler,wxImageHandler);
 
 #if wxUSE_STREAMS
 
@@ -103,7 +93,7 @@ CPP_METHODDEF(void) wx_init_source ( j_decompress_ptr WXUNUSED(cinfo) )
 {
 }
 
-CPP_METHODDEF(wxjpeg_boolean) wx_fill_input_buffer ( j_decompress_ptr cinfo )
+CPP_METHODDEF(boolean) wx_fill_input_buffer ( j_decompress_ptr cinfo )
 {
     wx_src_ptr src = (wx_src_ptr) cinfo->src;
 
@@ -148,10 +138,25 @@ CPP_METHODDEF(void) wx_term_source ( j_decompress_ptr cinfo )
 
 // JPEG error manager:
 
+#ifdef __VISUALC__
+    // We don't care about the size of this struct, but we still get an
+    // annoying warning C4324 here:
+    //
+    //  'wx_error_mgr' : structure was padded due to __declspec(align())
+    //
+    // and suppressing it seems to be the only way to avoid it.
+    #pragma warning(push)
+    #pragma warning(disable: 4324)
+#endif
+
 struct wx_error_mgr : public jpeg_error_mgr
 {
   jmp_buf setjmp_buffer;    /* for return to caller */
 };
+
+#ifdef __VISUALC__
+    #pragma warning(pop)
+#endif
 
 /*
  * Here's the routine that will replace the standard error_exit method:
@@ -371,7 +376,7 @@ CPP_METHODDEF(void) wx_init_destination (j_compress_ptr cinfo)
     dest->pub.free_in_buffer = OUTPUT_BUF_SIZE;
 }
 
-CPP_METHODDEF(wxjpeg_boolean) wx_empty_output_buffer (j_compress_ptr cinfo)
+CPP_METHODDEF(boolean) wx_empty_output_buffer (j_compress_ptr cinfo)
 {
     wx_dest_ptr dest = (wx_dest_ptr) cinfo->dest;
 
@@ -500,7 +505,11 @@ bool wxJPEGHandler::DoCanRead( wxInputStream& stream )
 
 /*static*/ wxVersionInfo wxJPEGHandler::GetLibraryVersionInfo()
 {
-    return wxVersionInfo("libjpeg", JPEG_LIB_VERSION/10, JPEG_LIB_VERSION%10);
+#if defined(JPEG_LIB_VERSION_MAJOR) && defined(JPEG_LIB_VERSION_MINOR)
+    return wxVersionInfo("libjpeg", JPEG_LIB_VERSION_MAJOR, JPEG_LIB_VERSION_MINOR);
+#else
+    return wxVersionInfo("libjpeg", JPEG_LIB_VERSION / 10, JPEG_LIB_VERSION % 10);
+#endif
 }
 
 #endif   // wxUSE_LIBJPEG

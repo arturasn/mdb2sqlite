@@ -96,9 +96,9 @@ protected:
 // implementation of wxListBox
 // ============================================================================
 
-BEGIN_EVENT_TABLE(wxListBox, wxListBoxBase)
+wxBEGIN_EVENT_TABLE(wxListBox, wxListBoxBase)
     EVT_SIZE(wxListBox::OnSize)
-END_EVENT_TABLE()
+wxEND_EVENT_TABLE()
 
 // ----------------------------------------------------------------------------
 // construction
@@ -127,6 +127,7 @@ void wxListBox::Init()
     m_showScrollbarX =
     m_updateScrollbarY =
     m_showScrollbarY = false;
+    m_inputHandlerType = wxINP_HANDLER_LISTBOX;
 }
 
 wxListBox::wxListBox(wxWindow *parent,
@@ -190,7 +191,7 @@ bool wxListBox::Create(wxWindow *parent,
         return false;
 
     if ( IsSorted() )
-        m_strings.sorted = new wxSortedArrayString;
+        m_strings.sorted = new wxSortedArrayString(wxDictionaryStringSortAscending);
     else
         m_strings.unsorted = new wxArrayString;
 
@@ -198,7 +199,7 @@ bool wxListBox::Create(wxWindow *parent,
 
     SetInitialSize(size);
 
-    CreateInputHandler(wxINP_HANDLER_LISTBOX);
+    CreateInputHandler(m_inputHandlerType);
 
     return true;
 }
@@ -420,12 +421,10 @@ void wxListBox::DoSetSelection(int n, bool select)
     {
         if ( n == wxNOT_FOUND )
         {
-            if ( !HasMultipleSelection() )
-            {
-                // selecting wxNOT_FOUND is documented to deselect all items
-                DeselectAll();
-                return;
-            }
+            // if is wxNOT_FOUND, just deselect all like other posts
+            // selecting wxNOT_FOUND is documented to deselect all items
+            DeselectAll();
+            return;
         }
         else if ( m_selections.Index(n) == wxNOT_FOUND )
         {
@@ -1115,6 +1114,34 @@ void wxListBox::Activate(int item)
 }
 
 // ----------------------------------------------------------------------------
+// hittest
+// ----------------------------------------------------------------------------
+
+int wxListBox::DoListHitTest(const wxPoint& point) const
+{
+    if ( !GetClientRect().Contains(point) )
+        return wxNOT_FOUND;
+
+    int y, index;
+
+    CalcUnscrolledPosition(0, point.y, NULL, &y);
+    index = y / GetLineHeight();
+
+    if ( index < 0 )
+    {
+        // mouse is above the first item
+        index = 0;
+    }
+    else if ( (unsigned int)index >= GetCount() )
+    {
+        // mouse is below the last item
+        index= GetCount() - 1;
+    }
+
+    return index;
+}
+
+// ----------------------------------------------------------------------------
 // input handling
 // ----------------------------------------------------------------------------
 
@@ -1449,8 +1476,6 @@ bool wxStdListboxInputHandler::HandleMouse(wxInputConsumer *consumer,
         {
             winCapture->ReleaseMouse();
             m_btnCapture = 0;
-
-            action = m_actionMouse;
         }
         //else: the mouse wasn't presed over the listbox, only released here
     }

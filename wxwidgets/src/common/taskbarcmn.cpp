@@ -25,7 +25,7 @@
     #include "wx/menu.h"
 #endif
 
-extern WXDLLIMPEXP_DATA_CORE(wxList) wxPendingDelete;
+extern WXDLLIMPEXP_DATA_BASE(wxList) wxPendingDelete;
 
 // DLL options compatibility check:
 WX_CHECK_BUILD_OPTIONS("wxAdvanced")
@@ -41,9 +41,9 @@ wxDEFINE_EVENT( wxEVT_TASKBAR_BALLOON_TIMEOUT, wxTaskBarIconEvent );
 wxDEFINE_EVENT( wxEVT_TASKBAR_BALLOON_CLICK, wxTaskBarIconEvent );
 
 
-BEGIN_EVENT_TABLE(wxTaskBarIconBase, wxEvtHandler)
+wxBEGIN_EVENT_TABLE(wxTaskBarIconBase, wxEvtHandler)
     EVT_TASKBAR_CLICK(wxTaskBarIconBase::OnRightButtonDown)
-END_EVENT_TABLE()
+wxEND_EVENT_TABLE()
 
 void wxTaskBarIconBase::OnRightButtonDown(wxTaskBarIconEvent& WXUNUSED(event))
 {

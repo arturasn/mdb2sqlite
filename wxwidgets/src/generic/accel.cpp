@@ -54,8 +54,8 @@ public:
 
     wxAccelRefData(const wxAccelRefData& data)
         : wxObjectRefData()
+        , m_accels(data.m_accels)
     {
-        m_accels = data.m_accels;
     }
 
     virtual ~wxAccelRefData()
@@ -78,7 +78,7 @@ public:
 // wxAcceleratorTable ctors
 // ----------------------------------------------------------------------------
 
-IMPLEMENT_DYNAMIC_CLASS(wxAcceleratorTable, wxObject)
+wxIMPLEMENT_DYNAMIC_CLASS(wxAcceleratorTable, wxObject);
 
 wxAcceleratorTable::wxAcceleratorTable()
 {

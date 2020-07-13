@@ -24,8 +24,8 @@ class FrameTestCase : public CppUnit::TestCase
 public:
     FrameTestCase() { }
 
-    void setUp();
-    void tearDown();
+    void setUp() wxOVERRIDE;
+    void tearDown() wxOVERRIDE;
 
 private:
     CPPUNIT_TEST_SUITE( FrameTestCase );
@@ -38,7 +38,7 @@ private:
 
     wxFrame *m_frame;
 
-    DECLARE_NO_COPY_CLASS(FrameTestCase)
+    wxDECLARE_NO_COPY_CLASS(FrameTestCase);
 };
 
 // register in the unnamed registry so that these tests are run by default

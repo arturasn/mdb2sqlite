@@ -104,6 +104,13 @@ enum wxAuiToolBarArtSetting
     */
     wxAUI_TBART_OVERFLOW_SIZE = 2
 
+    /**
+      Drop down button size in wxAuiToolBar.
+
+      @since 3.1.2
+    */
+    wxAUI_TBART_DROPDOWN_SIZE = 3
+
 };
 
 /**
@@ -148,6 +155,10 @@ enum wxAuiToolBarToolTextOrientation
 class wxAuiToolBarEvent : public wxNotifyEvent
 {
 public:
+    wxAuiToolBarEvent(wxEventType commandType = wxEVT_NULL,
+                      int winId = 0);
+    wxAuiToolBarEvent(const wxAuiToolBarEvent& c);
+
     /**
       Returns whether the drop down menu has been clicked.
     */
@@ -167,7 +178,19 @@ public:
       Returns the wxAuiToolBarItem identifier.
     */
     int GetToolId() const;
+
+
+    void SetDropDownClicked(bool c);
+    void SetClickPoint(const wxPoint& p);
+    void SetItemRect(const wxRect& r);
+    void SetToolId(int toolId);
 };
+
+wxEventType wxEVT_AUITOOLBAR_TOOL_DROPDOWN;
+wxEventType wxEVT_AUITOOLBAR_OVERFLOW_CLICK;
+wxEventType wxEVT_AUITOOLBAR_RIGHT_CLICK;
+wxEventType wxEVT_AUITOOLBAR_MIDDLE_CLICK;
+wxEventType wxEVT_AUITOOLBAR_BEGIN_DRAG;
 
 
 /**
@@ -573,6 +596,10 @@ public:
 
     wxAuiToolBar is a dockable toolbar, part of the wxAUI class framework.
     See also @ref overview_aui.
+
+    The appearance of this class is configurable and can be changed by calling
+    wxAuiToolBar::SetArtProvider(). By default, native art provider is used if
+    available (currently only in wxMSW) and wxAuiGenericToolBarArt otherwise.
 
     @beginStyleTable
     @style{wxAUI_TB_TEXT}

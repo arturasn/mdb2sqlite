@@ -102,6 +102,57 @@ enum wxPenCap
 
 
 /**
+    @class wxPenInfo
+
+    This class is a helper used for wxPen creation using named parameter
+    idiom: it allows specifying various wxPen attributes using the chained
+    calls to its clearly named methods instead of passing them in the fixed
+    order to wxPen constructors.
+
+    For instance, to create a dotted blue pen with the given join style you
+    could do
+    @code
+    wxPen pen(wxPenInfo(*wxBLUE).Style(wxPENSTYLE_DOT).Join(wxJOIN_BEVEL));
+    @endcode
+
+    @since 3.1.1
+ */
+class wxPenInfo
+{
+public:
+    explicit wxPenInfo(const wxColour& colour = wxColour(),
+                       int width = 1,
+                       wxPenStyle style = wxPENSTYLE_SOLID);
+
+    wxPenInfo& Colour(const wxColour& col);
+
+    wxPenInfo& Width(int width);
+
+    wxPenInfo& Style(wxPenStyle style);
+
+    wxPenInfo& Stipple(const wxBitmap& stipple);
+
+    wxPenInfo& Dashes(int nb_dashes, const wxDash *dash);
+
+    wxPenInfo& Join(wxPenJoin join);
+
+    wxPenInfo& Cap(wxPenCap cap);
+
+    wxColour GetColour() const;
+    wxBitmap GetStipple() const;
+    wxPenStyle GetStyle() const;
+    wxPenJoin GetJoin() const;
+    wxPenCap GetCap() const;
+    int GetDashes(wxDash **ptr);
+    int GetDashCount() const;
+    wxDash* GetDash() const;
+    bool IsTransparent() const;    
+    int GetWidth() const;
+};
+
+
+
+/**
     @class wxPen
 
     A pen is a drawing tool for drawing outlines. It is used for drawing
@@ -158,6 +209,11 @@ public:
     wxPen();
 
     /**
+        Creates a pen object using the specified pen description.
+    */
+    wxPen(const wxPenInfo& info);
+
+    /**
         Constructs a pen from a colour object, pen width and style.
 
         @param colour
@@ -171,7 +227,6 @@ public:
 
         @remarks Different versions of Windows and different versions of other
                  platforms support very different subsets of the styles above
-                 - there is no similarity even between Windows95 and Windows98 -
                  so handle with care.
 
         @see SetStyle(), SetColour(), SetWidth()

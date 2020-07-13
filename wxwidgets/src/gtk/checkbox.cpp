@@ -13,8 +13,8 @@
 
 #include "wx/checkbox.h"
 
-#include <gtk/gtk.h>
-#include "wx/gtk/private/gtk2-compat.h"
+#include "wx/gtk/private/wrapgtk.h"
+#include "wx/gtk/private/eventsdisabler.h"
 
 //-----------------------------------------------------------------------------
 // data
@@ -45,7 +45,7 @@ static void gtk_checkbox_toggled_callback(GtkWidget *widget, wxCheckBox *cb)
             bool active = gtk_toggle_button_get_active(toggle) != 0;
             bool inconsistent = gtk_toggle_button_get_inconsistent(toggle) != 0;
 
-            cb->GTKDisableEvents();
+            wxGtkEventsDisabler<wxCheckBox> noEvents(cb);
 
             if (!active && !inconsistent)
             {
@@ -67,8 +67,6 @@ static void gtk_checkbox_toggled_callback(GtkWidget *widget, wxCheckBox *cb)
             {
                 wxFAIL_MSG(wxT("3state wxCheckBox in unexpected state!"));
             }
-
-            cb->GTKEnableEvents();
         }
         else
         {
@@ -124,7 +122,13 @@ bool wxCheckBox::Create(wxWindow *parent,
         m_widgetCheckbox = gtk_check_button_new();
 
         m_widgetLabel = gtk_label_new("");
+#ifdef __WXGTK4__
+        g_object_set(m_widgetLabel, "xalign", 0.0f, NULL);
+#else
+        wxGCC_WARNING_SUPPRESS(deprecated-declarations)
         gtk_misc_set_alignment(GTK_MISC(m_widgetLabel), 0.0, 0.5);
+        wxGCC_WARNING_RESTORE()
+#endif
 
         m_widget = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
         gtk_box_pack_start(GTK_BOX(m_widget), m_widgetLabel, FALSE, FALSE, 3);
@@ -171,11 +175,8 @@ void wxCheckBox::SetValue( bool state )
     if (state == GetValue())
         return;
 
-    GTKDisableEvents();
-
+    wxGtkEventsDisabler<wxCheckBox> noEvents(this);
     gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(m_widgetCheckbox), state );
-
-    GTKEnableEvents();
 }
 
 bool wxCheckBox::GetValue() const
@@ -208,23 +209,30 @@ void wxCheckBox::SetLabel( const wxString& label )
 {
     wxCHECK_RET( m_widgetLabel != NULL, wxT("invalid checkbox") );
 
+    // If we don't hide the empty label, in some themes a focus rectangle is
+    // still drawn around it and this looks out of place.
+    if ( label.empty() )
+        gtk_widget_hide(m_widgetLabel);
+    else
+        gtk_widget_show(m_widgetLabel);
+
     // save the label inside m_label in case user calls GetLabel() later
     wxControl::SetLabel(label);
 
     GTKSetLabelForLabel(GTK_LABEL(m_widgetLabel), label);
 }
 
-bool wxCheckBox::Enable( bool enable )
+void wxCheckBox::DoEnable(bool enable)
 {
-    if (!base_type::Enable(enable))
-        return false;
+    if ( !m_widgetLabel )
+        return;
+
+    base_type::DoEnable(enable);
 
     gtk_widget_set_sensitive( m_widgetLabel, enable );
 
     if (enable)
         GTKFixSensitivity();
-
-    return true;
 }
 
 void wxCheckBox::DoApplyWidgetStyle(GtkRcStyle *style)

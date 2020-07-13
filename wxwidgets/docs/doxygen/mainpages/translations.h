@@ -448,11 +448,10 @@ Here are the steps you should follow:
 
 -# Get the latest version of the file <tt>locale/wxstd.pot</tt> from the
    wxWidgets source tree: if you're using
-   <a href="http://www.wxwidgets.org/develop/svn.htm">Subversion</a>
-   or the <a href="http://wxwindows.sourceforge.net/snapshots/">daily snapshots</a>
-   you should already have it.
-   Otherwise you can always retrieve it directly from the Subversion repository via the
-   <a href="http://svn.wxwidgets.org/viewvc/wx/wxWidgets/trunk/locale/wxstd.pot?view=co">Web interface</a>.
+   <a href="https://www.wxwidgets.org/develop/code-repository/">git</a>
+   you should already have it. Otherwise you can always retrieve it directly
+   from the git repository:
+   <a href="https://raw.githubusercontent.com/wxWidgets/wxWidgets/master/locale/wxstd.pot">locale/wxstd.pot</a>.
 -# Rename it to <tt>XY.po</tt> where <tt>"XY"</tt> is the 2 letter
    <a href="http://www.loc.gov/standards/iso639-2/php/English_list.php">ISO 639-2 language code</a>
    for your language.
@@ -468,8 +467,8 @@ Here are the steps you should follow:
    and it will be added to the next wxWidgets release or snapshot.
 
 In addition, please consider subscribing to the very low volume
-<a href="http://lists.wxwidgets.org/mailman/listinfo/wx-translators">
-wxWidgets translators</a> mailing list on which the news especially important
+<a href="https://www.wxwidgets.org/support/mailing-lists/">
+wxWidgets translators mailing list</a> on which the news especially important
 for the translators are announced.
 
 Thank you in advance for your help!

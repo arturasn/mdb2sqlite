@@ -49,7 +49,7 @@ public:
     virtual ~wxRibbonPageScrollButton();
 
 protected:
-    virtual wxBorder GetDefaultBorder() const { return wxBORDER_NONE; }
+    virtual wxBorder GetDefaultBorder() const wxOVERRIDE { return wxBORDER_NONE; }
 
     void OnEraseBackground(wxEraseEvent& evt);
     void OnPaint(wxPaintEvent& evt);
@@ -61,20 +61,20 @@ protected:
     wxRibbonPage* m_sibling;
     long m_flags;
 
-    DECLARE_CLASS(wxRibbonPageScrollButton)
-    DECLARE_EVENT_TABLE()
+    wxDECLARE_CLASS(wxRibbonPageScrollButton);
+    wxDECLARE_EVENT_TABLE();
 };
 
-IMPLEMENT_CLASS(wxRibbonPageScrollButton, wxRibbonControl)
+wxIMPLEMENT_CLASS(wxRibbonPageScrollButton, wxRibbonControl);
 
-BEGIN_EVENT_TABLE(wxRibbonPageScrollButton, wxRibbonControl)
+wxBEGIN_EVENT_TABLE(wxRibbonPageScrollButton, wxRibbonControl)
     EVT_ENTER_WINDOW(wxRibbonPageScrollButton::OnMouseEnter)
     EVT_ERASE_BACKGROUND(wxRibbonPageScrollButton::OnEraseBackground)
     EVT_LEAVE_WINDOW(wxRibbonPageScrollButton::OnMouseLeave)
     EVT_LEFT_DOWN(wxRibbonPageScrollButton::OnMouseDown)
     EVT_LEFT_UP(wxRibbonPageScrollButton::OnMouseUp)
     EVT_PAINT(wxRibbonPageScrollButton::OnPaint)
-END_EVENT_TABLE()
+wxEND_EVENT_TABLE()
 
 wxRibbonPageScrollButton::wxRibbonPageScrollButton(wxRibbonPage* sibling,
                  wxWindowID id,
@@ -82,7 +82,7 @@ wxRibbonPageScrollButton::wxRibbonPageScrollButton(wxRibbonPage* sibling,
                  const wxSize& size,
                  long style) : wxRibbonControl(sibling->GetParent(), id, pos, size, wxBORDER_NONE)
 {
-    SetBackgroundStyle(wxBG_STYLE_CUSTOM);
+    SetBackgroundStyle(wxBG_STYLE_PAINT);
     m_sibling = sibling;
     m_flags = (style & wxRIBBON_SCROLL_BTN_DIRECTION_MASK) | wxRIBBON_SCROLL_BTN_FOR_PAGE;
 }
@@ -146,13 +146,13 @@ void wxRibbonPageScrollButton::OnMouseUp(wxMouseEvent& WXUNUSED(evt))
     }
 }
 
-IMPLEMENT_CLASS(wxRibbonPage, wxRibbonControl)
+wxIMPLEMENT_CLASS(wxRibbonPage, wxRibbonControl);
 
-BEGIN_EVENT_TABLE(wxRibbonPage, wxRibbonControl)
+wxBEGIN_EVENT_TABLE(wxRibbonPage, wxRibbonControl)
     EVT_ERASE_BACKGROUND(wxRibbonPage::OnEraseBackground)
     EVT_PAINT(wxRibbonPage::OnPaint)
     EVT_SIZE(wxRibbonPage::OnSize)
-END_EVENT_TABLE()
+wxEND_EVENT_TABLE()
 
 wxRibbonPage::wxRibbonPage()
 {
@@ -175,6 +175,8 @@ wxRibbonPage::wxRibbonPage(wxRibbonBar* parent,
 wxRibbonPage::~wxRibbonPage()
 {
     delete[] m_size_calc_array;
+    delete m_scroll_left_btn;
+    delete m_scroll_right_btn;
 }
 
 bool wxRibbonPage::Create(wxRibbonBar* parent,
@@ -196,7 +198,6 @@ void wxRibbonPage::CommonInit(const wxString& label, const wxBitmap& icon)
     SetName(label);
 
     SetLabel(label);
-    m_old_size = wxSize(0, 0);
     m_icon = icon;
     m_scroll_left_btn = NULL;
     m_scroll_right_btn = NULL;
@@ -205,7 +206,7 @@ void wxRibbonPage::CommonInit(const wxString& label, const wxBitmap& icon)
     m_scroll_amount = 0;
     m_scroll_buttons_visible = false;
 
-    SetBackgroundStyle(wxBG_STYLE_CUSTOM);
+    SetBackgroundStyle(wxBG_STYLE_PAINT);
 
     wxDynamicCast(GetParent(), wxRibbonBar)->AddPage(this);
 }
@@ -224,6 +225,14 @@ void wxRibbonPage::SetArtProvider(wxRibbonArtProvider* art)
             ribbon_child->SetArtProvider(art);
         }
     }
+
+    // The scroll buttons are children of the parent ribbon control, not the
+    // page, so they're not taken into account by the loop above, but they
+    // still use the same art provider, so we need to update them too.
+    if ( m_scroll_left_btn )
+        m_scroll_left_btn->SetArtProvider(art);
+    if ( m_scroll_right_btn )
+        m_scroll_right_btn->SetArtProvider(art);
 }
 
 void wxRibbonPage::AdjustRectToIncludeScrollButtons(wxRect* rect) const
@@ -330,7 +339,8 @@ bool wxRibbonPage::ScrollPixels(int pixels)
         child->SetPosition(wxPoint(x, y));
     }
 
-    ShowScrollButtons();
+    if (ShowScrollButtons())
+        DoActualLayout();
     Refresh();
     return true;
 }
@@ -780,7 +790,7 @@ void wxRibbonPage::HideScrollButtons()
     ShowScrollButtons();
 }
 
-void wxRibbonPage::ShowScrollButtons()
+bool wxRibbonPage::ShowScrollButtons()
 {
     bool show_left = true;
     bool show_right = true;
@@ -883,6 +893,8 @@ void wxRibbonPage::ShowScrollButtons()
     {
         wxDynamicCast(GetParent(), wxRibbonBar)->RepositionPage(this);
     }
+
+    return reposition;
 }
 
 static int GetSizeInOrientation(wxSize size, wxOrientation orientation)
@@ -994,10 +1006,8 @@ bool wxRibbonPage::ExpandPanels(wxOrientation direction, int maximum_amount)
 
 bool wxRibbonPage::CollapsePanels(wxOrientation direction, int minimum_amount)
 {
-    bool collapsed_something = false;
     while(minimum_amount > 0)
     {
-        int largest_size = 0;
         wxRibbonPanel* largest_panel = NULL;
         wxSize* largest_panel_size = NULL;
         wxSize* panel_size = m_size_calc_array;
@@ -1021,6 +1031,7 @@ bool wxRibbonPage::CollapsePanels(wxOrientation direction, int minimum_amount)
         }
         else
         {
+            int largest_size = 0;
             for(wxWindowList::compatibility_iterator node = GetChildren().GetFirst();
                       node;
                       node = node->GetNext(), ++panel_size )
@@ -1078,7 +1089,6 @@ bool wxRibbonPage::CollapsePanels(wxOrientation direction, int minimum_amount)
                     largest_panel_size->y -= amount;
                 }
                 minimum_amount -= amount;
-                collapsed_something = true;
             }
             else
             {
@@ -1086,7 +1096,6 @@ bool wxRibbonPage::CollapsePanels(wxOrientation direction, int minimum_amount)
                 wxSize delta = (*largest_panel_size) - smaller;
                 *largest_panel_size = smaller;
                 minimum_amount -= GetSizeInOrientation(delta, direction);
-                collapsed_something = true;
             }
         }
         else
@@ -1094,7 +1103,7 @@ bool wxRibbonPage::CollapsePanels(wxOrientation direction, int minimum_amount)
             break;
         }
     }
-    return collapsed_something;
+    return minimum_amount <= 0;
 }
 
 bool wxRibbonPage::DismissExpandedPanel()

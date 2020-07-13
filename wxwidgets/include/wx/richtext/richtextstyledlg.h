@@ -1,6 +1,6 @@
 /////////////////////////////////////////////////////////////////////////////
 // Name:        wx/richtext/richtextstyledlg.h
-// Purpose:
+// Purpose:     Declares the rich text style editor dialog.
 // Author:      Julian Smart
 // Modified by:
 // Created:     10/5/2006 12:05:31 PM
@@ -14,6 +14,8 @@
 /*!
  * Includes
  */
+
+#include "wx/dialog.h"
 
 #include "wx/richtext/richtextuicustomization.h"
 
@@ -78,8 +80,8 @@ class WXDLLIMPEXP_FWD_CORE wxCheckBox;
 
 class WXDLLIMPEXP_RICHTEXT wxRichTextStyleOrganiserDialog: public wxDialog
 {
-    DECLARE_DYNAMIC_CLASS( wxRichTextStyleOrganiserDialog )
-    DECLARE_EVENT_TABLE()
+    wxDECLARE_DYNAMIC_CLASS(wxRichTextStyleOrganiserDialog);
+    wxDECLARE_EVENT_TABLE();
     DECLARE_HELP_PROVISION()
 
 public:
@@ -97,8 +99,8 @@ public:
     void Init();
 
     /// Transfer data from/to window
-    virtual bool TransferDataFromWindow();
-    virtual bool TransferDataToWindow();
+    virtual bool TransferDataFromWindow() wxOVERRIDE;
+    virtual bool TransferDataToWindow() wxOVERRIDE;
 
     /// Set/get style sheet
     void SetStyleSheet(wxRichTextStyleSheet* sheet) { m_richTextStyleSheet = sheet; }

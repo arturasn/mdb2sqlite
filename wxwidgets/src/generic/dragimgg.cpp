@@ -46,7 +46,7 @@
 // macros
 // ----------------------------------------------------------------------------
 
-IMPLEMENT_DYNAMIC_CLASS(wxGenericDragImage, wxObject)
+wxIMPLEMENT_DYNAMIC_CLASS(wxGenericDragImage, wxObject);
 
 // ============================================================================
 // implementation
@@ -77,55 +77,6 @@ void wxGenericDragImage::Init()
     m_pBackingBitmap = NULL;
 #endif
 }
-
-#if WXWIN_COMPATIBILITY_2_6
-wxGenericDragImage::wxGenericDragImage(const wxCursor& cursor, const wxPoint& WXUNUSED(cursorHotspot))
-{
-    Init();
-    Create(cursor);
-}
-
-wxGenericDragImage::wxGenericDragImage(const wxBitmap& image, const wxCursor& cursor, const wxPoint& WXUNUSED(cursorHotspot))
-{
-    Init();
-
-    Create(image, cursor);
-}
-
-wxGenericDragImage::wxGenericDragImage(const wxIcon& image, const wxCursor& cursor, const wxPoint& WXUNUSED(cursorHotspot))
-{
-    Init();
-
-    Create(image, cursor);
-}
-
-wxGenericDragImage::wxGenericDragImage(const wxString& str, const wxCursor& cursor, const wxPoint& WXUNUSED(cursorHotspot))
-{
-    Init();
-
-    Create(str, cursor);
-}
-
-bool wxGenericDragImage::Create(const wxCursor& cursor, const wxPoint& WXUNUSED(cursorHotspot))
-{
-    return Create(cursor);
-}
-
-bool wxGenericDragImage::Create(const wxBitmap& image, const wxCursor& cursor, const wxPoint& WXUNUSED(cursorHotspot))
-{
-    return Create(image, cursor);
-}
-
-bool wxGenericDragImage::Create(const wxIcon& image, const wxCursor& cursor, const wxPoint& WXUNUSED(cursorHotspot))
-{
-    return Create(image, cursor);
-}
-
-bool wxGenericDragImage::Create(const wxString& str, const wxCursor& cursor, const wxPoint& WXUNUSED(cursorHotspot))
-{
-    return Create(str, cursor);
-}
-#endif // WXWIN_COMPATIBILITY_2_6
 
 // Attributes
 ////////////////////////////////////////////////////////////////////////////
@@ -260,7 +211,6 @@ bool wxGenericDragImage::BeginDrag(const wxPoint& hotspot,
     // dragged.
 
     wxSize clientSize;
-    wxPoint pt;
     if (!m_fullScreen)
     {
         clientSize = window->GetClientSize();
@@ -274,7 +224,6 @@ bool wxGenericDragImage::BeginDrag(const wxPoint& hotspot,
         clientSize.x = w; clientSize.y = h;
         if (rect)
         {
-            pt.x = m_boundingRect.x; pt.y = m_boundingRect.y;
             clientSize.x = m_boundingRect.width; clientSize.y = m_boundingRect.height;
         }
         else

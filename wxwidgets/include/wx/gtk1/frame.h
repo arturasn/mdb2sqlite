@@ -50,8 +50,6 @@ public:
                 long style = wxDEFAULT_FRAME_STYLE,
                 const wxString& name = wxFrameNameStr);
 
-    virtual ~wxFrame();
-
 #if wxUSE_STATUSBAR
     virtual void PositionStatusBar();
 
@@ -102,7 +100,7 @@ public:
 
 #endif // wxUSE_MENUS_NATIVE
 
-    DECLARE_DYNAMIC_CLASS(wxFrame)
+    wxDECLARE_DYNAMIC_CLASS(wxFrame);
 };
 
 #endif // __GTKFRAMEH__

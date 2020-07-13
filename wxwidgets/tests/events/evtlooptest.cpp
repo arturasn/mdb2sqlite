@@ -42,7 +42,7 @@ private:
 
     void TestExit();
 
-    DECLARE_NO_COPY_CLASS(EvtloopTestCase)
+    wxDECLARE_NO_COPY_CLASS(EvtloopTestCase);
 };
 
 // register in the unnamed registry so that these tests are run by default
@@ -63,7 +63,7 @@ public:
     {
     }
 
-    virtual void Notify()
+    virtual void Notify() wxOVERRIDE
     {
         m_loop.ScheduleExit(m_rc);
     }
@@ -87,7 +87,7 @@ public:
     {
     }
 
-    virtual void Notify()
+    virtual void Notify() wxOVERRIDE
     {
         wxEventLoop loopInner;
         ScheduleLoopExitTimer timerInner(loopInner, EXIT_CODE_INNER_LOOP);

@@ -69,7 +69,7 @@ private:
     long m_creationTime;
 #endif // !wxUSE_POPUPWIN
 
-    DECLARE_EVENT_TABLE()
+    wxDECLARE_EVENT_TABLE();
     wxDECLARE_NO_COPY_CLASS(wxTipWindowView);
 };
 
@@ -81,7 +81,7 @@ private:
 // event tables
 // ----------------------------------------------------------------------------
 
-BEGIN_EVENT_TABLE(wxTipWindow, wxTipWindowBase)
+wxBEGIN_EVENT_TABLE(wxTipWindow, wxTipWindowBase)
     EVT_LEFT_DOWN(wxTipWindow::OnMouseClick)
     EVT_RIGHT_DOWN(wxTipWindow::OnMouseClick)
     EVT_MIDDLE_DOWN(wxTipWindow::OnMouseClick)
@@ -90,9 +90,9 @@ BEGIN_EVENT_TABLE(wxTipWindow, wxTipWindowBase)
     EVT_KILL_FOCUS(wxTipWindow::OnKillFocus)
     EVT_ACTIVATE(wxTipWindow::OnActivate)
 #endif // !wxUSE_POPUPWIN
-END_EVENT_TABLE()
+wxEND_EVENT_TABLE()
 
-BEGIN_EVENT_TABLE(wxTipWindowView, wxWindow)
+wxBEGIN_EVENT_TABLE(wxTipWindowView, wxWindow)
     EVT_PAINT(wxTipWindowView::OnPaint)
 
     EVT_LEFT_DOWN(wxTipWindowView::OnMouseClick)
@@ -104,7 +104,7 @@ BEGIN_EVENT_TABLE(wxTipWindowView, wxWindow)
 #if !wxUSE_POPUPWIN
     EVT_KILL_FOCUS(wxTipWindowView::OnKillFocus)
 #endif // !wxUSE_POPUPWIN
-END_EVENT_TABLE()
+wxEND_EVENT_TABLE()
 
 // ----------------------------------------------------------------------------
 // wxTipWindow
@@ -146,7 +146,7 @@ wxTipWindow::wxTipWindow(wxWindow *parent,
     // NB: the reason we use "/ 2" here is that we don't know where the current
     //     cursors hot spot is... it would be nice if we could find this out
     //     though
-    y += wxSystemSettings::GetMetric(wxSYS_CURSOR_Y) / 2;
+    y += wxSystemSettings::GetMetric(wxSYS_CURSOR_Y, this) / 2;
 
 #if wxUSE_POPUPWIN
     Position(wxPoint(x, y), wxSize(0,0));

@@ -95,7 +95,7 @@ public:
         The preprocessor macro `wxHAS_PREF_EDITOR_APPLY_IMMEDIATELY` is defined
         in this case as well.
      */
-    static bool ShouldApplyChangesImmediately()
+    static bool ShouldApplyChangesImmediately();
 
     /**
         Returns whether the preferences dialog is shown modally.
@@ -184,7 +184,7 @@ public:
 
     On OS X, preferences pages named "General" and "Advanced" are commonly used
     in apps and the OS provides stock icons for them that should be used.
-    Instead of reimplementing this behavior yourself, you can inherit from
+    Instead of reimplementing this behaviour yourself, you can inherit from
     wxStockPreferencesPage and get correct title and icon.
 
     Notice that this class only implements GetName() and GetLargeIcon(), you

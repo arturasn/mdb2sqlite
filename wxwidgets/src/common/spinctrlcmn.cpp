@@ -69,7 +69,7 @@ wxFLAGS_MEMBER(wxSP_ARROW_KEYS)
 wxFLAGS_MEMBER(wxSP_WRAP)
 wxEND_FLAGS( wxSpinCtrlStyle )
 
-wxIMPLEMENT_DYNAMIC_CLASS_XTI(wxSpinCtrl, wxControl, "wx/spinctrl.h")
+wxIMPLEMENT_DYNAMIC_CLASS_XTI(wxSpinCtrl, wxControl, "wx/spinctrl.h");
 
 wxBEGIN_PROPERTIES_TABLE(wxSpinCtrl)
 wxEVENT_RANGE_PROPERTY( Spin, wxEVT_SCROLL_TOP, wxEVT_SCROLL_CHANGED, wxSpinEvent )
@@ -113,6 +113,19 @@ wxString wxPrivate::wxSpinCtrlFormatAsHex(long val, long maxVal)
         text.Printf(wxS("0x%08lx"), val);
 
     return text;
+}
+
+wxSize wxPrivate::wxSpinCtrlGetBestSize(const wxControl* spin,
+                                        int minVal, int maxVal, int base)
+{
+    const int lenMin = (base == 16 ?
+                       wxSpinCtrlFormatAsHex(minVal, maxVal) :
+                       wxString::Format("%d", minVal)).length();
+    const int lenMax = (base == 16 ?
+                       wxSpinCtrlFormatAsHex(maxVal, maxVal) :
+                       wxString::Format("%d", maxVal)).length();
+    const wxString largestString('8', wxMax(lenMin, lenMax));
+    return spin->GetSizeFromText(largestString);
 }
 
 #endif // wxUSE_SPINCTRL

@@ -150,33 +150,10 @@
             <linguas>it</linguas>
             <install-to>$(LOCALEDIR)</install-to>
         </gettext-catalogs>
-
-
-        <!-- Mac OS X resources: -->
-        <set var="MACOS_R">lib/libwx_$(TOOLCHAIN_NAME).$(WXSOVERSION[0]).r</set>
-        <set var="MACOS_RSRC">lib/libwx_$(TOOLCHAIN_NAME).$(WXSOVERSION[0]).rsrc</set>
-        <action id="cocoa-res" cond="TOOLKIT=='COCOA'">
-            <dependency-of>all</dependency-of>
-            <set var="__targetname">$(MACOS_R)</set>
-            <command>
-                $(REZ) -d __UNIX__ -useDF $(top_srcdir)/src/cocoa/dummy.r -o $(MACOS_RSRC)
-                $(DEREZ) $(MACOS_RSRC) -useDF >$(MACOS_R)
-            </command>
-            <clean-files>$(MACOS_RSRC) $(MACOS_R)</clean-files>
-        </action>
-        <action id="cocoa-res-install" cond="TOOLKIT=='COCOA'">
-            <dependency-of>install</dependency-of>
-            <depends>cocoa-res</depends>
-            <command>
-                $(INSTALL_DATA) $(MACOS_R) $(LIBDIR)
-                $(INSTALL_DATA) $(MACOS_RSRC) $(LIBDIR)
-            </command>
-        </action>
-
     </if>
 
 
-    <!-- copy setup.h on DOS/OS2/Windows if the format supports it: -->
+    <!-- copy setup.h on DOS/Windows if the format supports it: -->
     <if cond="FORMAT!='autoconf' and IS_MSVC_PRJ=='0'">
         <mkdir id="libdir">
             <dir>$(LIBDIRNAME)</dir>
@@ -193,8 +170,7 @@
 
         <set var="SETUP_H_SUBDIR">
             <if cond="WXUNIV=='1'">univ</if>
-            <if cond="WXUNIV=='0' and PLATFORM_OS2!='1'">$(TOOLKIT_LOWERCASE)</if>
-            <if cond="WXUNIV=='0' and PLATFORM_OS2=='1'">os2</if>
+            <if cond="WXUNIV=='0'">$(TOOLKIT_LOWERCASE)</if>
         </set>
 
         <copy-file-to-file-if-not-exist id="master_setup.h">

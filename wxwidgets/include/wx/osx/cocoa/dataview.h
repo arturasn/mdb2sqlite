@@ -118,19 +118,19 @@ class wxDataViewRendererNativeData
 {
 public:
     wxDataViewRendererNativeData()
-        : m_Object(NULL), m_ColumnCell(NULL)
+        : m_Object(NULL), m_ColumnCell(NULL), m_ItemCell(NULL)
     {
         Init();
     }
 
     wxDataViewRendererNativeData(NSCell* initColumnCell)
-        : m_Object(NULL), m_ColumnCell([initColumnCell retain])
+        : m_Object(NULL), m_ColumnCell([initColumnCell retain]), m_ItemCell(NULL)
     {
         Init();
     }
 
     wxDataViewRendererNativeData(NSCell* initColumnCell, id initObject)
-        : m_Object([initObject retain]), m_ColumnCell([initColumnCell retain])
+        : m_Object([initObject retain]), m_ColumnCell([initColumnCell retain]), m_ItemCell(NULL)
     {
         Init();
     }
@@ -204,6 +204,10 @@ public:
     // Set the line break mode for the given cell using our m_ellipsizeMode
     void ApplyLineBreakMode(NSCell *cell);
 
+    // Does the rendered use a font that the control can't override?
+    void SetHasCustomFont(bool has) { m_hasCustomFont = has; }
+    bool HasCustomFont() const { return m_hasCustomFont; }
+
 private:
     // common part of all ctors
     void Init();
@@ -224,6 +228,8 @@ private:
     NSColor *m_origTextColour;
 
     wxEllipsizeMode m_ellipsizeMode;
+
+    bool m_hasCustomFont;
 };
 
 // ============================================================================
@@ -249,7 +255,7 @@ private:
 // owned by the set. Furthermore, children of the last parent are stored
 // in a linear list.
 //
-@interface wxCocoaOutlineDataSource : NSObject wxOSX_10_6_AND_LATER(<NSOutlineViewDataSource>)
+@interface wxCocoaOutlineDataSource : NSObject <NSOutlineViewDataSource>
 {
     // descriptors specifying the sorting (currently the array only holds one
     // object only)
@@ -314,11 +320,9 @@ private:
     -(void)             removeFromBuffer:(wxPointerObject*)item;
 
     // buffered children handling
-    -(void)             appendChild:(wxPointerObject*)item;
     -(void)             clearChildren;
     -(wxPointerObject*) getChild:(NSUInteger)index;
     -(NSUInteger)       getChildCount;
-    -(void)             removeChild:(NSUInteger)index;
 
     // buffer handling
     -(void) clearBuffers;
@@ -353,6 +357,32 @@ private:
 @end
 
 // ============================================================================
+// wxImageCell: used for bitmap renderer
+// ============================================================================
+
+@interface wxImageCell : NSImageCell
+{
+}
+
+    -(NSSize) cellSize;
+@end
+
+
+// ============================================================================
+// NSTextFieldCell customized to allow vertical alignment
+// ============================================================================
+
+@interface wxTextFieldCell : NSTextFieldCell
+{
+@private
+    int alignment_;
+    BOOL adjustRect_;
+}
+
+    -(void) setWXAlignment:(int)alignment;
+@end
+
+// ============================================================================
 // wxImageTextCell
 // ============================================================================
 //
@@ -367,7 +397,7 @@ private:
 // into their reserved space. Smaller or not existing images use the fixed
 // reserved size and are scaled if necessary.
 //
-@interface wxImageTextCell : NSTextFieldCell
+@interface wxImageTextCell : wxTextFieldCell
 {
 @private
     CGFloat xImageShift;    // shift for the image in x-direction from border
@@ -397,7 +427,7 @@ private:
 // wxCocoaOutlineView
 // ============================================================================
 
-@interface wxCocoaOutlineView : NSOutlineView wxOSX_10_6_AND_LATER(<NSOutlineViewDelegate>)
+@interface wxCocoaOutlineView : NSOutlineView <NSOutlineViewDelegate>
 {
 @private
     // column and row of the cell being edited or -1 if none
@@ -449,16 +479,14 @@ public:
     virtual void Collapse(const wxDataViewItem& item);
     virtual void EnsureVisible(const wxDataViewItem& item,
                                wxDataViewColumn const* columnPtr);
-    virtual void Expand(const wxDataViewItem& item);
     virtual unsigned int GetCount() const;
+    virtual int GetCountPerPage() const;
     virtual wxRect GetRectangle(const wxDataViewItem& item,
                                 wxDataViewColumn const* columnPtr);
+    virtual wxDataViewItem GetTopItem() const;
     virtual bool IsExpanded(const wxDataViewItem& item) const;
     virtual bool Reload();
-    virtual bool Remove(const wxDataViewItem& parent,
-                        const wxDataViewItem& item);
-    virtual bool Remove(const wxDataViewItem& parent,
-                        const wxDataViewItemArray& item);
+    virtual bool Remove(const wxDataViewItem& parent);
     virtual bool Update(const wxDataViewColumn* columnPtr);
     virtual bool Update(const wxDataViewItem& parent,
                         const wxDataViewItem& item);
@@ -492,12 +520,16 @@ public:
     // other methods (inherited from wxDataViewWidgetImpl)
     //
     virtual void DoSetIndent(int indent);
+
+    virtual void DoExpand(const wxDataViewItem& item);
+
     virtual void HitTest(const wxPoint& point,
                          wxDataViewItem& item,
                          wxDataViewColumn*& columnPtr) const;
+    virtual void SetRowHeight(int height);
     virtual void SetRowHeight(const wxDataViewItem& item, unsigned int height);
     virtual void OnSize();
-    
+
     virtual void StartEditor( const wxDataViewItem & item, unsigned int column );
 
     // drag & drop helper methods
@@ -507,8 +539,11 @@ public:
     // Cocoa-specific helpers
     id GetItemAtRow(int row) const;
 
+    virtual void SetFont(const wxFont& font, const wxColour& foreground, long windowStyle, bool ignoreBlack = true);
+
 private:
     void InitOutlineView(long style);
+    int GetDefaultRowHeight() const;
 
     wxCocoaOutlineDataSource* m_DataSource;
 

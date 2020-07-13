@@ -35,6 +35,12 @@ public:
         Create(parent, id, initial, pos, size, style, validator, name);
     }
 
+    virtual wxColour GetSelectedColour() const wxOVERRIDE
+        { return m_data.GetColour(); }
+
+    virtual void SetSelectedColour(const wxColour &colour) wxOVERRIDE
+        { m_data.SetColour(colour); UpdateFont(); }
+
     virtual ~wxGenericFontButton() {}
 
 
@@ -63,12 +69,12 @@ public:
 
 protected:
 
-    void UpdateFont();
+    void UpdateFont() wxOVERRIDE;
 
     wxFontData m_data;
 
 private:
-   DECLARE_DYNAMIC_CLASS(wxGenericFontButton)
+    wxDECLARE_DYNAMIC_CLASS(wxGenericFontButton);
 };
 
 

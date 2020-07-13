@@ -22,9 +22,6 @@
     #pragma hdrstop
 #endif
 
-// This class can't be implemented and hence is not used under Win CE.
-#ifndef __WXWINCE__
-
 #ifndef WX_PRECOMP
     #include "wx/dcclient.h"
     #include "wx/frame.h"       // Only for wxFRAME_SHAPED.
@@ -85,11 +82,7 @@ bool wxNonOwnedWindow::DoSetRegionShape(const wxRegion& region)
 #include "wx/msw/wrapgdip.h"
 
 // This class contains data used only when SetPath(wxGraphicsPath) is called.
-//
-// Notice that it derives from wxEvtHandler solely to allow Connect()-ing its
-// OnPaint() method to the window, we could get rid of this inheritance once
-// Bind() can be used in wx sources.
-class wxNonOwnedWindowShapeImpl : public wxEvtHandler
+class wxNonOwnedWindowShapeImpl
 {
 public:
     wxNonOwnedWindowShapeImpl(wxNonOwnedWindow* win, const wxGraphicsPath& path) :
@@ -110,24 +103,12 @@ public:
         // Connect to the paint event to draw the border.
         //
         // TODO: Do this only optionally?
-        m_win->Connect
-               (
-                wxEVT_PAINT,
-                wxPaintEventHandler(wxNonOwnedWindowShapeImpl::OnPaint),
-                NULL,
-                this
-               );
+        m_win->Bind(wxEVT_PAINT, &wxNonOwnedWindowShapeImpl::OnPaint, this);
     }
 
     virtual ~wxNonOwnedWindowShapeImpl()
     {
-        m_win->Disconnect
-               (
-                wxEVT_PAINT,
-                wxPaintEventHandler(wxNonOwnedWindowShapeImpl::OnPaint),
-                NULL,
-                this
-               );
+        m_win->Unbind(wxEVT_PAINT, &wxNonOwnedWindowShapeImpl::OnPaint, this);
     }
 
 private:
@@ -179,5 +160,3 @@ wxNonOwnedWindow::~wxNonOwnedWindow()
 }
 
 #endif // wxUSE_GRAPHICS_CONTEXT/!wxUSE_GRAPHICS_CONTEXT
-
-#endif // !__WXWINCE__

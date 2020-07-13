@@ -26,8 +26,8 @@ class RadioBoxTestCase : public CppUnit::TestCase
 public:
     RadioBoxTestCase() { }
 
-    void setUp();
-    void tearDown();
+    void setUp() wxOVERRIDE;
+    void tearDown() wxOVERRIDE;
 
 private:
     CPPUNIT_TEST_SUITE( RadioBoxTestCase );
@@ -54,7 +54,7 @@ private:
 
     wxRadioBox* m_radio;
 
-    DECLARE_NO_COPY_CLASS(RadioBoxTestCase)
+    wxDECLARE_NO_COPY_CLASS(RadioBoxTestCase);
 };
 
 // register in the unnamed registry so that these tests are run by default

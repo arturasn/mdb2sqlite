@@ -7,7 +7,7 @@ Building Projects
 -----------------
 
 makeprojects is an AppleScript that uses the XML Tools from 
-http://www.latenightsw.com/freeware/XMLTools2/
+http://www.latenightsw.com/freeware/xml-tools/
 
 the reason for this script is to support a single place of definition for the files needed
 for a certain platform by building Xcode projects from the bakefiles files.bkl file list.
@@ -17,7 +17,7 @@ reads in the files lists from the files.bkl in the build/bakefiles directory, ev
 conditions in these definitions and then adds the correct files to the newly created Xcode
 projects
 
-if you only need a specific target and not all three of them (carbon, cocoa, iphone) then you can 
+if you only need a specific target and not all of them (cocoa, iphone) then you can 
 comment the unneeded makeProject calls.
 
 Prerequisites
@@ -25,6 +25,6 @@ Prerequisites
 
 you need the xml scripting additions from latenightsw, 
 
-http://www.latenightsw.com/freeware/XMLTools2/
+http://www.latenightsw.com/freeware/xml-tools/
 
 Stefan Csomor

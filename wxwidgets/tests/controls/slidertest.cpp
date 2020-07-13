@@ -27,8 +27,8 @@ class SliderTestCase : public CppUnit::TestCase
 public:
     SliderTestCase() { }
 
-    void setUp();
-    void tearDown();
+    void setUp() wxOVERRIDE;
+    void tearDown() wxOVERRIDE;
 
 private:
     CPPUNIT_TEST_SUITE( SliderTestCase );
@@ -57,7 +57,7 @@ private:
 
     wxSlider* m_slider;
 
-    DECLARE_NO_COPY_CLASS(SliderTestCase)
+    wxDECLARE_NO_COPY_CLASS(SliderTestCase);
 };
 
 bool SliderTestCase::ms_inversed = false;
@@ -112,7 +112,7 @@ void SliderTestCase::LineUpDown()
     EventCounter linedown(m_slider, wxEVT_SCROLL_LINEDOWN);
 
     wxUIActionSimulator sim;
-
+    wxYield();
     m_slider->SetFocus();
 
     sim.Char(WXK_UP);
@@ -129,6 +129,7 @@ void SliderTestCase::LinePageSize()
 {
 #if wxUSE_UIACTIONSIMULATOR
     wxUIActionSimulator sim;
+    wxYield();
     m_slider->SetFocus();
 
     m_slider->SetPageSize(20);

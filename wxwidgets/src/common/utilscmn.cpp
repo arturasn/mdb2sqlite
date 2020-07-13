@@ -19,8 +19,33 @@
 // For compilers that support precompilation, includes "wx.h".
 #include "wx/wxprec.h"
 
+#include "wx/debug.h"
+
 #ifdef __BORLANDC__
     #pragma hdrstop
+#endif
+
+// This is a needed to get the declaration of the global "environ" variable
+// from MinGW headers which don't declare it there when in strict ANSI mode. We
+// can't use the usual wxDECL_FOR_STRICT_MINGW32() hack for it because it's not
+// even a variable, but a macro expanding to a function or a variable depending
+// on the build and this is horribly brittle but there just doesn't seem to be
+// any other alternative.
+#ifdef wxNEEDS_STRICT_ANSI_WORKAROUNDS
+    // Notice that undefining __STRICT_ANSI__ and including it here doesn't
+    // work because it could have been already included, e.g. when using PCH.
+    #include <stdlib.h>
+
+    #ifndef environ
+        // This just reproduces what stdlib.h does in MinGW 4.8.1.
+        #ifdef __MSVCRT__
+            wxDECL_FOR_STRICT_MINGW32(char ***, __p__environ, (void));
+            #define environ (*__p__environ())
+        #else
+            extern char *** _imp___environ_dll;
+            #define environ (*_imp___environ_dll)
+        #endif
+    #endif // defined(environ)
 #endif
 
 #ifndef WX_PRECOMP
@@ -52,49 +77,44 @@
 #include "wx/mimetype.h"
 #include "wx/config.h"
 #include "wx/versioninfo.h"
-
-#if defined(__WXWINCE__) && wxUSE_DATETIME
-    #include "wx/datetime.h"
-#endif
+#include "wx/math.h"
 
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#if !wxONLY_WATCOM_EARLIER_THAN(1,4)
-    #if !(defined(_MSC_VER) && (_MSC_VER > 800))
-        #include <errno.h>
-    #endif
-#endif
+#include <errno.h>
 
 #if wxUSE_GUI
+    #include "wx/filename.h"
+    #include "wx/filesys.h"
     #include "wx/notebook.h"
     #include "wx/statusbr.h"
+    #include "wx/private/launchbrowser.h"
 #endif // wxUSE_GUI
 
-#ifndef __WXWINCE__
-    #include <time.h>
-#else
-    #include "wx/msw/wince/time.h"
-#endif
+#include <time.h>
 
 #ifdef __WXMAC__
     #include "wx/osx/private.h"
 #endif
 
-#if !defined(__WXWINCE__)
-    #include <sys/types.h>
-    #include <sys/stat.h>
-#endif
+#include <sys/types.h>
+#include <sys/stat.h>
 
 #if defined(__WINDOWS__)
     #include "wx/msw/private.h"
-    #include "wx/filesys.h"
 #endif
 
-#if wxUSE_GUI && defined(__WXGTK__)
-    #include <gtk/gtk.h>    // for GTK_XXX_VERSION constants
+#if wxUSE_GUI
+    // Include the definitions of GTK_XXX_VERSION constants.
+    #ifdef __WXGTK20__
+        #include "wx/gtk/private/wrapgtk.h"
+    #elif defined(__WXGTK__)
+        #include <gtk/gtk.h>
+    #elif defined(__WXQT__)
+        #include <QtCore/QtGlobal>       // for QT_VERSION_STR constants
+    #endif
 #endif
 
 #if wxUSE_BASE
@@ -104,38 +124,38 @@
 // ============================================================================
 
 // Array used in DecToHex conversion routine.
-static const wxChar hexArray[] = wxT("0123456789ABCDEF");
+static const char hexArray[] = "0123456789ABCDEF";
 
 // Convert 2-digit hex number to decimal
 int wxHexToDec(const wxString& str)
 {
+    wxCHECK_MSG( str.Length() >= 2, -1, wxS("Invalid argument") );
+
     char buf[2];
     buf[0] = str.GetChar(0);
     buf[1] = str.GetChar(1);
-    return wxHexToDec((const char*) buf);
+    return wxHexToDec(buf);
 }
 
-// Convert decimal integer to 2-character hex string
-void wxDecToHex(int dec, wxChar *buf)
+// Convert decimal integer to 2-character hex string (not prefixed by 0x).
+void wxDecToHex(unsigned char dec, wxChar *buf)
 {
-    int firstDigit = (int)(dec/16.0);
-    int secondDigit = (int)(dec - (firstDigit*16.0));
-    buf[0] = hexArray[firstDigit];
-    buf[1] = hexArray[secondDigit];
+    wxASSERT_MSG( buf, wxS("Invalid argument") );
+    buf[0] = hexArray[dec >> 4];
+    buf[1] = hexArray[dec & 0x0F];
     buf[2] = 0;
 }
 
 // Convert decimal integer to 2 characters
-void wxDecToHex(int dec, char* ch1, char* ch2)
+void wxDecToHex(unsigned char dec, char* ch1, char* ch2)
 {
-    int firstDigit = (int)(dec/16.0);
-    int secondDigit = (int)(dec - (firstDigit*16.0));
-    (*ch1) = (char) hexArray[firstDigit];
-    (*ch2) = (char) hexArray[secondDigit];
+    wxASSERT_MSG( ch1 && ch2, wxS("Invalid argument(s)") );
+    *ch1 = hexArray[dec >> 4];
+    *ch2 = hexArray[dec & 0x0F];
 }
 
-// Convert decimal integer to 2-character hex string
-wxString wxDecToHex(int dec)
+// Convert decimal integer to 2-character hex string (not prefixed by 0x).
+wxString wxDecToHex(unsigned char dec)
 {
     wxChar buf[3];
     wxDecToHex(dec, buf);
@@ -149,19 +169,10 @@ wxString wxDecToHex(int dec)
 // Return the current date/time
 wxString wxNow()
 {
-#ifdef __WXWINCE__
-#if wxUSE_DATETIME
-    wxDateTime now = wxDateTime::Now();
-    return now.Format();
-#else
-    return wxEmptyString;
-#endif
-#else
     time_t now = time(NULL);
     char *date = ctime(&now);
     date[24] = '\0';
     return wxString::FromAscii(date);
-#endif
 }
 
 #if WXWIN_COMPATIBILITY_2_8
@@ -351,25 +362,6 @@ bool wxPlatform::Is(int platform)
     if (platform == wxOS_WINDOWS)
         return true;
 #endif
-#ifdef __WXWINCE__
-    if (platform == wxOS_WINDOWS_CE)
-        return true;
-#endif
-
-#if 0
-
-// FIXME: wxWinPocketPC and wxWinSmartPhone are unknown symbols
-
-#if defined(__WXWINCE__) && defined(__POCKETPC__)
-    if (platform == wxWinPocketPC)
-        return true;
-#endif
-#if defined(__WXWINCE__) && defined(__SMARTPHONE__)
-    if (platform == wxWinSmartPhone)
-        return true;
-#endif
-
-#endif
 
 #ifdef __WXGTK__
     if (platform == wxPORT_GTK)
@@ -387,16 +379,8 @@ bool wxPlatform::Is(int platform)
     if (platform == wxOS_UNIX)
         return true;
 #endif
-#ifdef __OS2__
-    if (platform == wxOS_OS2)
-        return true;
-#endif
-#ifdef __WXPM__
-    if (platform == wxPORT_PM)
-        return true;
-#endif
-#ifdef __WXCOCOA__
-    if (platform == wxPORT_MAC)
+#ifdef __WXQT__
+    if (platform == wxPORT_QT)
         return true;
 #endif
 
@@ -630,14 +614,7 @@ static bool ReadAll(wxInputStream *is, wxArrayString& output)
     // the stream could be already at EOF or in wxSTREAM_BROKEN_PIPE state
     is->Reset();
 
-    // Notice that wxTextInputStream doesn't work correctly with wxConvAuto
-    // currently, see #14720, so use the current locale conversion explicitly
-    // under assumption that any external program should be using it too.
-    wxTextInputStream tis(*is, " \t"
-#if wxUSE_UNICODE
-                                    , wxConvLibc
-#endif
-                                                );
+    wxTextInputStream tis(*is);
 
     for ( ;; )
     {
@@ -984,9 +961,78 @@ void wxQsort(void* pbase, size_t total_elems,
   }
 }
 
+// ----------------------------------------------------------------------------
+// wxGCD
+// Compute the greatest common divisor of two positive integers
+// using binary GCD algorithm.
+// See:
+//     http://en.wikipedia.org/wiki/Binary_GCD_algorithm#Iterative_version_in_C
+// ----------------------------------------------------------------------------
+
+unsigned int wxGCD(unsigned int u, unsigned int v)
+{
+    // GCD(0,v) == v; GCD(u,0) == u, GCD(0,0) == 0
+    if (u == 0)
+        return v;
+    if (v == 0)
+        return u;
+
+    int shift;
+
+    // Let shift := lg K, where K is the greatest power of 2
+    // dividing both u and v.
+    for (shift = 0; ((u | v) & 1) == 0; ++shift)
+    {
+        u >>= 1;
+        v >>= 1;
+    }
+
+    while ((u & 1) == 0)
+        u >>= 1;
+
+    // From here on, u is always odd.
+    do
+    {
+        // remove all factors of 2 in v -- they are not common
+        // note: v is not zero, so while will terminate
+        while ((v & 1) == 0)
+            v >>= 1;
+
+        // Now u and v are both odd. Swap if necessary so u <= v,
+        // then set v = v - u (which is even)
+        if (u > v)
+        {
+            wxSwap(u, v);
+        }
+        v -= u;  // Here v >= u
+    } while (v != 0);
+
+    // restore common factors of 2
+    return u << shift;
+}
+
+// ----------------------------------------------------------------------------
+// wxCTZ
+// Count trailing zeros. Use optimised builtin where available.
+// ----------------------------------------------------------------------------
+unsigned int wxCTZ(wxUint32 x)
+{
+    wxCHECK_MSG(x > 0, 0, "Undefined for x == 0.");
+#ifdef __GNUC__
+   return __builtin_ctz(x);
+#else
+   int n;
+   n = 1;
+   if ((x & 0x0000FFFF) == 0) {n = n +16; x = x >>16;}
+   if ((x & 0x000000FF) == 0) {n = n + 8; x = x >> 8;}
+   if ((x & 0x0000000F) == 0) {n = n + 4; x = x >> 4;}
+   if ((x & 0x00000003) == 0) {n = n + 2; x = x >> 2;}
+   return n - (x & 1);
+#endif
+}
+
+
 #endif // wxUSE_BASE
-
-
 
 // ============================================================================
 // GUI-only functions from now on
@@ -1008,21 +1054,17 @@ bool wxSetDetectableAutoRepeat( bool WXUNUSED(flag) )
 // Launch default browser
 // ----------------------------------------------------------------------------
 
-#if defined(__WINDOWS__)
+#if defined(__WINDOWS__) && !defined(__WXQT__) || \
+    defined(__WXX11__) || defined(__WXGTK__) || defined(__WXMOTIF__) || \
+    defined(__WXOSX__)
 
 // implemented in a port-specific utils source file:
-bool wxDoLaunchDefaultBrowser(const wxString& url, const wxString& scheme, int flags);
-
-#elif defined(__WXX11__) || defined(__WXGTK__) || defined(__WXMOTIF__) || defined(__WXCOCOA__) || \
-      (defined(__WXOSX__) )
-
-// implemented in a port-specific utils source file:
-bool wxDoLaunchDefaultBrowser(const wxString& url, int flags);
+bool wxDoLaunchDefaultBrowser(const wxLaunchBrowserParams& params);
 
 #else
 
 // a "generic" implementation:
-bool wxDoLaunchDefaultBrowser(const wxString& url, int flags)
+bool wxDoLaunchDefaultBrowser(const wxLaunchBrowserParams& params)
 {
     // on other platforms try to use mime types or wxExecute...
 
@@ -1036,7 +1078,7 @@ bool wxDoLaunchDefaultBrowser(const wxString& url, int flags)
         wxString mt;
         ft->GetMimeType(&mt);
 
-        ok = ft->GetOpenCommand(&cmd, wxFileType::MessageParameters(url));
+        ok = ft->GetOpenCommand(&cmd, wxFileType::MessageParameters(params.url));
         delete ft;
     }
 #endif // wxUSE_MIMETYPE
@@ -1045,7 +1087,7 @@ bool wxDoLaunchDefaultBrowser(const wxString& url, int flags)
     {
         // fallback to checking for the BROWSER environment variable
         if ( !wxGetEnv(wxT("BROWSER"), &cmd) || cmd.empty() )
-            cmd << wxT(' ') << url;
+            cmd << wxT(' ') << params.url;
     }
 
     ok = ( !cmd.empty() && wxExecute(cmd) );
@@ -1059,90 +1101,50 @@ bool wxDoLaunchDefaultBrowser(const wxString& url, int flags)
 }
 #endif
 
-static bool DoLaunchDefaultBrowserHelper(const wxString& urlOrig, int flags)
+static bool DoLaunchDefaultBrowserHelper(const wxString& url, int flags)
 {
-    // NOTE: we don't have to care about the wxBROWSER_NOBUSYCURSOR flag
-    //       as it was already handled by wxLaunchDefaultBrowser
+    wxLaunchBrowserParams params(flags);
 
-    wxUnusedVar(flags);
-
-    wxString url(urlOrig), scheme;
-    wxURI uri(url);
+    const wxURI uri(url);
 
     // this check is useful to avoid that wxURI recognizes as scheme parts of
-    // the filename, in case urlOrig is a local filename
+    // the filename, in case url is a local filename
     // (e.g. "C:\\test.txt" when parsed by wxURI reports a scheme == "C")
     bool hasValidScheme = uri.HasScheme() && uri.GetScheme().length() > 1;
 
-#if defined(__WINDOWS__)
-
-    // NOTE: when testing wxMSW's wxLaunchDefaultBrowser all possible forms
-    //       of the URL/flags should be tested; e.g.:
-    //
-    // for (int i=0; i<2; i++)
-    // {
-    //   // test arguments without a valid URL scheme:
-    //   wxLaunchDefaultBrowser("C:\\test.txt", i==0 ? 0 : wxBROWSER_NEW_WINDOW);
-    //   wxLaunchDefaultBrowser("wxwidgets.org", i==0 ? 0 : wxBROWSER_NEW_WINDOW);
-    //
-    //   // test arguments with different valid schemes:
-    //   wxLaunchDefaultBrowser("file:/C%3A/test.txt", i==0 ? 0 : wxBROWSER_NEW_WINDOW);
-    //   wxLaunchDefaultBrowser("http://wxwidgets.org", i==0 ? 0 : wxBROWSER_NEW_WINDOW);
-    //   wxLaunchDefaultBrowser("mailto:user@host.org", i==0 ? 0 : wxBROWSER_NEW_WINDOW);
-    // }
-    // (assuming you have a C:\test.txt file)
-
     if ( !hasValidScheme )
     {
-        if (wxFileExists(urlOrig) || wxDirExists(urlOrig))
+        if (wxFileExists(url) || wxDirExists(url))
         {
-            scheme = "file";
-            // do not prepend the file scheme to the URL as ShellExecuteEx() doesn't like it
+            params.scheme = "file";
+            params.path = url;
         }
         else
         {
-            url.Prepend(wxS("http://"));
-            scheme = "http";
+            params.scheme = "http";
         }
+
+        params.url << params.scheme << wxS("://") << url;
     }
     else if ( hasValidScheme )
     {
-        scheme = uri.GetScheme();
+        params.url = url;
+        params.scheme = uri.GetScheme();
 
-        if ( uri.GetScheme() == "file" )
+        if ( params.scheme == "file" )
         {
-            // TODO: extract URLToFileName() to some always compiled in
-            //       function
-#if wxUSE_FILESYSTEM
-            // ShellExecuteEx() doesn't like the "file" scheme when opening local files;
-            // remove it
-            url = wxFileSystem::URLToFileName(url).GetFullPath();
-#endif // wxUSE_FILESYSTEM
+            // for same reason as above, remove the scheme from the URL
+            params.path = wxFileName::URLToFileName(url).GetFullPath();
         }
     }
 
-    if (wxDoLaunchDefaultBrowser(url, scheme, flags))
-        return true;
-    //else: call wxLogSysError
-#else
-    if ( !hasValidScheme )
+    if ( !wxDoLaunchDefaultBrowser(params) )
     {
-        // set the scheme of url to "http" or "file" if it does not have one
-        if (wxFileExists(urlOrig) || wxDirExists(urlOrig))
-            url.Prepend(wxS("file://"));
-        else
-            url.Prepend(wxS("http://"));
+        wxLogSysError(_("Failed to open URL \"%s\" in default browser."), url);
+        return false;
     }
 
-    if (wxDoLaunchDefaultBrowser(url, flags))
-        return true;
-    //else: call wxLogSysError
-#endif
-
-    wxLogSysError(_("Failed to open URL \"%s\" in default browser."),
-                  url.c_str());
-
-    return false;
+    return true;
 }
 
 bool wxLaunchDefaultBrowser(const wxString& url, int flags)
@@ -1161,30 +1163,6 @@ bool wxLaunchDefaultBrowser(const wxString& url, int flags)
 // Menu accelerators related functions
 // ----------------------------------------------------------------------------
 
-#if WXWIN_COMPATIBILITY_2_6
-wxChar *wxStripMenuCodes(const wxChar *in, wxChar *out)
-{
-#if wxUSE_MENUS
-    wxString s = wxMenuItem::GetLabelText(in);
-#else
-    wxString str(in);
-    wxString s = wxStripMenuCodes(str);
-#endif // wxUSE_MENUS
-    if ( out )
-    {
-        // go smash their buffer if it's not big enough - I love char * params
-        memcpy(out, s.c_str(), s.length() * sizeof(wxChar));
-    }
-    else
-    {
-        out = new wxChar[s.length() + 1];
-        wxStrcpy(out, s.c_str());
-    }
-
-    return out;
-}
-#endif
-
 wxString wxStripMenuCodes(const wxString& in, int flags)
 {
     wxASSERT_MSG( flags, wxT("this is useless to call without any flags") );
@@ -1193,6 +1171,29 @@ wxString wxStripMenuCodes(const wxString& in, int flags)
 
     size_t len = in.length();
     out.reserve(len);
+
+    // In some East Asian languages _("&File") translates as "<translation>(&F)"
+    // Check for this first, otherwise fall through to the standard situation
+    if ( flags & wxStrip_CJKMnemonics )
+    {
+        wxString label(in), accel;
+        int pos = in.Find('\t');
+        if (pos != wxNOT_FOUND)
+        {
+            label = in.Left(pos+1).Trim();
+            if (!(flags & wxStrip_Accel))
+            {
+                accel = in.Mid(pos);
+            }
+        }
+
+        // The initial '?' means we match "Foo(&F)" but not "(&F)"
+        if (label.Matches("?*(&?)"))
+        {
+            label = label.Left( label.Len()-4 ).Trim();
+            return label + accel;
+        }
+    }
 
     for ( wxString::const_iterator it = in.begin(); it != in.end(); ++it )
     {
@@ -1390,7 +1391,9 @@ wxVersionInfo wxGetLibraryVersionInfo()
     wxString msg;
     msg.Printf(wxS("wxWidgets Library (%s port)\n")
                wxS("Version %d.%d.%d (Unicode: %s, debug level: %d),\n")
+#if !wxUSE_REPRODUCIBLE_BUILD
                wxS("compiled at %s %s\n\n")
+#endif
                wxS("Runtime version of toolkit used is %d.%d.\n"),
                wxPlatformInfo::Get().GetPortIdName(),
                wxMAJOR_VERSION,
@@ -1404,8 +1407,10 @@ wxVersionInfo wxGetLibraryVersionInfo()
                "none",
 #endif
                wxDEBUG_LEVEL,
+#if !wxUSE_REPRODUCIBLE_BUILD
                __TDATE__,
                __TTIME__,
+#endif
                wxPlatformInfo::Get().GetToolkitMajorVersion(),
                wxPlatformInfo::Get().GetToolkitMinorVersion()
               );
@@ -1417,12 +1422,17 @@ wxVersionInfo wxGetLibraryVersionInfo()
                             GTK_MICRO_VERSION);
 #endif // __WXGTK__
 
+#ifdef __WXQT__
+    msg += wxString::Format("Compile-time QT version is %s.\n",
+                            QT_VERSION_STR);
+#endif // __WXQT__
+
     return wxVersionInfo(wxS("wxWidgets"),
                          wxMAJOR_VERSION,
                          wxMINOR_VERSION,
                          wxRELEASE_NUMBER,
                          msg,
-                         wxS("Copyright (c) 1995-2013 wxWidgets team"));
+                         wxS("Copyright (c) 1995-2019 wxWidgets team"));
 }
 
 void wxInfoMessageBox(wxWindow* parent)

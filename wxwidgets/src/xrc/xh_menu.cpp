@@ -24,7 +24,7 @@
     #include "wx/menu.h"
 #endif
 
-IMPLEMENT_DYNAMIC_CLASS(wxMenuXmlHandler, wxXmlResourceHandler)
+wxIMPLEMENT_DYNAMIC_CLASS(wxMenuXmlHandler, wxXmlResourceHandler);
 
 wxMenuXmlHandler::wxMenuXmlHandler() :
         wxXmlResourceHandler(), m_insideMenu(false)
@@ -78,10 +78,9 @@ wxObject *wxMenuXmlHandler::DoCreateResource()
         {
             int id = GetID();
             wxString label = GetText(wxT("label"));
+#if wxUSE_ACCEL
             wxString accel = GetText(wxT("accel"), false);
-            wxString fullLabel = label;
-            if (!accel.empty())
-                fullLabel << wxT("\t") << accel;
+#endif // wxUSE_ACCEL
 
             wxItemKind kind = wxITEM_NORMAL;
             if (GetBool(wxT("radio")))
@@ -100,10 +99,18 @@ wxObject *wxMenuXmlHandler::DoCreateResource()
                 kind = wxITEM_CHECK;
             }
 
-            wxMenuItem *mitem = new wxMenuItem(p_menu, id, fullLabel,
+            wxMenuItem *mitem = new wxMenuItem(p_menu, id, label,
                                                GetText(wxT("help")), kind);
+#if wxUSE_ACCEL
+            if (!accel.empty())
+            {
+                wxAcceleratorEntry entry;
+                if (entry.FromString(accel))
+                    mitem->SetAccel(&entry);
+            }
+#endif // wxUSE_ACCEL
 
-#if (!defined(__WXMSW__) && !defined(__WXPM__)) || wxUSE_OWNER_DRAWN
+#if !defined(__WXMSW__) || wxUSE_OWNER_DRAWN
             if (HasParam(wxT("bitmap")))
             {
                 // currently only wxMSW has support for using different checked
@@ -138,7 +145,7 @@ bool wxMenuXmlHandler::CanHandle(wxXmlNode *node)
            );
 }
 
-IMPLEMENT_DYNAMIC_CLASS(wxMenuBarXmlHandler, wxXmlResourceHandler)
+wxIMPLEMENT_DYNAMIC_CLASS(wxMenuBarXmlHandler, wxXmlResourceHandler);
 
 wxMenuBarXmlHandler::wxMenuBarXmlHandler() : wxXmlResourceHandler()
 {

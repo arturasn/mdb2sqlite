@@ -148,6 +148,11 @@ class WXDLLIMPEXP_AUI wxAuiPaneInfo
 public:
 
     wxAuiPaneInfo()
+        : best_size(wxDefaultSize)
+        , min_size(wxDefaultSize)
+        , max_size(wxDefaultSize)
+        , floating_pos(wxDefaultPosition)
+        , floating_size(wxDefaultSize)
     {
         window = NULL;
         frame = NULL;
@@ -156,63 +161,12 @@ public:
         dock_layer = 0;
         dock_row = 0;
         dock_pos = 0;
-        floating_pos = wxDefaultPosition;
-        floating_size = wxDefaultSize;
-        best_size = wxDefaultSize;
-        min_size = wxDefaultSize;
-        max_size = wxDefaultSize;
         dock_proportion = 0;
 
         DefaultPane();
     }
 
     ~wxAuiPaneInfo() {}
-
-#ifndef SWIG
-    wxAuiPaneInfo(const wxAuiPaneInfo& c)
-    {
-        name = c.name;
-        caption = c.caption;
-        icon = c.icon;
-        window = c.window;
-        frame = c.frame;
-        state = c.state;
-        dock_direction = c.dock_direction;
-        dock_layer = c.dock_layer;
-        dock_row = c.dock_row;
-        dock_pos = c.dock_pos;
-        best_size = c.best_size;
-        min_size = c.min_size;
-        max_size = c.max_size;
-        floating_pos = c.floating_pos;
-        floating_size = c.floating_size;
-        dock_proportion = c.dock_proportion;
-        buttons = c.buttons;
-        rect = c.rect;
-    }
-
-    wxAuiPaneInfo& operator=(const wxAuiPaneInfo& c)
-    {
-        name = c.name;
-        caption = c.caption;
-        window = c.window;
-        frame = c.frame;
-        state = c.state;
-        dock_direction = c.dock_direction;
-        dock_layer = c.dock_layer;
-        dock_row = c.dock_row;
-        dock_pos = c.dock_pos;
-        best_size = c.best_size;
-        min_size = c.min_size;
-        max_size = c.max_size;
-        floating_pos = c.floating_pos;
-        floating_size = c.floating_size;
-        dock_proportion = c.dock_proportion;
-        buttons = c.buttons;
-        rect = c.rect;
-        return *this;
-    }
-#endif // SWIG
 
     // Write the safe parts of a newly loaded PaneInfo structure "source" into "this"
     // used on loading perspectives etc.
@@ -414,7 +368,7 @@ public:
         buttonCustom3         = 1 << 28,
 
         savedHiddenState      = 1 << 30, // used internally
-        actionPane            = 1 << 31  // used internally
+        actionPane            = 1u << 31  // used internally
     };
 
 public:
@@ -496,7 +450,7 @@ public:
 
     void Update();
 
-    wxString SavePaneInfo(wxAuiPaneInfo& pane);
+    wxString SavePaneInfo(const wxAuiPaneInfo& pane);
     void LoadPaneInfo(wxString panePart, wxAuiPaneInfo &pane);
     wxString SavePerspective();
     bool LoadPerspective(const wxString& perspective, bool update = true);
@@ -616,6 +570,7 @@ protected:
     void OnChildFocus(wxChildFocusEvent& evt);
     void OnHintFadeTimer(wxTimerEvent& evt);
     void OnFindManager(wxAuiManagerEvent& evt);
+    void OnSysColourChanged(wxSysColourChangedEvent& event);
 
 protected:
 
@@ -664,8 +619,8 @@ protected:
     void* m_reserved;
 
 #ifndef SWIG
-    DECLARE_EVENT_TABLE()
-    DECLARE_CLASS(wxAuiManager)
+    wxDECLARE_EVENT_TABLE();
+    wxDECLARE_CLASS(wxAuiManager);
 #endif // SWIG
 };
 
@@ -685,18 +640,7 @@ public:
         canveto_flag = true;
         dc = NULL;
     }
-#ifndef SWIG
-    wxAuiManagerEvent(const wxAuiManagerEvent& c) : wxEvent(c)
-    {
-        manager = c.manager;
-        pane = c.pane;
-        button = c.button;
-        veto_flag = c.veto_flag;
-        canveto_flag = c.canveto_flag;
-        dc = c.dc;
-    }
-#endif
-    wxEvent *Clone() const { return new wxAuiManagerEvent(*this); }
+    wxEvent *Clone() const wxOVERRIDE { return new wxAuiManagerEvent(*this); }
 
     void SetManager(wxAuiManager* mgr) { manager = mgr; }
     void SetPane(wxAuiPaneInfo* p) { pane = p; }
@@ -723,7 +667,7 @@ public:
 
 #ifndef SWIG
 private:
-    DECLARE_DYNAMIC_CLASS_NO_ASSIGN(wxAuiManagerEvent)
+    wxDECLARE_DYNAMIC_CLASS_NO_ASSIGN(wxAuiManagerEvent);
 #endif
 };
 
@@ -743,39 +687,6 @@ public:
         toolbar = false;
         reserved1 = false;
     }
-
-#ifndef SWIG
-    wxAuiDockInfo(const wxAuiDockInfo& c)
-    {
-        dock_direction = c.dock_direction;
-        dock_layer = c.dock_layer;
-        dock_row = c.dock_row;
-        size = c.size;
-        min_size = c.min_size;
-        resizable = c.resizable;
-        fixed = c.fixed;
-        toolbar = c.toolbar;
-        panes = c.panes;
-        rect = c.rect;
-        reserved1 = c.reserved1;
-    }
-
-    wxAuiDockInfo& operator=(const wxAuiDockInfo& c)
-    {
-        dock_direction = c.dock_direction;
-        dock_layer = c.dock_layer;
-        dock_row = c.dock_row;
-        size = c.size;
-        min_size = c.min_size;
-        resizable = c.resizable;
-        fixed = c.fixed;
-        toolbar = c.toolbar;
-        panes = c.panes;
-        rect = c.rect;
-        reserved1 = c.reserved1;
-        return *this;
-    }
-#endif // SWIG
 
     bool IsOk() const { return dock_direction != 0; }
     bool IsHorizontal() const { return dock_direction == wxAUI_DOCK_TOP ||

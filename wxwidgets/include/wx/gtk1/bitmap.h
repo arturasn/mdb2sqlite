@@ -53,7 +53,7 @@ public:
     GdkBitmap *GetBitmap() const;
 
 private:
-    DECLARE_DYNAMIC_CLASS(wxMask)
+    wxDECLARE_DYNAMIC_CLASS(wxMask);
 };
 
 //-----------------------------------------------------------------------------
@@ -76,7 +76,7 @@ public:
     }
 #endif
     wxBitmap( const wxString &filename, wxBitmapType type = wxBITMAP_DEFAULT_TYPE );
-    wxBitmap( const wxImage& image, int depth = -1 ) { (void)CreateFromImage(image, depth); }
+    wxBitmap( const wxImage& image, int depth = -1, double WXUNUSED(scale) = 1.0 ) { (void)CreateFromImage(image, depth); }
     virtual ~wxBitmap();
 
     bool Create(int width, int height, int depth = wxBITMAP_SCREEN_DEPTH);
@@ -147,7 +147,7 @@ private:
     friend class wxBitmapHandler;
 
 private:
-    DECLARE_DYNAMIC_CLASS(wxBitmap)
+    wxDECLARE_DYNAMIC_CLASS(wxBitmap);
 };
 
 

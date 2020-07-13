@@ -48,8 +48,8 @@
 // wxWin macros
 // ----------------------------------------------------------------------------
 
-    IMPLEMENT_DYNAMIC_CLASS(wxPostScriptPrinter, wxPrinterBase)
-    IMPLEMENT_CLASS(wxPostScriptPrintPreview, wxPrintPreviewBase)
+    wxIMPLEMENT_DYNAMIC_CLASS(wxPostScriptPrinter, wxPrinterBase);
+    wxIMPLEMENT_CLASS(wxPostScriptPrintPreview, wxPrintPreviewBase);
 
 // ============================================================================
 // implementation
@@ -105,24 +105,8 @@ bool wxPostScriptPrinter::Print(wxWindow *parent, wxPrintout *printout, bool pro
         return false;
     }
 
-    wxSize ScreenPixels = wxGetDisplaySize();
-    wxSize ScreenMM = wxGetDisplaySizeMM();
-
-    printout->SetPPIScreen( (int) ((ScreenPixels.GetWidth() * 25.4) / ScreenMM.GetWidth()),
-                            (int) ((ScreenPixels.GetHeight() * 25.4) / ScreenMM.GetHeight()) );
-    printout->SetPPIPrinter( dc->GetResolution(),
-                             dc->GetResolution() );
-
     // Set printout parameters
-    printout->SetDC(dc);
-
-    int w, h;
-    dc->GetSize(&w, &h);
-    printout->SetPageSizePixels((int)w, (int)h);
-    printout->SetPaperRectPixels(wxRect(0, 0, w, h));
-    int mw, mh;
-    dc->GetSizeMM(&mw, &mh);
-    printout->SetPageSizeMM((int)mw, (int)mh);
+    printout->SetUp(*dc);
 
     // Create an abort window
     wxBeginBusyCursor();

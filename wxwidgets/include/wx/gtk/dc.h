@@ -15,25 +15,29 @@
 
 class wxGTKCairoDCImpl: public wxGCDCImpl
 {
-    typedef wxGCDCImpl base_type;
 public:
     wxGTKCairoDCImpl(wxDC* owner);
-    wxGTKCairoDCImpl(wxDC* owner, int);
+    wxGTKCairoDCImpl(wxDC* owner, double scaleFactor);
     wxGTKCairoDCImpl(wxDC* owner, wxWindow* window);
 
-    virtual void DoDrawBitmap(const wxBitmap& bitmap, int x, int y, bool useMask);
-    virtual void DoDrawIcon(const wxIcon& icon, int x, int y);
+    virtual void DoDrawBitmap(const wxBitmap& bitmap, int x, int y, bool useMask) wxOVERRIDE;
+    virtual void DoDrawIcon(const wxIcon& icon, int x, int y) wxOVERRIDE;
 #if wxUSE_IMAGE
-    virtual bool DoFloodFill(int x, int y, const wxColour& col, wxFloodFillStyle style);
+    virtual bool DoFloodFill(int x, int y, const wxColour& col, wxFloodFillStyle style) wxOVERRIDE;
 #endif
-    virtual wxBitmap DoGetAsBitmap(const wxRect* subrect) const;
-    virtual bool DoGetPixel(int x, int y, wxColour* col) const;
-    virtual void DoGetSize(int* width, int* height) const;
-    virtual bool DoStretchBlit(int xdest, int ydest, int dstWidth, int dstHeight, wxDC* source, int xsrc, int ysrc, int srcWidth, int srcHeight, wxRasterOperationMode rop, bool useMask, int xsrcMask, int ysrcMask);
-    virtual void* GetCairoContext() const;
+    virtual wxBitmap DoGetAsBitmap(const wxRect* subrect) const wxOVERRIDE;
+    virtual bool DoGetPixel(int x, int y, wxColour* col) const wxOVERRIDE;
+    virtual void DoGetSize(int* width, int* height) const wxOVERRIDE;
+    virtual bool DoStretchBlit(int xdest, int ydest, int dstWidth, int dstHeight, wxDC* source, int xsrc, int ysrc, int srcWidth, int srcHeight, wxRasterOperationMode rop, bool useMask, int xsrcMask, int ysrcMask) wxOVERRIDE;
+    virtual void* GetCairoContext() const wxOVERRIDE;
+
+    virtual wxSize GetPPI() const wxOVERRIDE;
 
 protected:
-    int m_width, m_height;
+    // Set m_size from the given (valid) GdkWindow.
+    void InitSize(GdkWindow* window);
+
+    wxSize m_size;
 
     wxDECLARE_NO_COPY_CLASS(wxGTKCairoDCImpl);
 };
@@ -41,7 +45,6 @@ protected:
 
 class wxWindowDCImpl: public wxGTKCairoDCImpl
 {
-    typedef wxGTKCairoDCImpl base_type;
 public:
     wxWindowDCImpl(wxWindowDC* owner, wxWindow* window);
 
@@ -51,7 +54,6 @@ public:
 
 class wxClientDCImpl: public wxGTKCairoDCImpl
 {
-    typedef wxGTKCairoDCImpl base_type;
 public:
     wxClientDCImpl(wxClientDC* owner, wxWindow* window);
 
@@ -61,7 +63,6 @@ public:
 
 class wxPaintDCImpl: public wxGTKCairoDCImpl
 {
-    typedef wxGTKCairoDCImpl base_type;
 public:
     wxPaintDCImpl(wxPaintDC* owner, wxWindow* window);
 
@@ -71,9 +72,10 @@ public:
 
 class wxScreenDCImpl: public wxGTKCairoDCImpl
 {
-    typedef wxGTKCairoDCImpl base_type;
 public:
     wxScreenDCImpl(wxScreenDC* owner);
+
+    virtual wxSize GetPPI() const wxOVERRIDE;
 
     wxDECLARE_NO_COPY_CLASS(wxScreenDCImpl);
 };
@@ -81,15 +83,14 @@ public:
 
 class wxMemoryDCImpl: public wxGTKCairoDCImpl
 {
-    typedef wxGTKCairoDCImpl base_type;
 public:
     wxMemoryDCImpl(wxMemoryDC* owner);
     wxMemoryDCImpl(wxMemoryDC* owner, wxBitmap& bitmap);
     wxMemoryDCImpl(wxMemoryDC* owner, wxDC* dc);
-    virtual wxBitmap DoGetAsBitmap(const wxRect* subrect) const;
-    virtual void DoSelect(const wxBitmap& bitmap);
-    virtual const wxBitmap& GetSelectedBitmap() const;
-    virtual wxBitmap& GetSelectedBitmap();
+    virtual wxBitmap DoGetAsBitmap(const wxRect* subrect) const wxOVERRIDE;
+    virtual void DoSelect(const wxBitmap& bitmap) wxOVERRIDE;
+    virtual const wxBitmap& GetSelectedBitmap() const wxOVERRIDE;
+    virtual wxBitmap& GetSelectedBitmap() wxOVERRIDE;
 
 private:
     void Setup();
@@ -101,9 +102,8 @@ private:
 
 class WXDLLIMPEXP_CORE wxGTKCairoDC: public wxDC
 {
-    typedef wxDC base_type;
 public:
-    wxGTKCairoDC(cairo_t* cr);
+    wxGTKCairoDC(cairo_t* cr, wxWindow* window);
 
     wxDECLARE_NO_COPY_CLASS(wxGTKCairoDC);
 };
@@ -127,21 +127,21 @@ public:
 #endif // wxUSE_PALETTE
 
     // Resolution in pixels per logical inch
-    virtual wxSize GetPPI() const;
+    virtual wxSize GetPPI() const wxOVERRIDE;
 
-    virtual bool StartDoc( const wxString& WXUNUSED(message) ) { return true; }
-    virtual void EndDoc() { }
-    virtual void StartPage() { }
-    virtual void EndPage() { }
+    virtual bool StartDoc( const wxString& WXUNUSED(message) ) wxOVERRIDE { return true; }
+    virtual void EndDoc() wxOVERRIDE { }
+    virtual void StartPage() wxOVERRIDE { }
+    virtual void EndPage() wxOVERRIDE { }
 
     virtual GdkWindow* GetGDKWindow() const { return NULL; }
-    virtual void* GetHandle() const { return GetGDKWindow(); }
-    
-    // base class pure virtuals implemented here
-    virtual void DoSetClippingRegion(wxCoord x, wxCoord y, wxCoord width, wxCoord height);
-    virtual void DoGetSizeMM(int* width, int* height) const;
+    virtual void* GetHandle() const wxOVERRIDE { return GetGDKWindow(); }
 
-    DECLARE_ABSTRACT_CLASS(wxGTKDCImpl)
+    // base class pure virtuals implemented here
+    virtual void DoSetClippingRegion(wxCoord x, wxCoord y, wxCoord width, wxCoord height) wxOVERRIDE;
+    virtual void DoGetSizeMM(int* width, int* height) const wxOVERRIDE;
+
+    wxDECLARE_ABSTRACT_CLASS(wxGTKDCImpl);
 };
 
 // this must be defined when wxDC::Blit() honours the DC origin and needed to

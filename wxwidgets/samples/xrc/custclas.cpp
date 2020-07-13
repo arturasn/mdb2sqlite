@@ -56,7 +56,7 @@ enum {
 // wxWidgets macro: implement dynamic class
 //-----------------------------------------------------------------------------
 
-IMPLEMENT_DYNAMIC_CLASS( MyResizableListCtrl, wxListCtrl )
+wxIMPLEMENT_DYNAMIC_CLASS( MyResizableListCtrl, wxListCtrl );
 
 //-----------------------------------------------------------------------------
 // Event table: connect the events to the handler functions to process them
@@ -142,7 +142,7 @@ void MyResizableListCtrl::SetColumnWidths()
 
     // This is just a debug message in case you want to watch the
     // events scroll by as you resize.
-    wxLogDebug( wxT("Successfully set column widths") );
+    wxLogDebug( "Successfully set column widths" );
 }
 
 

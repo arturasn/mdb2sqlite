@@ -56,7 +56,7 @@ private:
     wxSize m_size;
 
 private:
-    DECLARE_DYNAMIC_CLASS(wxMask)
+    wxDECLARE_DYNAMIC_CLASS(wxMask);
 };
 
 //-----------------------------------------------------------------------------
@@ -100,7 +100,7 @@ public:
     int GetDepth() const;
 
 #if wxUSE_IMAGE
-    wxBitmap( const wxImage& image, int depth = -1 ) { (void)CreateFromImage(image, depth); }
+    wxBitmap( const wxImage& image, int depth = -1, double WXUNUSED(scale) = 1.0 ) { (void)CreateFromImage(image, depth); }
     wxImage ConvertToImage() const;
     bool CreateFromImage(const wxImage& image, int depth = -1);
 #endif // wxUSE_IMAGE
@@ -124,9 +124,11 @@ public:
     // implementation
     // --------------
 
-    void SetHeight( int height );
-    void SetWidth( int width );
-    void SetDepth( int depth );
+#if WXWIN_COMPATIBILITY_3_0
+    wxDEPRECATED(void SetHeight( int height ));
+    wxDEPRECATED(void SetWidth( int width ));
+    wxDEPRECATED(void SetDepth( int depth ));
+#endif
     void SetPixmap( WXPixmap pixmap );
     void SetBitmap( WXPixmap bitmap );
 
@@ -142,7 +144,7 @@ protected:
     virtual wxGDIRefData *CloneGDIRefData(const wxGDIRefData *data) const;
 
 private:
-    DECLARE_DYNAMIC_CLASS(wxBitmap)
+    wxDECLARE_DYNAMIC_CLASS(wxBitmap);
 };
 
 #endif // _WX_BITMAP_H_

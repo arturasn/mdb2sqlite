@@ -32,17 +32,12 @@ class MyEvent : public wxEvent
 public:
     MyEvent() : wxEvent(0, MyEventType) { }
 
-    virtual wxEvent *Clone() const { return new MyEvent; }
+    virtual wxEvent *Clone() const wxOVERRIDE { return new MyEvent; }
 };
 
 typedef void (wxEvtHandler::*MyEventFunction)(MyEvent&);
-#ifndef wxHAS_EVENT_BIND
-    #define MyEventHandler(func) wxEVENT_HANDLER_CAST(MyEventFunction, func)
-#else
-    #define MyEventHandler(func) &func
-#endif
 #define EVT_MYEVENT(func) \
-    wx__DECLARE_EVT0(MyEventType, MyEventHandler(func))
+    wx__DECLARE_EVT0(MyEventType, &func)
 
 class AnotherEvent : public wxEvent
 {
@@ -129,21 +124,26 @@ public:
     void OnIdle(wxIdleEvent&) { g_called.method = true; }
 
 private:
-    DECLARE_EVENT_TABLE()
+    wxDECLARE_EVENT_TABLE();
 };
 
-BEGIN_EVENT_TABLE(MyClassWithEventTable, wxEvtHandler)
+// Avoid gcc warning about some of the functions defined by the expansion of
+// the event table macros being unused: they are indeed unused, but we still
+// want to have them to check that they compile.
+wxGCC_WARNING_SUPPRESS(unused-function)
+
+wxBEGIN_EVENT_TABLE(MyClassWithEventTable, wxEvtHandler)
     EVT_IDLE(MyClassWithEventTable::OnIdle)
 
     EVT_MYEVENT(MyClassWithEventTable::OnMyEvent)
-#ifdef wxHAS_EVENT_BIND
     EVT_MYEVENT(MyClassWithEventTable::OnEvent)
-#endif
 
     // this shouldn't compile:
     //EVT_MYEVENT(MyClassWithEventTable::OnIdle)
     //EVT_IDLE(MyClassWithEventTable::OnAnotherEvent)
-END_EVENT_TABLE()
+wxEND_EVENT_TABLE()
+
+wxGCC_WARNING_RESTORE(unused-function)
 
 } // anonymous namespace
 
@@ -163,7 +163,6 @@ private:
         CPPUNIT_TEST( LegacyConnect );
         CPPUNIT_TEST( DisconnectWildcard );
         CPPUNIT_TEST( AutoDisconnect );
-#ifdef wxHAS_EVENT_BIND
         CPPUNIT_TEST( BindFunction );
         CPPUNIT_TEST( BindStaticMethod );
         CPPUNIT_TEST( BindFunctor );
@@ -172,14 +171,13 @@ private:
         CPPUNIT_TEST( BindFunctionUsingBaseEvent );
         CPPUNIT_TEST( BindNonHandler );
         CPPUNIT_TEST( InvalidBind );
-#endif // wxHAS_EVENT_BIND
+        CPPUNIT_TEST( UnbindFromHandler );
     CPPUNIT_TEST_SUITE_END();
 
     void BuiltinConnect();
     void LegacyConnect();
     void DisconnectWildcard();
     void AutoDisconnect();
-#ifdef wxHAS_EVENT_BIND
     void BindFunction();
     void BindStaticMethod();
     void BindFunctor();
@@ -188,7 +186,7 @@ private:
     void BindFunctionUsingBaseEvent();
     void BindNonHandler();
     void InvalidBind();
-#endif // wxHAS_EVENT_BIND
+    void UnbindFromHandler();
 
 
     // these member variables exceptionally don't use "m_" prefix because
@@ -196,7 +194,7 @@ private:
     MyHandler handler;
     MyEvent e;
 
-    DECLARE_NO_COPY_CLASS(EvtHandlerTestCase)
+    wxDECLARE_NO_COPY_CLASS(EvtHandlerTestCase);
 };
 
 // register in the unnamed registry so that these tests are run by default
@@ -218,7 +216,6 @@ void EvtHandlerTestCase::BuiltinConnect()
     handler.Connect(wxEVT_IDLE, (wxObjectEventFunction)(wxEventFunction)&MyHandler::OnIdle);
     handler.Disconnect(wxEVT_IDLE, (wxObjectEventFunction)(wxEventFunction)&MyHandler::OnIdle);
 
-#ifdef wxHAS_EVENT_BIND
     handler.Bind(wxEVT_IDLE, GlobalOnIdle);
     handler.Unbind(wxEVT_IDLE, GlobalOnIdle);
 
@@ -231,7 +228,6 @@ void EvtHandlerTestCase::BuiltinConnect()
 
     handler.Bind(wxEVT_IDLE, &MyHandler::StaticOnIdle);
     handler.Unbind(wxEVT_IDLE, &MyHandler::StaticOnIdle);
-#endif // wxHAS_EVENT_BIND
 }
 
 void EvtHandlerTestCase::LegacyConnect()
@@ -278,8 +274,6 @@ void EvtHandlerTestCase::AutoDisconnect()
     // there should be nothing to disconnect anymore
     CPPUNIT_ASSERT(!source.Disconnect(wxID_ANY, wxEVT_IDLE));
 }
-
-#ifdef wxHAS_EVENT_BIND
 
 void EvtHandlerTestCase::BindFunction()
 {
@@ -475,4 +469,68 @@ void EvtHandlerTestCase::InvalidBind()
 #endif
 }
 
-#endif // wxHAS_EVENT_BIND
+// Helpers for UnbindFromHandler() test, have to be declared outside of the
+// function in C++98.
+struct Handler1
+{
+    void OnDontCall(MyEvent&)
+    {
+        // Although this handler is bound, the second one below is bound
+        // later and so will be called first and will disconnect this one
+        // before it has a chance to be called.
+        CPPUNIT_FAIL("shouldn't be called");
+    }
+};
+
+class Handler2
+{
+public:
+    Handler2(MyHandler& handler, Handler1& h1)
+        : m_handler(handler),
+          m_h1(h1)
+    {
+    }
+
+    void OnUnbind(MyEvent& e)
+    {
+        m_handler.Unbind(MyEventType, &Handler1::OnDontCall, &m_h1);
+
+        // Check that the now disconnected first handler is not executed.
+        e.Skip();
+    }
+
+private:
+    MyHandler& m_handler;
+    Handler1& m_h1;
+
+    wxDECLARE_NO_COPY_CLASS(Handler2);
+};
+
+void EvtHandlerTestCase::UnbindFromHandler()
+{
+    Handler1 h1;
+    handler.Bind(MyEventType, &Handler1::OnDontCall, &h1);
+
+    Handler2 h2(handler, h1);
+    handler.Bind(MyEventType, &Handler2::OnUnbind, &h2);
+
+    handler.ProcessEvent(e);
+}
+
+// This is a compilation-time-only test: just check that a class inheriting
+// from wxEvtHandler non-publicly can use Bind() with its method, this used to
+// result in compilation errors.
+// Note that this test will work only on C++11 compilers, so we test this only
+// for such compilers.
+#if __cplusplus >= 201103
+class HandlerNonPublic : protected wxEvtHandler
+{
+public:
+    HandlerNonPublic()
+    {
+        Bind(wxEVT_IDLE, &HandlerNonPublic::OnIdle, this);
+    }
+
+    void OnIdle(wxIdleEvent&) { }
+};
+#endif // C++11

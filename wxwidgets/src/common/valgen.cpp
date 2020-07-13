@@ -49,7 +49,7 @@
 
 #include "wx/valgen.h"
 
-IMPLEMENT_CLASS(wxGenericValidator, wxValidator)
+wxIMPLEMENT_CLASS(wxGenericValidator, wxValidator);
 
 wxGenericValidator::wxGenericValidator(bool *val)
 {
@@ -128,7 +128,7 @@ bool wxGenericValidator::Copy(const wxGenericValidator& val)
 }
 
 // Called to transfer data to the window
-bool wxGenericValidator::TransferToWindow(void)
+bool wxGenericValidator::TransferToWindow()
 {
     if ( !m_validatorWindow )
         return false;
@@ -414,7 +414,7 @@ bool wxGenericValidator::TransferToWindow(void)
 }
 
 // Called to transfer data from the window
-bool wxGenericValidator::TransferFromWindow(void)
+bool wxGenericValidator::TransferFromWindow()
 {
     if ( !m_validatorWindow )
         return false;

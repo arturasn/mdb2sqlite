@@ -19,7 +19,6 @@
  * under a certain platform
  */
 
-#define wxOSX_USE_ATSU_TEXT 0
 #define wxHAS_OPENGL_ES
 
 #define wxOSX_USE_QUICKTIME 0
@@ -131,6 +130,8 @@
 #undef wxUSE_RICHTEXT
 #define wxUSE_RICHTEXT 0
 
+#undef wxUSE_ACTIVITYINDICATOR
+#undef wxUSE_ADDREMOVECTRL
 #undef wxUSE_ANIMATIONCTRL
 #undef wxUSE_CALENDARCTRL
 #undef wxUSE_COMBOCTRL
@@ -160,6 +161,8 @@
 #undef wxUSE_BUSYINFO
 #undef wxUSE_SEARCHCTRL
 
+#define wxUSE_ACTIVITYINDICATOR 0
+#define wxUSE_ADDREMOVECTRL 0
 #define wxUSE_ANIMATIONCTRL 0
 #define wxUSE_CALENDARCTRL 0
 #define wxUSE_COMBOCTRL 0
@@ -368,6 +371,16 @@
 #undef wxUSE_WEBVIEW
 #define wxUSE_WEBVIEW 0
 #endif
+
+#if wxUSE_SECRETSTORE
+    #undef wxUSE_SECRETSTORE
+    #define wxUSE_SECRETSTORE 0
+#endif
+
+// IconRef datatype does not exist on iOS
+
+#undef wxOSX_USE_ICONREF
+#define wxOSX_USE_ICONREF 0
 
 #endif
     /* _WX_OSX_IPHONE_CHKCONF_H_ */

@@ -15,6 +15,7 @@ This page contains a summarized listing of classes, please see the
 @ref group_class page for a full listing by category or the
 <a href="classes.html">full list of classes</a> in alphabetical order.
 
+For a more visual approach, see @ref page_screenshots "the screenshots" page.
 
 
 @section page_class_cat_basicwnd Basic Windows
@@ -92,6 +93,7 @@ Related Overviews: @ref overview_cmndlg
 Typically, these are small windows which provide interaction with the user.
 Controls that are not static can have wxValidator associated with them.
 
+@li wxActivityIndicator: A small animated control indicating program activity
 @li wxAnimationCtrl: A control to display an animation
 @li wxControl: The base class for controls
 @li wxBitmapButton: Push button control, displaying a bitmap
@@ -168,8 +170,8 @@ Related Overviews: @ref overview_validator
 
 @section page_class_cat_pickers Picker Controls
 
-A picker control is a control whose appearance and behaviour is highly
-platform-dependent.
+These controls provide the user with the possibility to choose something (file
+or directory, font or colour, ...) directly from the window containing them.
 
 @li wxColourPickerCtrl: A control which allows the user to choose a colour
 @li wxDirPickerCtrl: A control which allows the user to choose a directory
@@ -352,6 +354,7 @@ Related Overviews: @ref overview_bitmap
 @li wxCursor: A small, transparent bitmap representing the cursor
 @li wxIcon: A small, transparent bitmap for assigning to frames and drawing on
     device contexts
+@li wxIconBundle: Contains multiple copies of an icon in different sizes
 @li wxImage: A platform-independent image class
 @li wxImageHandler: Class for loading a saving a wxImage in a specific format
 @li wxImageList: A list of images, used with some controls
@@ -630,13 +633,13 @@ these classes provide a subset or almost complete STL API.
 
 Related Overviews: @ref overview_container
 
-@li wxArray<T>: A type-safe dynamic array implementation (macro based)
+@li wxArray<T>: A legacy dynamic array, use std::vector or wxVector instead.
 @li wxArrayString: An efficient container for storing wxString objects
 @li wxHashMap<T>: A type-safe hash map implementation (macro based)
 @li wxHashSet<T>: A type-safe hash set implementation(macro based)
 @li wxHashTable: A simple hash table implementation (deprecated, use wxHashMap)
 @li wxList<T>: A type-safe linked list implementation (macro based)
-@li wxVector<T>: Template base vector implementation identical to std::vector
+@li wxVector<T>: A template-based vector implementation identical to std::vector
 
 
 
@@ -701,6 +704,8 @@ Related overview: @ref overview_stream
 @li wxTempFileOutputStream: Stream to safely replace an existing file
 @li wxStringInputStream: String input stream class
 @li wxStringOutputStream: String output stream class
+@li wxLZMAInputStream: LZMA decompression stream class
+@li wxLZMAOutputStream: LZMA compression stream class
 @li wxZlibInputStream: Zlib and gzip (compression) input stream class
 @li wxZlibOutputStream: Zlib and gzip (compression) output stream class
 @li wxZipInputStream: Input stream for reading from ZIP archives

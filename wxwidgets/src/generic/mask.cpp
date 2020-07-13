@@ -3,7 +3,7 @@
 // Purpose:     generic wxMask implementation
 // Author:      Vadim Zeitlin
 // Created:     2006-09-28
-// Copyright:   (c) 2006 Vadim Zeitlin <vadim@wxwindows.org>
+// Copyright:   (c) 2006 Vadim Zeitlin <vadim@wxwidgets.org>
 // Licence:     wxWindows licence
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -33,7 +33,7 @@
 // wxMask implementation
 // ============================================================================
 
-IMPLEMENT_DYNAMIC_CLASS(wxMask, wxObject)
+wxIMPLEMENT_DYNAMIC_CLASS(wxMask, wxObject);
 
 void wxMask::FreeData()
 {

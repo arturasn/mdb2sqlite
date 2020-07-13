@@ -27,8 +27,8 @@ class ToggleButtonTestCase : public CppUnit::TestCase
 public:
     ToggleButtonTestCase() { }
 
-    void setUp();
-    void tearDown();
+    void setUp() wxOVERRIDE;
+    void tearDown() wxOVERRIDE;
 
 private:
     CPPUNIT_TEST_SUITE( ToggleButtonTestCase );
@@ -41,7 +41,7 @@ private:
 
     wxToggleButton* m_button;
 
-    DECLARE_NO_COPY_CLASS(ToggleButtonTestCase)
+    wxDECLARE_NO_COPY_CLASS(ToggleButtonTestCase);
 };
 
 // register in the unnamed registry so that these tests are run by default

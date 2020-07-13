@@ -48,17 +48,17 @@ public:
 
     // returning true from here ensures that we act as a container window for
     // our children
-    virtual bool IsStaticBox() const { return true; }
+    virtual bool IsStaticBox() const wxOVERRIDE { return true; }
 
 protected:
     // draw the control
-    virtual void DoDraw(wxControlRenderer *renderer);
+    virtual void DoDraw(wxControlRenderer *renderer) wxOVERRIDE;
 
     // get the size of the border
     wxRect GetBorderGeometry() const;
 
 private:
-    DECLARE_DYNAMIC_CLASS(wxStaticBox)
+    wxDECLARE_DYNAMIC_CLASS(wxStaticBox);
 };
 
 #endif // _WX_UNIV_STATBOX_H_

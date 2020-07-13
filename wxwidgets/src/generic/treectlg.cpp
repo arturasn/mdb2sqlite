@@ -37,6 +37,7 @@
 
 #include "wx/generic/treectlg.h"
 #include "wx/imaglist.h"
+#include "wx/itemattr.h"
 
 #include "wx/renderer.h"
 
@@ -80,7 +81,7 @@ public:
 
     wxTreeRenameTimer( wxGenericTreeCtrl *owner );
 
-    virtual void Notify();
+    virtual void Notify() wxOVERRIDE;
 
 private:
     wxGenericTreeCtrl *m_owner;
@@ -112,7 +113,7 @@ private:
     wxString            m_startValue;
     bool                m_aboutToFinish;
 
-    DECLARE_EVENT_TABLE()
+    wxDECLARE_EVENT_TABLE();
     wxDECLARE_NO_COPY_CLASS(wxTreeTextCtrl);
 };
 
@@ -126,7 +127,7 @@ public:
 
     wxTreeFindTimer( wxGenericTreeCtrl *owner ) { m_owner = owner; }
 
-    virtual void Notify() { m_owner->ResetFindState(); }
+    virtual void Notify() wxOVERRIDE { m_owner->ResetFindState(); }
 
 private:
     wxGenericTreeCtrl *m_owner;
@@ -223,7 +224,7 @@ public:
     {
         wxFont font;
 
-        wxTreeItemAttr * const attr = GetAttributes();
+        wxItemAttr * const attr = GetAttributes();
         if ( attr && attr->HasFont() )
             font = attr->GetFont();
         else if ( IsBold() )
@@ -282,19 +283,19 @@ public:
 
     // attributes
         // get them - may be NULL
-    wxTreeItemAttr *GetAttributes() const { return m_attr; }
+    wxItemAttr *GetAttributes() const { return m_attr; }
         // get them ensuring that the pointer is not NULL
-    wxTreeItemAttr& Attr()
+    wxItemAttr& Attr()
     {
         if ( !m_attr )
         {
-            m_attr = new wxTreeItemAttr;
+            m_attr = new wxItemAttr;
             m_ownsAttr = true;
         }
         return *m_attr;
     }
         // set them
-    void SetAttributes(wxTreeItemAttr *attr)
+    void SetAttributes(wxItemAttr *attr)
     {
         if ( m_ownsAttr ) delete m_attr;
         m_attr = attr;
@@ -303,7 +304,7 @@ public:
         m_widthText = -1;
     }
         // set them and delete when done
-    void AssignAttributes(wxTreeItemAttr *attr)
+    void AssignAttributes(wxItemAttr *attr)
     {
         SetAttributes(attr);
         m_ownsAttr = true;
@@ -335,7 +336,7 @@ private:
     wxArrayGenericTreeItems m_children; // list of children
     wxGenericTreeItem  *m_parent;       // parent of this item
 
-    wxTreeItemAttr     *m_attr;         // attributes???
+    wxItemAttr     *m_attr;         // attributes???
 
     // tree ctrl images for the normal, selected, expanded and
     // expanded+selected states
@@ -415,11 +416,11 @@ void wxTreeRenameTimer::Notify()
 // wxTreeTextCtrl (internal)
 //-----------------------------------------------------------------------------
 
-BEGIN_EVENT_TABLE(wxTreeTextCtrl,wxTextCtrl)
+wxBEGIN_EVENT_TABLE(wxTreeTextCtrl,wxTextCtrl)
     EVT_CHAR           (wxTreeTextCtrl::OnChar)
     EVT_KEY_UP         (wxTreeTextCtrl::OnKeyUp)
     EVT_KILL_FOCUS     (wxTreeTextCtrl::OnKillFocus)
-END_EVENT_TABLE()
+wxEND_EVENT_TABLE()
 
 wxTreeTextCtrl::wxTreeTextCtrl(wxGenericTreeCtrl *owner,
                                wxGenericTreeItem *itm)
@@ -440,14 +441,6 @@ wxTreeTextCtrl::wxTreeTextCtrl(wxGenericTreeCtrl *owner,
     rect.y -= 2;
     rect.width  += 8;
     rect.height += 4;
-#elif defined(wxOSX_USE_CARBON) && wxOSX_USE_CARBON
-    int bestHeight = GetBestSize().y - 8;
-    if ( rect.height > bestHeight )
-    {
-        int diff = rect.height - bestHeight;
-        rect.height -= diff;
-        rect.y += diff / 2;
-    }
 #endif // platforms
 
     (void)Create(m_owner, wxID_ANY, m_startValue,
@@ -514,6 +507,13 @@ bool wxTreeTextCtrl::AcceptChanges()
 void wxTreeTextCtrl::Finish( bool setfocus )
 {
     m_owner->ResetTextControl();
+
+#ifdef __WXMAC__
+    // On wxMac, modal event loops avoid deleting pending objects.
+    // Hide control so it does not remain visible e.g. if the tree
+    // control is used in a dialog.
+    Hide();
+#endif
 
     wxPendingDelete.Append(this);
 
@@ -709,21 +709,21 @@ wxGenericTreeItem *wxGenericTreeItem::HitTest(const wxPoint& point,
             if ((point.x >= m_x) && (point.x <= m_x+m_width))
             {
                 int image_w = -1;
-                int image_h;
 
                 // assuming every image (normal and selected) has the same size!
                 if ( (GetImage() != NO_IMAGE) && theCtrl->m_imageListNormal )
                 {
+                    int image_h;
                     theCtrl->m_imageListNormal->GetSize(GetImage(),
                                                         image_w, image_h);
                 }
 
                 int state_w = -1;
-                int state_h;
 
                 if ( (GetState() != wxTREE_ITEMSTATE_NONE) &&
                         theCtrl->m_imageListState )
                 {
+                    int state_h;
                     theCtrl->m_imageListState->GetSize(GetState(),
                                                        state_w, state_h);
                 }
@@ -903,9 +903,9 @@ void wxGenericTreeItem::RecursiveResetTextSize()
 // wxGenericTreeCtrl implementation
 // -----------------------------------------------------------------------------
 
-IMPLEMENT_DYNAMIC_CLASS(wxGenericTreeCtrl, wxControl)
+wxIMPLEMENT_DYNAMIC_CLASS(wxGenericTreeCtrl, wxControl);
 
-BEGIN_EVENT_TABLE(wxGenericTreeCtrl, wxTreeCtrlBase)
+wxBEGIN_EVENT_TABLE(wxGenericTreeCtrl, wxTreeCtrlBase)
     EVT_PAINT          (wxGenericTreeCtrl::OnPaint)
     EVT_SIZE           (wxGenericTreeCtrl::OnSize)
     EVT_MOUSE_EVENTS   (wxGenericTreeCtrl::OnMouse)
@@ -914,7 +914,7 @@ BEGIN_EVENT_TABLE(wxGenericTreeCtrl, wxTreeCtrlBase)
     EVT_SET_FOCUS      (wxGenericTreeCtrl::OnSetFocus)
     EVT_KILL_FOCUS     (wxGenericTreeCtrl::OnKillFocus)
     EVT_TREE_ITEM_GETTOOLTIP(wxID_ANY, wxGenericTreeCtrl::OnGetToolTip)
-END_EVENT_TABLE()
+wxEND_EVENT_TABLE()
 
 // -----------------------------------------------------------------------------
 // construction/destruction
@@ -988,22 +988,6 @@ bool wxGenericTreeCtrl::Create(wxWindow *parent,
                                const wxValidator& validator,
                                const wxString& name )
 {
-#ifdef __WXMAC__
-    int major, minor;
-    wxGetOsVersion(&major, &minor);
-
-    if (major < 10)
-        style |= wxTR_ROW_LINES;
-
-    if (style & wxTR_HAS_BUTTONS)
-        style |= wxTR_NO_LINES;
-#endif // __WXMAC__
-
-#ifdef __WXGTK20__
-    if (style & wxTR_HAS_BUTTONS)
-        style |= wxTR_NO_LINES;
-#endif
-
     if ( !wxControl::Create( parent, id, pos, size,
                              style|wxHSCROLL|wxVSCROLL|wxWANTS_CHARS,
                              validator,
@@ -1025,7 +1009,7 @@ bool wxGenericTreeCtrl::Create(wxWindow *parent,
     if (!m_hasFont)
         SetOwnFont(attr.font);
 
-    // this is a misnomer: it's called "dotted pen" but uses (default) wxSOLID
+    // this is a misnomer: it's called "dotted pen" but uses (default) wxPENSTYLE_SOLID
     // style because we apparently get performance problems when using dotted
     // pen for drawing in some ports -- but under MSW it seems to work fine
 #ifdef __WXMSW__
@@ -1095,7 +1079,7 @@ wxGenericTreeCtrl::GetChildrenCount(const wxTreeItemId& item,
     return ((wxGenericTreeItem*) item.m_pItem)->GetChildrenCount(recursively);
 }
 
-void wxGenericTreeCtrl::SetWindowStyle(const long styles)
+void wxGenericTreeCtrl::SetWindowStyleFlag(long styles)
 {
     // Do not try to expand the root node if it hasn't been created yet
     if (m_anchor && !HasFlag(wxTR_HIDE_ROOT) && (styles & wxTR_HIDE_ROOT))
@@ -1758,7 +1742,10 @@ void wxGenericTreeCtrl::ChildrenClosing(wxGenericTreeItem* item)
 
     if ( item != m_current && IsDescendantOf(item, m_current) )
     {
-        m_current->SetHilight( false );
+        // Don't leave the only selected item invisible, but do leave selected
+        // items selected if we can have many of them.
+        if ( !HasFlag(wxTR_MULTIPLE) )
+            m_current->SetHilight( false );
         m_current = NULL;
         m_select_me = item;
     }
@@ -1892,8 +1879,16 @@ void wxGenericTreeCtrl::Expand(const wxTreeItemId& itemId)
         m_dirty = true;
     }
 
-    event.SetEventType(wxEVT_TREE_ITEM_EXPANDED);
-    GetEventHandler()->ProcessEvent( event );
+    // Don't send EXPANDED event unconditionally: if this is an item for which
+    // SetItemHasChildren(true) had been called before, but no children have
+    // been added from the EXPANDING handler, we shouldn't consider the item to
+    // be really expanded.
+    wxTreeItemIdValue cookie;
+    if ( GetFirstChild(item, cookie).IsOk() )
+    {
+        event.SetEventType(wxEVT_TREE_ITEM_EXPANDED);
+        GetEventHandler()->ProcessEvent( event );
+    }
 }
 
 void wxGenericTreeCtrl::Collapse(const wxTreeItemId& itemId)
@@ -1966,6 +1961,8 @@ void wxGenericTreeCtrl::ClearFocusedItem()
     wxTreeItemId item = GetFocusedItem();
     if ( item.IsOk() )
         SelectItem(item, false);
+
+    m_current = NULL;
 }
 
 void wxGenericTreeCtrl::SetFocusedItem(const wxTreeItemId& item)
@@ -2296,7 +2293,7 @@ void wxGenericTreeCtrl::ScrollTo(const wxTreeItemId &item)
     // update the control before scrolling it
     if (m_dirty)
     {
-#if defined( __WXMSW__ ) 
+#if defined( __WXMSW__ )
         Update();
 #elif defined(__WXMAC__)
         Update();
@@ -2305,7 +2302,7 @@ void wxGenericTreeCtrl::ScrollTo(const wxTreeItemId &item)
         DoDirtyProcessing();
 #endif
     }
-        
+
     wxGenericTreeItem *gitem = (wxGenericTreeItem*) item.m_pItem;
 
     int itemY = gitem->GetY();
@@ -2324,7 +2321,7 @@ void wxGenericTreeCtrl::ScrollTo(const wxTreeItemId &item)
         itemY += itemHeight - clientHeight;
 
         // because itemY below will be divided by PIXELS_PER_UNIT it may
-        // be rounded down, with the result of the item still only being 
+        // be rounded down, with the result of the item still only being
         // partially visible, so make sure we are rounding up
         itemY += PIXELS_PER_UNIT - 1;
     }
@@ -2559,7 +2556,7 @@ void wxGenericTreeCtrl::PaintItem(wxGenericTreeItem *item, wxDC& dc)
     else
     {
         wxColour colBg;
-        wxTreeItemAttr * const attr = item->GetAttributes();
+        wxItemAttr * const attr = item->GetAttributes();
         if ( attr && attr->HasBackgroundColour() )
         {
             drawItemBackground =
@@ -2588,11 +2585,7 @@ void wxGenericTreeCtrl::PaintItem(wxGenericTreeItem *item, wxDC& dc)
         else
         {
             int flags = wxCONTROL_SELECTED;
-            if (m_hasFocus
-#if defined( __WXMAC__ ) && !defined(__WXUNIVERSAL__) && wxOSX_USE_CARBON // TODO CS
-                && IsControlActive( (ControlRef)GetHandle() )
-#endif
-            )
+            if (m_hasFocus)
                 flags |= wxCONTROL_FOCUSED;
             if ((item == m_current) && (m_hasFocus))
                 flags |= wxCONTROL_CURRENT;
@@ -2785,15 +2778,7 @@ wxGenericTreeCtrl::PaintLevel(wxGenericTreeItem *item,
             wxTRANSPARENT_PEN;
 
         wxColour colText;
-        if ( item->IsSelected()
-#if defined( __WXMAC__ ) && !defined(__WXUNIVERSAL__) && wxOSX_USE_CARBON // TODO CS
-            // On wxMac, if the tree doesn't have the focus we draw an empty
-            // rectangle, so we want to make sure that the text is visible
-            // against the normal background, not the highlightbackground, so
-            // don't use the highlight text colour unless we have the focus.
-             && m_hasFocus && IsControlActive( (ControlRef)GetHandle() )
-#endif
-            )
+        if ( item->IsSelected() )
         {
 #ifdef __WXMAC__
             colText = *wxWHITE;
@@ -2806,7 +2791,7 @@ wxGenericTreeCtrl::PaintLevel(wxGenericTreeItem *item,
         }
         else
         {
-            wxTreeItemAttr *attr = item->GetAttributes();
+            wxItemAttr *attr = item->GetAttributes();
             if (attr && attr->HasTextColour())
                 colText = attr->GetTextColour();
             else
@@ -3134,7 +3119,7 @@ void wxGenericTreeCtrl::OnChar( wxKeyEvent &event )
                 ExpandAllChildren(m_current);
                 break;
             }
-            //else: fall through to Collapse() it
+            wxFALLTHROUGH;//else: fall through to Collapse() it
 
         case '-':
         case WXK_SUBTRACT:
@@ -3241,14 +3226,12 @@ void wxGenericTreeCtrl::OnChar( wxKeyEvent &event )
             break;
 
         case WXK_RIGHT:
-            // this works the same as the down arrow except that we
-            // also expand the item if it wasn't expanded yet
+            // right arrow just expand the item will be fine
             if (m_current != GetRootItem().m_pItem || !HasFlag(wxTR_HIDE_ROOT))
                 Expand(m_current);
             //else: don't try to expand hidden root item (which can be the
             //      current one when the tree is empty)
-
-            // fall through
+            break;
 
         case WXK_DOWN:
             {
@@ -3437,18 +3420,20 @@ bool wxGenericTreeCtrl::GetBoundingRect(const wxTreeItemId& item,
 
     if ( textOnly )
     {
-        int image_h = 0, image_w = 0;
+        int image_w = 0;
         int image = ((wxGenericTreeItem*) item.m_pItem)->GetCurrentImage();
         if ( image != NO_IMAGE && m_imageListNormal )
         {
+            int image_h;
             m_imageListNormal->GetSize( image, image_w, image_h );
             image_w += MARGIN_BETWEEN_IMAGE_AND_TEXT;
         }
 
-        int state_h = 0, state_w = 0;
+        int state_w = 0;
         int state = ((wxGenericTreeItem*) item.m_pItem)->GetState();
         if ( state != wxTREE_ITEMSTATE_NONE && m_imageListState )
         {
+            int state_h;
             m_imageListState->GetSize( state, state_w, state_h );
             if ( image_w != 0 )
                 state_w += MARGIN_BETWEEN_STATE_AND_IMAGE;
@@ -3534,7 +3519,6 @@ void wxGenericTreeCtrl::OnRenameCancelled(wxGenericTreeItem *item)
 {
     // let owner know that the edit was cancelled
     wxTreeEvent le(wxEVT_TREE_END_LABEL_EDIT, this, item);
-    le.m_label = wxEmptyString;
     le.m_editCancelled = true;
 
     GetEventHandler()->ProcessEvent( le );
@@ -3761,7 +3745,11 @@ void wxGenericTreeCtrl::OnMouse( wxMouseEvent &event )
 
         m_dragCount = 0;
 
-        if (item == NULL) return;  /* we hit the blank area */
+        if ( item == NULL )
+        {
+            event.Skip();
+            return;
+        }
 
         if ( event.RightDown() )
         {
@@ -4171,9 +4159,6 @@ wxSize wxGenericTreeCtrl::DoGetBestSize() const
     int dy = (size.y - borderSize.y) % PIXELS_PER_UNIT;
     if ( dy )
         size.y += PIXELS_PER_UNIT - dy;
-
-    // we need to update the cache too as the base class cached its own value
-    CacheBestSize(size);
 
     return size;
 }

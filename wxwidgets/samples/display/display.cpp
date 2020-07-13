@@ -28,13 +28,14 @@
     #include "wx/wx.h"
 #endif
 
+#include "wx/artprov.h"
 #include "wx/bookctrl.h"
 #include "wx/sysopt.h"
 
 #include "wx/display.h"
 
 
-// the application icon (under Windows and OS/2 it is in resources)
+// the application icon (under Windows it is in resources)
 #ifndef wxHAS_IMAGES_IN_RESOURCES
     #include "../sample.xpm"
 #endif
@@ -53,7 +54,7 @@ public:
     // this one is called on application startup and is a good place for the app
     // initialization (doing it here and not in the ctor allows to have an error
     // return: if OnInit() returns false, the application terminates)
-    virtual bool OnInit();
+    virtual bool OnInit() wxOVERRIDE;
 };
 
 // Define a new frame type: this is going to be our main frame
@@ -80,6 +81,9 @@ public:
     void OnLeftClick(wxMouseEvent& event);
 
 private:
+    // Fill m_book with the information about all the displays.
+    void PopuplateWithDisplayInfo();
+
 #if wxUSE_DISPLAY
     // convert video mode to textual description
     wxString VideoModeToText(const wxVideoMode& mode);
@@ -153,7 +157,7 @@ wxEND_EVENT_TABLE()
 // static object for many reasons) and also declares the accessor function
 // wxGetApp() which will return the reference of the right type (i.e. MyApp and
 // not wxApp)
-IMPLEMENT_APP(MyApp)
+wxIMPLEMENT_APP(MyApp);
 
 // ============================================================================
 // implementation
@@ -168,13 +172,6 @@ bool MyApp::OnInit()
 {
     if ( !wxApp::OnInit() )
         return false;
-
-#ifdef __WXMSW__
-    if ( argc == 2 && !wxStricmp(argv[1],  wxT("/dx")) )
-    {
-        wxSystemOptions::SetOption(wxT("msw.display.directdraw"), 1);
-    }
-#endif // __WXMSW__
 
     // create the main application window
     MyFrame *frame = new MyFrame(_("Display wxWidgets Sample"),
@@ -206,7 +203,14 @@ MyFrame::MyFrame(const wxString& title, const wxPoint& pos, const wxSize& size, 
     wxMenu *menuDisplay = new wxMenu;
     menuDisplay->Append(Display_FromPoint, _("Find from &point..."));
     menuDisplay->AppendSeparator();
-    menuDisplay->AppendCheckItem(Display_FullScreen, _("Full &screen\tF12"));
+    wxMenuItem* const
+        itemFullScreen = new wxMenuItem(menuDisplay,
+                                        Display_FullScreen,
+                                        _("Full &screen\tF12"));
+    itemFullScreen->SetBitmap(
+            wxArtProvider::GetBitmap(wxART_FULL_SCREEN, wxART_MENU)
+        );
+    menuDisplay->Append(itemFullScreen);
     menuDisplay->AppendSeparator();
     menuDisplay->Append(Display_Quit, _("E&xit\tAlt-X"), _("Quit this program"));
 
@@ -219,6 +223,8 @@ MyFrame::MyFrame(const wxString& title, const wxPoint& pos, const wxSize& size, 
     menuBar->Append(menuDisplay, _("&Display"));
     menuBar->Append(helpMenu, _("&Help"));
 
+    EnableFullScreenView();
+
     // ... and attach this menu bar to the frame
     SetMenuBar(menuBar);
 #endif // wxUSE_MENUS
@@ -229,11 +235,14 @@ MyFrame::MyFrame(const wxString& title, const wxPoint& pos, const wxSize& size, 
 #endif // wxUSE_STATUSBAR
 
     // create child controls
-    wxPanel *panel = new wxPanel(this, wxID_ANY);
+    m_book = new wxBookCtrl(this, wxID_ANY);
+    PopuplateWithDisplayInfo();
+}
 
-    m_book = new wxBookCtrl(panel, wxID_ANY);
-    const size_t count = wxDisplay::GetCount();
-    for ( size_t nDpy = 0; nDpy < count; nDpy++ )
+void MyFrame::PopuplateWithDisplayInfo()
+{
+    const size_t countDpy = wxDisplay::GetCount();
+    for ( size_t nDpy = 0; nDpy < countDpy; nDpy++ )
     {
         wxDisplay display(nDpy);
 
@@ -244,45 +253,59 @@ MyFrame::MyFrame(const wxString& title, const wxPoint& pos, const wxSize& size, 
         sizer->AddGrowableCol(1);
 
         const wxRect r(display.GetGeometry());
-        sizer->Add(new wxStaticText(page, wxID_ANY, wxT("Origin: ")));
+        sizer->Add(new wxStaticText(page, wxID_ANY, "Origin: "));
         sizer->Add(new wxStaticText
                        (
                         page,
                         wxID_ANY,
-                        wxString::Format(wxT("(%d, %d)"),
+                        wxString::Format("(%d, %d)",
                                          r.x, r.y)
                        ));
 
-        sizer->Add(new wxStaticText(page, wxID_ANY, wxT("Size: ")));
+        sizer->Add(new wxStaticText(page, wxID_ANY, "Size: "));
         sizer->Add(new wxStaticText
                        (
                         page,
                         wxID_ANY,
-                        wxString::Format(wxT("(%d, %d)"),
+                        wxString::Format("(%d, %d)",
                                          r.width, r.height)
                        ));
 
         const wxRect rc(display.GetClientArea());
-        sizer->Add(new wxStaticText(page, wxID_ANY, wxT("Client area: ")));
+        sizer->Add(new wxStaticText(page, wxID_ANY, "Client area: "));
         sizer->Add(new wxStaticText
                        (
                         page,
                         wxID_ANY,
-                        wxString::Format(wxT("(%d, %d)-(%d, %d)"),
+                        wxString::Format("(%d, %d)-(%d, %d)",
                                          rc.x, rc.y, rc.width, rc.height)
                        ));
 
-        sizer->Add(new wxStaticText(page, wxID_ANY, wxT("Name: ")));
+        sizer->Add(new wxStaticText(page, wxID_ANY, "Resolution: "));
+        const wxSize ppi = display.GetPPI();
+        sizer->Add(new wxStaticText(page, wxID_ANY,
+                                    wxString::Format("%d*%d", ppi.x, ppi.y)));
+
+        sizer->Add(new wxStaticText(page, wxID_ANY, "Depth: "));
+        sizer->Add(new wxStaticText(page, wxID_ANY,
+                                    wxString::Format("%d", display.GetDepth())));
+
+        sizer->Add(new wxStaticText(page, wxID_ANY, "Name: "));
         sizer->Add(new wxStaticText(page, wxID_ANY, display.GetName()));
 
+        sizer->Add(new wxStaticText(page, wxID_ANY, "Primary: "));
+        sizer->Add(new wxStaticText(page, wxID_ANY,
+                                    display.IsPrimary() ? "yes" : "no"));
+
+        // add it to another sizer to have borders around it and button below
         wxSizer *sizerTop = new wxBoxSizer(wxVERTICAL);
         sizerTop->Add(sizer, 1, wxALL | wxEXPAND, 10);
 
 #if wxUSE_DISPLAY
         wxChoice *choiceModes = new wxChoice(page, Display_ChangeMode);
         const wxArrayVideoModes modes = display.GetModes();
-        const size_t count = modes.GetCount();
-        for ( size_t nMode = 0; nMode < count; nMode++ )
+        const size_t countModes = modes.GetCount();
+        for ( size_t nMode = 0; nMode < countModes; nMode++ )
         {
             const wxVideoMode& mode = modes[nMode];
 
@@ -290,29 +313,26 @@ MyFrame::MyFrame(const wxString& title, const wxPoint& pos, const wxSize& size, 
                                 new MyVideoModeClientData(mode));
         }
 
-        sizer->Add(new wxStaticText(page, wxID_ANY, wxT("&Modes: ")));
+        sizer->Add(new wxStaticText(page, wxID_ANY, "&Modes: "));
         sizer->Add(choiceModes, 0, wxEXPAND);
 
-        sizer->Add(new wxStaticText(page, wxID_ANY, wxT("Current: ")));
+        sizer->Add(new wxStaticText(page, wxID_ANY, "Current: "));
         sizer->Add(new wxStaticText(page, Display_CurrentMode,
                                     VideoModeToText(display.GetCurrentMode())));
 
-        // add it to another sizer to have borders around it and button below
-        sizerTop->Add(new wxButton(page, Display_ResetMode, wxT("&Reset mode")),
+        sizerTop->Add(new wxButton(page, Display_ResetMode, "&Reset mode"),
                       0, wxALL | wxCENTRE, 5);
 #endif // wxUSE_DISPLAY
 
         page->SetSizer(sizerTop);
+        page->Layout();
 
         m_book->AddPage(page,
-                        wxString::Format(wxT("Display %lu"),
+                        wxString::Format("Display %lu",
                                          (unsigned long)nDpy));
     }
 
-    wxBoxSizer *sizer = new wxBoxSizer(wxHORIZONTAL);
-    sizer->Add(m_book, 1, wxEXPAND);
-    panel->SetSizer(sizer);
-    sizer->SetSizeHints(this);
+    SetClientSize(m_book->GetBestSize());
 }
 
 #if wxUSE_DISPLAY
@@ -320,16 +340,16 @@ MyFrame::MyFrame(const wxString& title, const wxPoint& pos, const wxSize& size, 
 wxString MyFrame::VideoModeToText(const wxVideoMode& mode)
 {
     wxString s;
-    s.Printf(wxT("%dx%d"), mode.w, mode.h);
+    s.Printf("%dx%d", mode.w, mode.h);
 
     if ( mode.bpp )
     {
-        s += wxString::Format(wxT(", %dbpp"), mode.bpp);
+        s += wxString::Format(", %dbpp", mode.bpp);
     }
 
     if ( mode.refresh )
     {
-        s += wxString::Format(wxT(", %dHz"), mode.refresh);
+        s += wxString::Format(", %dHz", mode.refresh);
     }
 
     return s;
@@ -347,8 +367,8 @@ void MyFrame::OnQuit(wxCommandEvent& WXUNUSED(event))
 
 void MyFrame::OnAbout(wxCommandEvent& WXUNUSED(event))
 {
-    wxMessageBox(wxT("Demo program for wxDisplay class.\n\n(c) 2003-2006 Vadim Zeitlin"),
-                 wxT("About Display Sample"),
+    wxMessageBox("Demo program for wxDisplay class.\n\n(c) 2003-2006 Vadim Zeitlin",
+                 "About Display Sample",
                  wxOK | wxICON_INFORMATION,
                  this);
 }
@@ -356,15 +376,15 @@ void MyFrame::OnAbout(wxCommandEvent& WXUNUSED(event))
 void MyFrame::OnFromPoint(wxCommandEvent& WXUNUSED(event))
 {
 #if wxUSE_STATUSBAR
-    SetStatusText(wxT("Press the mouse anywhere..."));
+    SetStatusText("Press the mouse anywhere...");
 #endif // wxUSE_STATUSBAR
 
     CaptureMouse();
 }
 
-void MyFrame::OnFullScreen(wxCommandEvent& event)
+void MyFrame::OnFullScreen(wxCommandEvent& WXUNUSED(event))
 {
-    ShowFullScreen(event.IsChecked());
+    ShowFullScreen(!IsFullScreen());
 }
 
 #if wxUSE_DISPLAY
@@ -378,7 +398,7 @@ void MyFrame::OnChangeMode(wxCommandEvent& event)
                 wxDynamicCast(event.GetEventObject(), wxChoice)->
                     GetClientObject(event.GetInt()))->mode) )
     {
-        wxLogError(wxT("Changing video mode failed!"));
+        wxLogError("Changing video mode failed!");
     }
 }
 
@@ -400,10 +420,10 @@ void MyFrame::OnLeftClick(wxMouseEvent& event)
         int dpy = wxDisplay::GetFromPoint(ptScreen);
         if ( dpy == wxNOT_FOUND )
         {
-            wxLogError(wxT("Mouse clicked outside of display!?"));
+            wxLogError("Mouse clicked outside of display!?");
         }
 
-        wxLogStatus(this, wxT("Mouse clicked in display %d (at (%d, %d))"),
+        wxLogStatus(this, "Mouse clicked in display %d (at (%d, %d))",
                     dpy, ptScreen.x, ptScreen.y);
 
         ReleaseMouse();
@@ -414,18 +434,10 @@ void MyFrame::OnLeftClick(wxMouseEvent& event)
 
 void MyFrame::OnDisplayChanged(wxDisplayChangedEvent& event)
 {
-    // update the current mode text
-    for ( size_t n = 0; n < m_book->GetPageCount(); n++ )
-    {
-        wxStaticText *label = wxDynamicCast(m_book->GetPage(n)->
-                                                FindWindow(Display_CurrentMode),
-                                            wxStaticText);
-        if ( label )
-            label->SetLabel(VideoModeToText(wxDisplay(n).GetCurrentMode()));
-    }
+    m_book->DeleteAllPages();
+    PopuplateWithDisplayInfo();
 
-
-    wxLogStatus(this, wxT("Display resolution was changed."));
+    wxLogStatus(this, "Display resolution was changed.");
 
     event.Skip();
 }

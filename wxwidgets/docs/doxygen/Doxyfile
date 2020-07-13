@@ -1,4 +1,4 @@
-# Doxyfile 1.8.2
+# Doxyfile 1.8.8
 
 #---------------------------------------------------------------------------
 # Project Options
@@ -6,11 +6,12 @@
 
 DOXYFILE_ENCODING      = UTF-8
 PROJECT_NAME           = wxWidgets
-PROJECT_NUMBER         = 3.0.2
+PROJECT_NUMBER         = 3.1.3
 PROJECT_BRIEF          =
 PROJECT_LOGO           = logo.png
 OUTPUT_DIRECTORY       = out
 CREATE_SUBDIRS         = NO
+ALLOW_UNICODE_NAMES    = NO
 OUTPUT_LANGUAGE        = English
 BRIEF_MEMBER_DESC      = YES
 REPEAT_BRIEF           = YES
@@ -18,7 +19,7 @@ ABBREVIATE_BRIEF       =
 ALWAYS_DETAILED_SEC    = YES # Default: NO
 INLINE_INHERITED_MEMB  = NO
 FULL_PATH_NAMES        = YES
-STRIP_FROM_PATH        = "$(WXWIDGETS)/"
+STRIP_FROM_PATH        = ../..
 STRIP_FROM_INC_PATH    = "$(WXWIDGETS)/include/" \
                          "$(WXWIDGETS)/interface/"
 SHORT_NAMES            = NO
@@ -45,7 +46,6 @@ SUBGROUPING            = YES
 INLINE_GROUPED_CLASSES = NO # TODO: Examine this setting.
 INLINE_SIMPLE_STRUCTS  = NO # TODO: Examine this setting.
 TYPEDEF_HIDES_STRUCT   = NO
-SYMBOL_CACHE_SIZE      = 0
 LOOKUP_CACHE_SIZE      = 0
 
 
@@ -95,8 +95,12 @@ ALIASES += endFlagTable="</div>\n"
 ALIASES += appearance{1}="\htmlonly<div class="appearance"><span class='appearance'>Appearance:</span><table><tr><td>\endhtmlonly\n\image html appear-\1-msw.png \"wxMSW Appearance\"\n\htmlonly</td><td>\endhtmlonly\n\image html appear-\1-gtk.png \"wxGTK Appearance\"\n\htmlonly</td><td>\endhtmlonly\n\image html appear-\1-mac.png \"wxOSX Appearance\"\n\htmlonly</td></tr></table></div>\endhtmlonly"
 ALIASES += genericAppearance{1}="\htmlonly<div class="appearance"><span class='appearance'>Appearance:</span><table class='appearance'><tr><td>\endhtmlonly\n\image html generic/\1.png \"Generic Appearance\"\n\htmlonly</td></tr></table></div>\endhtmlonly"
 
+# these compact versions are only used on the screenshots page
+ALIASES += appearance_brief{2}="\htmlonly<div class="appearance_brief"><table><tr><td>\endhtmlonly\n\1\htmlonly</td><td>\endhtmlonly\n\image html appear-\2-msw.png\n\htmlonly</td><td>\endhtmlonly\n\image html appear-\2-gtk.png\n\htmlonly</td><td>\endhtmlonly\n\image html appear-\2-mac.png\n\htmlonly</td></tr></table></div>\endhtmlonly"
+ALIASES += genericAppearance_brief{2}="\htmlonly<div class="appearance_brief"><table><tr><td>\endhtmlonly\n\1\htmlonly</td><td>\endhtmlonly\n\image html generic/\2.png\n\htmlonly</td></tr></table></div>\endhtmlonly"
+
 # aliases for the creation of "named member groups"
-# USAGE: the first argument must not contain spaces and be a unique identifier 
+# USAGE: the first argument must not contain spaces and be a unique identifier
 #        of the member group for the class being documented;
 #        the second argument is the member group name and can contain spaces
 #        See wxString as an usage example.
@@ -208,7 +212,7 @@ ALIASES += rightCurly="}"
 #---------------------------------------------------------------------------
 
 # For indicating a sample location
-ALIASES += sampledir{1}="@e Location: @c samples/\1 subdirectory of your wxWidgets installation or http://svn.wxwidgets.org/viewvc/wx/wxWidgets/trunk/samples/\1"
+ALIASES += sampledir{1}="@e Location: @c samples/\1 subdirectory of your wxWidgets installation or https://github.com/wxWidgets/wxWidgets/tree/master/samples/\1"
 
 # For refering to the corresponding sample in a class document or a overview
 # Usually placed in the queue of @see
@@ -230,7 +234,7 @@ ALIASES += buildwith{2}="<b>Build Note:</b> You may need to build the wxWidgets 
 #---------------------------------------------------------------------------
 
 EXTRACT_ALL            = YES # Default: NO
-EXTRACT_PRIVATE        = NO
+EXTRACT_PRIVATE        = YES # Default: NO
 EXTRACT_PACKAGE        = NO
 EXTRACT_STATIC         = YES # Default: NO
 EXTRACT_LOCAL_CLASSES  = YES
@@ -244,6 +248,7 @@ INTERNAL_DOCS          = NO
 CASE_SENSE_NAMES       = NO # Default: YES
 HIDE_SCOPE_NAMES       = NO
 SHOW_INCLUDE_FILES     = YES
+SHOW_GROUPED_MEMB_INC  = NO # TODO: YES
 FORCE_LOCAL_INCLUDES   = NO
 INLINE_INFO            = YES
 SORT_MEMBER_DOCS       = YES
@@ -256,10 +261,8 @@ GENERATE_TODOLIST      = YES
 GENERATE_TESTLIST      = YES
 GENERATE_BUGLIST       = YES
 GENERATE_DEPRECATEDLIST= YES
-
-# can contain WXPERL_MANUAL, WXPYTHON_MANUAL keywords
-ENABLED_SECTIONS       = WXPERL_MANUAL WXPYTHON_MANUAL
-
+ENABLED_SECTIONS       = WXPERL_MANUAL \
+                         WXPYTHON_MANUAL
 MAX_INITIALIZER_LINES  = 30
 SHOW_USED_FILES        = NO # Default: YES
 SHOW_FILES             = YES
@@ -286,9 +289,19 @@ WARN_LOGFILE           = doxygen.log
 # Input File Options
 #---------------------------------------------------------------------------
 
-INPUT                  = mainpages groups overviews ../../interface
+INPUT                  = mainpages \
+                         groups \
+                         overviews \
+                         ../gtk \
+                         ../ios \
+                         ../motif \
+                         ../msw \
+                         ../osx \
+                         ../qt \
+                         ../x11 \
+                         ../../interface
 INPUT_ENCODING         = UTF-8
-FILE_PATTERNS          = *.h
+FILE_PATTERNS          = *.h *.md
 RECURSIVE              = YES # Default: NO
 EXCLUDE                =
 EXCLUDE_SYMLINKS       = NO
@@ -302,6 +315,7 @@ INPUT_FILTER           =
 FILTER_PATTERNS        =
 FILTER_SOURCE_FILES    = NO
 FILTER_SOURCE_PATTERNS =
+USE_MDFILE_AS_MAINPAGE =
 
 
 #---------------------------------------------------------------------------
@@ -314,6 +328,7 @@ STRIP_CODE_COMMENTS    = YES
 REFERENCED_BY_RELATION = NO
 REFERENCES_RELATION    = NO
 REFERENCES_LINK_SOURCE = YES
+SOURCE_TOOLTIPS        = YES
 USE_HTAGS              = NO
 VERBATIM_HEADERS       = NO # Default: YES
 
@@ -345,18 +360,6 @@ HTML_COLORSTYLE_GAMMA  = 100 # Default: 80
 HTML_TIMESTAMP         = YES
 HTML_DYNAMIC_SECTIONS  = YES # Default: NO
 HTML_INDEX_NUM_ENTRIES = 100
-DISABLE_INDEX          = NO
-ENUM_VALUES_PER_LINE   = 1 # Default: 4
-GENERATE_TREEVIEW      = NO
-TREEVIEW_WIDTH         = 250
-EXT_LINKS_IN_WINDOW    = YES # Default: NO
-FORMULA_FONTSIZE       = 10
-FORMULA_TRANSPARENT    = YES
-USE_MATHJAX            = NO
-MATHJAX_RELPATH        = http://cdn.mathjax.org/mathjax/latest
-MATHJAX_EXTENSIONS     =
-SEARCHENGINE           = $(SEARCHENGINE)
-SERVER_BASED_SEARCH    = $(SERVER_BASED_SEARCH)
 
 
 #---------------------------------------------------------------------------
@@ -364,10 +367,10 @@ SERVER_BASED_SEARCH    = $(SERVER_BASED_SEARCH)
 #---------------------------------------------------------------------------
 
 GENERATE_DOCSET        = $(GENERATE_DOCSET)
-DOCSET_FEEDNAME        = "wxWidgets 3.0"
-DOCSET_BUNDLE_ID       = org.wxwidgets.doxygen.wx30
+DOCSET_FEEDNAME        = "wxWidgets 3.1"
+DOCSET_BUNDLE_ID       = org.wxwidgets.doxygen.wx31
 DOCSET_PUBLISHER_ID    = org.wxwidgets.doxygen
-DOCSET_PUBLISHER_NAME  = wxWidgets Team
+DOCSET_PUBLISHER_NAME  = wxWidgets
 
 
 #---------------------------------------------------------------------------
@@ -406,6 +409,31 @@ ECLIPSE_DOC_ID         = org.wxwidgets.doxygen
 
 
 #---------------------------------------------------------------------------
+# Other Output Options
+#---------------------------------------------------------------------------
+
+DISABLE_INDEX          = NO
+GENERATE_TREEVIEW      = NO
+ENUM_VALUES_PER_LINE   = 1 # Default: 4
+TREEVIEW_WIDTH         = 250
+EXT_LINKS_IN_WINDOW    = YES # Default: NO
+FORMULA_FONTSIZE       = 10
+FORMULA_TRANSPARENT    = YES
+USE_MATHJAX            = NO
+MATHJAX_FORMAT         = HTML-CSS
+MATHJAX_RELPATH        = http://cdn.mathjax.org/mathjax/latest
+MATHJAX_EXTENSIONS     =
+MATHJAX_CODEFILE       =
+SEARCHENGINE           = $(SEARCHENGINE)
+SERVER_BASED_SEARCH    = $(SERVER_BASED_SEARCH)
+EXTERNAL_SEARCH        = NO
+SEARCHENGINE_URL       =
+SEARCHDATA_FILE        = searchdata.xml
+EXTERNAL_SEARCH_ID     =
+EXTRA_SEARCH_MAPPINGS  =
+
+
+#---------------------------------------------------------------------------
 # LaTeX Output Options
 #---------------------------------------------------------------------------
 
@@ -414,10 +442,11 @@ LATEX_OUTPUT           = latex
 LATEX_CMD_NAME         = latex
 MAKEINDEX_CMD_NAME     = makeindex
 COMPACT_LATEX          = NO
-PAPER_TYPE             = a4wide
+PAPER_TYPE             = a4
 EXTRA_PACKAGES         =
-LATEX_HEADER           = latexdocstart.inc
+LATEX_HEADER           = latex_header.tex
 LATEX_FOOTER           =
+LATEX_EXTRA_FILES      =
 PDF_HYPERLINKS         = YES
 USE_PDFLATEX           = YES
 LATEX_BATCHMODE        = YES # Default: NO
@@ -445,6 +474,7 @@ RTF_EXTENSIONS_FILE    =
 GENERATE_MAN           = NO
 MAN_OUTPUT             = man
 MAN_EXTENSION          = .3
+MAN_SUBDIR             =
 MAN_LINKS              = NO
 
 
@@ -454,9 +484,16 @@ MAN_LINKS              = NO
 
 GENERATE_XML           = $(GENERATE_XML)
 XML_OUTPUT             = xml
-XML_SCHEMA             =
-XML_DTD                =
 XML_PROGRAMLISTING     = NO # Default: YES
+
+
+#---------------------------------------------------------------------------
+# DOCBOOK Output Options
+#---------------------------------------------------------------------------
+
+GENERATE_DOCBOOK       = NO
+DOCBOOK_OUTPUT         = docbook
+DOCBOOK_PROGRAMLISTING = NO
 
 
 #---------------------------------------------------------------------------
@@ -486,7 +523,8 @@ EXPAND_ONLY_PREDEF     = NO
 SEARCH_INCLUDES        = YES
 INCLUDE_PATH           =
 INCLUDE_FILE_PATTERNS  =
-PREDEFINED             = wxUSE_BASE wxUSE_GUI
+PREDEFINED             = wxUSE_BASE \
+                         wxUSE_GUI
 EXPAND_AS_DEFINED      =
 SKIP_FUNCTION_MACROS   = YES
 
@@ -496,9 +534,10 @@ SKIP_FUNCTION_MACROS   = YES
 #---------------------------------------------------------------------------
 
 TAGFILES               =
-GENERATE_TAGFILE       =
+GENERATE_TAGFILE       = $(GENERATE_TAGFILE)
 ALLEXTERNALS           = NO
 EXTERNAL_GROUPS        = YES
+EXTERNAL_PAGES         = YES
 PERL_PATH              = /usr/bin/perl
 
 
@@ -508,10 +547,11 @@ PERL_PATH              = /usr/bin/perl
 
 CLASS_DIAGRAMS         = YES
 MSCGEN_PATH            =
+DIA_PATH               =
 HIDE_UNDOC_RELATIONS   = YES
 HAVE_DOT               = YES # Default: NO
 DOT_NUM_THREADS        = 0
-DOT_FONTNAME           = FreeSans # Default: Helvetica
+DOT_FONTNAME           =
 DOT_FONTSIZE           = 10
 DOT_FONTPATH           =
 CLASS_GRAPH            = YES
@@ -528,16 +568,14 @@ GRAPHICAL_HIERARCHY    = NO # TODO: Default: YES
 DIRECTORY_GRAPH        = NO # Default: YES
 DOT_IMAGE_FORMAT       = png
 INTERACTIVE_SVG        = NO
+DOT_PATH               =
 DOTFILE_DIRS           =
 MSCFILE_DIRS           =
+DIAFILE_DIRS           =
+PLANTUML_JAR_PATH      =
 DOT_GRAPH_MAX_NODES    = 50
 MAX_DOT_GRAPH_DEPTH    = 1000 # Default: 0
 DOT_TRANSPARENT        = NO
 DOT_MULTI_TARGETS      = NO
 GENERATE_LEGEND        = YES
 DOT_CLEANUP            = YES
-
-# Instead of setting a value for DOT_PATH it's easier and more portable to
-# put your dot utility in the PATH. On Windows you'll need to install GraphViz
-# tools, and then manually add it to the PATH environment variable.
-DOT_PATH               =

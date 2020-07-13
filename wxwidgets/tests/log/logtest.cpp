@@ -23,10 +23,16 @@
 
 #include "wx/scopeguard.h"
 
+#ifdef __WINDOWS__
+    #include "wx/msw/wrapwin.h"
+#else
+    #include <errno.h>
+#endif
+
 #if WXWIN_COMPATIBILITY_2_8
     // we override deprecated DoLog() and DoLogString() in this test, suppress
     // warnings about it
-    #if wxCHECK_VISUALC_VERSION(7)
+    #ifdef __VISUALC__
         #pragma warning(disable: 4996)
     #endif // VC++ 7+
 #endif // WXWIN_COMPATIBILITY_2_8
@@ -80,7 +86,7 @@ public:
 protected:
     virtual void DoLogRecord(wxLogLevel level,
                              const wxString& msg,
-                             const wxLogRecordInfo& info)
+                             const wxLogRecordInfo& info) wxOVERRIDE
     {
         m_logs[level] = msg;
         m_logsInfo[level] = info;
@@ -153,8 +159,8 @@ class LogTestCase : public CppUnit::TestCase
 public:
     LogTestCase() { }
 
-    virtual void setUp();
-    virtual void tearDown();
+    virtual void setUp() wxOVERRIDE;
+    virtual void tearDown() wxOVERRIDE;
 
 private:
     CPPUNIT_TEST_SUITE( LogTestCase );
@@ -242,7 +248,7 @@ void LogTestCase::Null()
 void LogTestCase::Component()
 {
     wxLogMessage("Message");
-    CPPUNIT_ASSERT_EQUAL( wxLOG_COMPONENT,
+    CPPUNIT_ASSERT_EQUAL( std::string(wxLOG_COMPONENT),
                           m_log->GetInfo(wxLOG_Message).component );
 
     // completely disable logging for this component
@@ -348,11 +354,13 @@ void LogTestCase::SysError()
     CPPUNIT_ASSERT( m_log->GetLog(wxLOG_Error).StartsWith("Error (", &s) );
     WX_ASSERT_MESSAGE( ("Error message is \"(%s\"", s), s.StartsWith("error 17") );
 
-    // The last error code seems to be set somewhere in MinGW CRT as its value
-    // is just not what we expect (ERROR_INVALID_PARAMETER instead of 0 and 0
-    // instead of ERROR_FILE_NOT_FOUND) so exclude the tests which rely on last
-    // error being preserved for this compiler.
-#ifndef __MINGW32__
+    // Try to ensure that the system error is 0.
+#ifdef __WINDOWS__
+    ::SetLastError(0);
+#else
+    errno = 0;
+#endif
+
     wxLogSysError("Success");
     CPPUNIT_ASSERT( m_log->GetLog(wxLOG_Error).StartsWith("Success (", &s) );
     WX_ASSERT_MESSAGE( ("Error message is \"(%s\"", s), s.StartsWith("error 0") );
@@ -361,7 +369,6 @@ void LogTestCase::SysError()
     wxLogSysError("Not found");
     CPPUNIT_ASSERT( m_log->GetLog(wxLOG_Error).StartsWith("Not found (", &s) );
     WX_ASSERT_MESSAGE( ("Error message is \"(%s\"", s), s.StartsWith("error 2") );
-#endif // __MINGW32__
 }
 
 void LogTestCase::NoWarnings()

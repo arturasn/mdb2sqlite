@@ -11,9 +11,6 @@
 #define _WX_STRVARARG_H_
 
 #include "wx/platform.h"
-#if wxONLY_WATCOM_EARLIER_THAN(1,4)
-    #error "OpenWatcom version >= 1.4 is required to compile this code"
-#endif
 
 #include "wx/cpp.h"
 #include "wx/chartype.h"
@@ -155,10 +152,8 @@ public:
     // a char* string is also a pointer and an integer is also a char.
     enum ArgumentType
     {
-#if wxABI_VERSION >= 30001
         Arg_Unused      = 0, // not used at all; the value of 0 is chosen to
                              // conveniently pass wxASSERT_ARG_TYPE's check
-#endif
 
         Arg_Char        = 0x0001,    // character as char %c
         Arg_Pointer     = 0x0002,    // %p
@@ -367,17 +362,12 @@ struct wxFormatStringSpecifier
     //
     // Furthermore, if the compiler doesn't have partial template
     // specialization, we didn't cover pointers either.
-#ifdef HAVE_PARTIAL_SPECIALIZATION
     enum { value = wxFormatString::Arg_Int };
-#else
-    enum { value = wxFormatString::Arg_Int | wxFormatString::Arg_Pointer };
-#endif
 };
 
 #endif // HAVE_TR1_TYPE_TRAITS/!HAVE_TR1_TYPE_TRAITS
 
 
-#ifdef HAVE_PARTIAL_SPECIALIZATION
 template<typename T>
 struct wxFormatStringSpecifier<T*>
 {
@@ -389,7 +379,6 @@ struct wxFormatStringSpecifier<const T*>
 {
     enum { value = wxFormatString::Arg_Pointer };
 };
-#endif // !HAVE_PARTIAL_SPECIALIZATION
 
 
 #define wxFORMAT_STRING_SPECIFIER(T, arg)                                   \
@@ -435,6 +424,12 @@ wxFORMAT_STRING_SPECIFIER(const wchar_t*, wxFormatString::Arg_String)
 wxFORMAT_STRING_SPECIFIER(int*, wxFormatString::Arg_IntPtr | wxFormatString::Arg_Pointer)
 wxFORMAT_STRING_SPECIFIER(short int*, wxFormatString::Arg_ShortIntPtr | wxFormatString::Arg_Pointer)
 wxFORMAT_STRING_SPECIFIER(long int*, wxFormatString::Arg_LongIntPtr | wxFormatString::Arg_Pointer)
+
+// Support for nullptr is available since MSVS 2010, even though it doesn't
+// define __cplusplus as a C++11 compiler.
+#if __cplusplus >= 201103 || wxCHECK_VISUALC_VERSION(10)
+wxFORMAT_STRING_SPECIFIER(std::nullptr_t, wxFormatString::Arg_Pointer)
+#endif
 
 #undef wxFORMAT_STRING_SPECIFIER
 
@@ -1160,68 +1155,5 @@ private:
 #define _WX_VARARG_DEFINE_FUNC_NOP_N0(name, numfixed, fixed)                  \
     inline void name(_WX_VARARG_FIXED_UNUSED_EXPAND(numfixed, fixed))         \
     {}
-
-
-// ----------------------------------------------------------------------------
-// workaround for OpenWatcom bug #351
-// ----------------------------------------------------------------------------
-
-#ifdef __WATCOMC__
-// workaround for http://bugzilla.openwatcom.org/show_bug.cgi?id=351
-
-// This macro can be used to forward a 'vararg' template to another one with
-// different fixed arguments types. Parameters are same as for
-// WX_DEFINE_VARARG_FUNC (rettype=void can be used here), 'convfixed' is how
-// to convert fixed arguments. For example, this is typical code for dealing
-// with different forms of format string:
-//
-// WX_DEFINE_VARARG_FUNC_VOID(Printf, 1, (const wxFormatString&),
-//                            DoPrintfWchar, DoPrintfUtf8)
-// #ifdef __WATCOMC__
-// WX_VARARG_WATCOM_WORKAROUND(void, Printf, 1, (const wxString&),
-//                             (wxFormatString(f1)))
-// WX_VARARG_WATCOM_WORKAROUND(void, Printf, 1, (const char*),
-//                             (wxFormatString(f1)))
-// ...
-#define WX_VARARG_WATCOM_WORKAROUND(rettype, name, numfixed, fixed, convfixed)\
-    _WX_VARARG_ITER(_WX_VARARG_MAX_ARGS,                                      \
-                    _WX_VARARG_WATCOM_WORKAROUND,                             \
-                    rettype, name, convfixed, dummy, numfixed, fixed)
-
-#define WX_VARARG_WATCOM_WORKAROUND_CTOR(name, numfixed, fixed, convfixed)    \
-    _WX_VARARG_ITER(_WX_VARARG_MAX_ARGS,                                      \
-                    _WX_VARARG_WATCOM_WORKAROUND_CTOR,                        \
-                    dummy, name, convfixed, dummy, numfixed, fixed)
-
-#define _WX_VARARG_WATCOM_UNPACK_1(a1)               a1
-#define _WX_VARARG_WATCOM_UNPACK_2(a1, a2)           a1, a2
-#define _WX_VARARG_WATCOM_UNPACK_3(a1, a2, a3)       a1, a2, a3
-#define _WX_VARARG_WATCOM_UNPACK_4(a1, a2, a3, a4)   a1, a2, a3, a4
-#define _WX_VARARG_WATCOM_UNPACK(N, convfixed) \
-        _WX_VARARG_WATCOM_UNPACK_##N convfixed
-
-#define _WX_VARARG_PASS_WATCOM(i) a##i
-
-#define _WX_VARARG_WATCOM_WORKAROUND(N, rettype, name,                        \
-                                     convfixed, dummy, numfixed, fixed)       \
-    template<_WX_VARARG_JOIN(N, _WX_VARARG_TEMPL)>                            \
-    rettype name(_WX_VARARG_FIXED_EXPAND(numfixed, fixed),                    \
-                 _WX_VARARG_JOIN(N, _WX_VARARG_ARG))                          \
-    {                                                                         \
-         return name(_WX_VARARG_WATCOM_UNPACK(numfixed, convfixed),           \
-                     _WX_VARARG_JOIN(N, _WX_VARARG_PASS_WATCOM));             \
-    }
-
-#define _WX_VARARG_WATCOM_WORKAROUND_CTOR(N, dummy1, name,                    \
-                                     convfixed, dummy2, numfixed, fixed)      \
-    template<_WX_VARARG_JOIN(N, _WX_VARARG_TEMPL)>                            \
-    name(_WX_VARARG_FIXED_EXPAND(numfixed, fixed),                            \
-                 _WX_VARARG_JOIN(N, _WX_VARARG_ARG))                          \
-    {                                                                         \
-         name(_WX_VARARG_WATCOM_UNPACK(numfixed, convfixed),                  \
-                     _WX_VARARG_JOIN(N, _WX_VARARG_PASS_WATCOM));             \
-    }
-
-#endif // __WATCOMC__
 
 #endif // _WX_STRVARARG_H_

@@ -77,28 +77,27 @@ void wxGridCellRenderer::Draw(wxGrid& grid,
 
 #if wxUSE_DATETIME
 
-// Enables a grid cell to display a formatted date and or time
+// Enables a grid cell to display a formatted date
 
-wxGridCellDateTimeRenderer::wxGridCellDateTimeRenderer(const wxString& outformat, const wxString& informat)
+wxGridCellDateRenderer::wxGridCellDateRenderer(const wxString& outformat)
 {
-    m_iformat = informat;
-    m_oformat = outformat;
+    if ( outformat.empty() )
+    {
+        m_oformat = "%x"; // Localized date representation.
+    }
+    else
+    {
+        m_oformat = outformat;
+    }
     m_tz = wxDateTime::Local;
-    m_dateDef = wxDefaultDateTime;
 }
 
-wxGridCellRenderer *wxGridCellDateTimeRenderer::Clone() const
+wxGridCellRenderer *wxGridCellDateRenderer::Clone() const
 {
-    wxGridCellDateTimeRenderer *renderer = new wxGridCellDateTimeRenderer;
-    renderer->m_iformat = m_iformat;
-    renderer->m_oformat = m_oformat;
-    renderer->m_dateDef = m_dateDef;
-    renderer->m_tz = m_tz;
-
-    return renderer;
+    return new wxGridCellDateRenderer(*this);
 }
 
-wxString wxGridCellDateTimeRenderer::GetString(const wxGrid& grid, int row, int col)
+wxString wxGridCellDateRenderer::GetString(const wxGrid& grid, int row, int col)
 {
     wxGridTableBase *table = grid.GetTable();
 
@@ -121,8 +120,7 @@ wxString wxGridCellDateTimeRenderer::GetString(const wxGrid& grid, int row, int 
     if (!hasDatetime )
     {
         text = table->GetValue(row, col);
-        const char * const end = val.ParseFormat(text, m_iformat, m_dateDef);
-        hasDatetime = end && !*end;
+        hasDatetime = Parse(text, val);
     }
 
     if ( hasDatetime )
@@ -132,12 +130,18 @@ wxString wxGridCellDateTimeRenderer::GetString(const wxGrid& grid, int row, int 
     return text;
 }
 
-void wxGridCellDateTimeRenderer::Draw(wxGrid& grid,
-                                   wxGridCellAttr& attr,
-                                   wxDC& dc,
-                                   const wxRect& rectCell,
-                                   int row, int col,
-                                   bool isSelected)
+bool wxGridCellDateRenderer::Parse(const wxString& text, wxDateTime& result)
+{
+    wxString::const_iterator end;
+    return result.ParseDate(text, &end) && end == text.end();
+}
+
+void wxGridCellDateRenderer::Draw(wxGrid& grid,
+                                  wxGridCellAttr& attr,
+                                  wxDC& dc,
+                                  const wxRect& rectCell,
+                                  int row, int col,
+                                  bool isSelected)
 {
     wxGridCellRenderer::Draw(grid, attr, dc, rectCell, row, col, isSelected);
 
@@ -154,18 +158,39 @@ void wxGridCellDateTimeRenderer::Draw(wxGrid& grid,
     grid.DrawTextRectangle(dc, GetString(grid, row, col), rect, hAlign, vAlign);
 }
 
-wxSize wxGridCellDateTimeRenderer::GetBestSize(wxGrid& grid,
-                                            wxGridCellAttr& attr,
-                                            wxDC& dc,
-                                            int row, int col)
+wxSize wxGridCellDateRenderer::GetBestSize(wxGrid& grid,
+                                           wxGridCellAttr& attr,
+                                           wxDC& dc,
+                                           int row, int col)
 {
     return DoGetBestSize(attr, dc, GetString(grid, row, col));
 }
 
-void wxGridCellDateTimeRenderer::SetParameters(const wxString& params)
+void wxGridCellDateRenderer::SetParameters(const wxString& params)
 {
     if (!params.empty())
         m_oformat=params;
+}
+
+
+// Enables a grid cell to display a formatted date and or time
+
+wxGridCellDateTimeRenderer::wxGridCellDateTimeRenderer(const wxString& outformat, const wxString& informat)
+    : wxGridCellDateRenderer(outformat)
+    , m_iformat(informat)
+    , m_dateDef(wxDefaultDateTime)
+{
+}
+
+wxGridCellRenderer *wxGridCellDateTimeRenderer::Clone() const
+{
+    return new wxGridCellDateTimeRenderer(*this);
+}
+
+bool wxGridCellDateTimeRenderer::Parse(const wxString& text, wxDateTime& result)
+{
+    const char * const end = result.ParseFormat(text, m_iformat, m_dateDef);
+    return end && !*end;
 }
 
 #endif // wxUSE_DATETIME
@@ -436,20 +461,57 @@ wxGridCellAutoWrapStringRenderer::GetBestSize(wxGrid& grid,
                                               wxDC& dc,
                                               int row, int col)
 {
+    // We have to make a choice here and fix either width or height because we
+    // don't have any naturally best size. This choice is mostly arbitrary, but
+    // we need to be consistent about it, otherwise wxGrid auto-sizing code
+    // would get confused. For now we decide to use a single line of text and
+    // compute the width needed to fully display everything.
+    const int height = dc.GetCharHeight();
+
+    return wxSize(GetBestWidth(grid, attr, dc, row, col, height), height);
+}
+
+static const int AUTOWRAP_Y_MARGIN = 4;
+
+int
+wxGridCellAutoWrapStringRenderer::GetBestHeight(wxGrid& grid,
+                                                wxGridCellAttr& attr,
+                                                wxDC& dc,
+                                                int row, int col,
+                                                int width)
+{
     const int lineHeight = dc.GetCharHeight();
 
-    // Search for a shape no taller than the golden ratio.
-    wxSize size;
-    for ( size.x = 10; ; size.x += 10 )
-    {
-        const size_t
-            numLines = GetTextLines(grid, dc, attr, size, row, col).size();
-        size.y = numLines * lineHeight;
-        if ( size.x >= size.y*1.68 )
-            break;
-    }
+    // Use as many lines as we need for this width and add a small border to
+    // improve the appearance.
+    return GetTextLines(grid, dc, attr, wxSize(width, lineHeight),
+                        row, col).size() * lineHeight + AUTOWRAP_Y_MARGIN;
+}
 
-    return size;
+int
+wxGridCellAutoWrapStringRenderer::GetBestWidth(wxGrid& grid,
+                                               wxGridCellAttr& attr,
+                                               wxDC& dc,
+                                               int row, int col,
+                                               int height)
+{
+    const int lineHeight = dc.GetCharHeight();
+
+    // Maximal number of lines that fully fit but at least 1.
+    const size_t maxLines = height - AUTOWRAP_Y_MARGIN < lineHeight
+                                ? 1
+                                : (height - AUTOWRAP_Y_MARGIN)/lineHeight;
+
+    // Increase width until all the text fits.
+    //
+    // TODO: this is not the most efficient to do it for the long strings.
+    const int charWidth = dc.GetCharWidth();
+    int width = 2*charWidth;
+    while ( GetTextLines(grid, dc, attr, wxSize(width, height),
+                         row, col).size() > maxLines )
+        width += charWidth;
+
+    return width;
 }
 
 // ----------------------------------------------------------------------------
@@ -535,10 +597,9 @@ void wxGridCellStringRenderer::Draw(wxGrid& grid,
     int hAlign, vAlign;
     attr.GetAlignment(&hAlign, &vAlign);
 
-    int overflowCols = 0;
-
     if (attr.GetOverflow())
     {
+        int overflowCols = 0;
         int cols = grid.GetNumberCols();
         int best_width = GetBestSize(grid,attr,dc,row,col).GetWidth();
         int cell_rows, cell_cols;
@@ -593,8 +654,7 @@ void wxGridCellStringRenderer::Draw(wxGrid& grid,
             for (int i = col + cell_cols; i <= col_end; i++)
             {
                 clip.width = grid.GetColSize(i) - 1;
-                dc.DestroyClippingRegion();
-                dc.SetClippingRegion(clip);
+                wxDCClipper clipper(dc, clip);
 
                 SetTextColoursAndFont(grid, attr, dc,
                         grid.IsInSelection(row,i));
@@ -607,7 +667,6 @@ void wxGridCellStringRenderer::Draw(wxGrid& grid,
             rect = rectCell;
             rect.Inflate(-1);
             rect.width++;
-            dc.DestroyClippingRegion();
         }
     }
 

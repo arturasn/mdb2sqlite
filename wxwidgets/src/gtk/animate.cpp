@@ -23,14 +23,15 @@
 
 #include "wx/wfstream.h"
 #include "wx/gtk/private.h"
-
-#include <gtk/gtk.h>
+#include "wx/gtk/private/object.h"
 
 
 // ============================================================================
 // implementation
 // ============================================================================
 
+extern "C" {
+static
 void gdk_pixbuf_area_updated(GdkPixbufLoader *loader,
                              gint             WXUNUSED(x),
                              gint             WXUNUSED(y),
@@ -45,13 +46,13 @@ void gdk_pixbuf_area_updated(GdkPixbufLoader *loader,
         anim->SetPixbuf(gdk_pixbuf_loader_get_animation(loader));
     }
 }
-
+}
 
 //-----------------------------------------------------------------------------
 // wxAnimation
 //-----------------------------------------------------------------------------
 
-IMPLEMENT_DYNAMIC_CLASS(wxAnimation, wxAnimationBase)
+wxIMPLEMENT_DYNAMIC_CLASS(wxAnimation, wxAnimationBase);
 
 wxAnimation::wxAnimation(const wxAnimation& that)
     : base_type(that)
@@ -116,6 +117,8 @@ bool wxAnimation::Load(wxInputStream &stream, wxAnimationType type)
     else
         loader = gdk_pixbuf_loader_new();
 
+    wxGtkObject<GdkPixbufLoader> ensureUnrefLoader(loader);
+
     if (!loader ||
         error != NULL)  // even if the loader was allocated, an error could have happened
     {
@@ -156,6 +159,7 @@ bool wxAnimation::Load(wxInputStream &stream, wxAnimationType type)
     if (!data_written)
     {
         wxLogDebug("Could not read data from the stream...");
+        gdk_pixbuf_loader_close(loader, NULL);
         return false;
     }
 
@@ -202,10 +206,10 @@ void wxAnimation::SetPixbuf(GdkPixbufAnimation* p)
 // wxAnimationCtrl
 //-----------------------------------------------------------------------------
 
-IMPLEMENT_DYNAMIC_CLASS(wxAnimationCtrl, wxAnimationCtrlBase)
-BEGIN_EVENT_TABLE(wxAnimationCtrl, wxAnimationCtrlBase)
+wxIMPLEMENT_DYNAMIC_CLASS(wxAnimationCtrl, wxAnimationCtrlBase);
+wxBEGIN_EVENT_TABLE(wxAnimationCtrl, wxAnimationCtrlBase)
     EVT_TIMER(wxID_ANY, wxAnimationCtrl::OnTimer)
-END_EVENT_TABLE()
+wxEND_EVENT_TABLE()
 
 void wxAnimationCtrl::Init()
 {

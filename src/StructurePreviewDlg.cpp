@@ -1,7 +1,6 @@
 #define _AFXDLL
 #include "StdAfx.h"
 #include "StructurePreviewDlg.h"
-#include "wx/wx.h"
 
 #ifdef _DEBUG
 #undef THIS_FILE

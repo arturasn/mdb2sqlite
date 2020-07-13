@@ -141,17 +141,17 @@ private:
     void OnBrowse(wxCommandEvent& event);
 #endif // wxUSE_FILEDLG
 
-    DECLARE_EVENT_TABLE()
+    wxDECLARE_EVENT_TABLE();
     wxDECLARE_NO_COPY_CLASS(wxDumpOpenExternalDlg);
 };
 
-BEGIN_EVENT_TABLE(wxDumpOpenExternalDlg, wxDialog)
+wxBEGIN_EVENT_TABLE(wxDumpOpenExternalDlg, wxDialog)
 
 #if wxUSE_FILEDLG
     EVT_BUTTON(wxID_MORE, wxDumpOpenExternalDlg::OnBrowse)
 #endif
 
-END_EVENT_TABLE()
+wxEND_EVENT_TABLE()
 
 
 wxDumpOpenExternalDlg::wxDumpOpenExternalDlg(wxWindow *parent,
@@ -231,7 +231,7 @@ void wxDumpOpenExternalDlg::OnBrowse(wxCommandEvent& )
                      fname.GetPathWithSep(),
                      fname.GetFullName()
 #ifdef __WXMSW__
-                     , _("Executable files (*.exe)|*.exe|") + wxALL_FILES
+                     , wxString(_("Executable files (*.exe)|*.exe|")) + wxALL_FILES
 #endif // __WXMSW__
                      );
     if ( dlg.ShowModal() == wxID_OK )
@@ -252,8 +252,8 @@ class wxDebugReportDialog : public wxDialog
 public:
     wxDebugReportDialog(wxDebugReport& dbgrpt);
 
-    virtual bool TransferDataToWindow();
-    virtual bool TransferDataFromWindow();
+    virtual bool TransferDataToWindow() wxOVERRIDE;
+    virtual bool TransferDataFromWindow() wxOVERRIDE;
 
 private:
     void OnView(wxCommandEvent& );
@@ -275,7 +275,7 @@ private:
 
     wxArrayString m_files;
 
-    DECLARE_EVENT_TABLE()
+    wxDECLARE_EVENT_TABLE();
     wxDECLARE_NO_COPY_CLASS(wxDebugReportDialog);
 };
 
@@ -283,12 +283,12 @@ private:
 // wxDebugReportDialog implementation
 // ============================================================================
 
-BEGIN_EVENT_TABLE(wxDebugReportDialog, wxDialog)
+wxBEGIN_EVENT_TABLE(wxDebugReportDialog, wxDialog)
     EVT_BUTTON(wxID_VIEW_DETAILS, wxDebugReportDialog::OnView)
     EVT_UPDATE_UI(wxID_VIEW_DETAILS, wxDebugReportDialog::OnViewUpdate)
     EVT_BUTTON(wxID_OPEN, wxDebugReportDialog::OnOpen)
     EVT_UPDATE_UI(wxID_OPEN, wxDebugReportDialog::OnViewUpdate)
-END_EVENT_TABLE()
+wxEND_EVENT_TABLE()
 
 
 // ----------------------------------------------------------------------------
@@ -306,16 +306,15 @@ wxDebugReportDialog::wxDebugReportDialog(wxDebugReport& dbgrpt)
 {
     // upper part of the dialog: explanatory message
     wxString msg;
-    wxString debugDir = dbgrpt.GetDirectory();
 
     // The temporary directory can be the short form on Windows;
     // normalize it for the benefit of users.
-#ifdef __WXMSW__
-    wxFileName debugDirFilename(debugDir, wxEmptyString);
+    wxFileName debugDirFilename(dbgrpt.GetSaveLocation());
     debugDirFilename.Normalize(wxPATH_NORM_LONG);
-    debugDir = debugDirFilename.GetPath();
-#endif
-    msg << _("A debug report has been generated in the directory\n")
+    wxString debugDir = debugDirFilename.GetFullPath();
+    msg << (debugDirFilename.IsDir()
+            ? _("A debug report has been generated in the directory\n")
+            : _("The following debug report will be generated\n"))
         << wxT('\n')
         << wxT("             \"") << debugDir << wxT("\"\n")
         << wxT('\n')
@@ -332,7 +331,7 @@ wxDebugReportDialog::wxDebugReportDialog(wxDebugReport& dbgrpt)
 
     wxSizer *sizerPreview =
         new wxStaticBoxSizer(wxVERTICAL, this, _("&Debug report preview:"));
-    sizerPreview->Add(CreateTextSizer(msg), SizerFlags(0).Centre());
+    sizerPreview->Add(CreateTextSizer(msg), wxSizerFlags().Centre().Border());
 
     // ... and the list of files in this debug report with buttons to view them
     wxSizer *sizerFileBtns = new wxBoxSizer(wxVERTICAL);

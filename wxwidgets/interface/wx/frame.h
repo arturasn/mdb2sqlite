@@ -119,7 +119,7 @@
            frames having this style (the dialogs don't have a minimize or a
            maximize box by default)
     @style{wxFRAME_EX_METAL}
-           On Mac OS X, frames with this style will be shown with a metallic
+           On OS X, frames with this style will be shown with a metallic
            look. This is an extra style.
     @endExtraStyleTable
 
@@ -161,8 +161,10 @@ public:
         Constructor, creating the window.
 
         @param parent
-            The window parent. This may be @NULL. If it is non-@NULL, the frame will
-            always be displayed on top of the parent window on Windows.
+            The window parent. This may be, and often is, @NULL. If it is
+            non-@NULL, the frame will be minimized when its parent is minimized
+            and restored when it is restored (although it will still be
+            possible to minimize and restore just this frame itself).
         @param id
             The window identifier. It may take a value of -1 to indicate a default value.
         @param title
@@ -276,6 +278,26 @@ public:
     virtual wxToolBar* CreateToolBar(long style = wxTB_DEFAULT_STYLE,
                                      wxWindowID id = wxID_ANY,
                                      const wxString& name = wxToolBarNameStr);
+
+    /**
+        Method used to show help string of the selected menu toolbar item.
+
+        This method is called by the default @c wxEVT_MENU_HIGHLIGHT event
+        handler and also by wxToolBar to show the optional help string
+        associated with the selected menu or toolbar item. It can be overridden
+        if the default behaviour of showing this string in the frame status bar
+        is not appropriate.
+
+        @param text The help string to show, may be empty. The default
+            implementation simply shows this string in the frame status bar
+            (after remembering its previous text to restore it later).
+        @param show Whether the help should be shown or hidden. The default
+            implementation restores the previously saved status bar text when
+            it is @false.
+
+        @see SetStatusBarPane()
+     */
+    virtual void DoGiveHelp(const wxString& text, bool show);
 
     /**
         Returns the origin of the frame client area (in client coordinates).
@@ -405,7 +427,11 @@ public:
     void SetStatusBarPane(int n);
 
     /**
-        Sets the status bar text and redraws the status bar.
+        Sets the status bar text and updates the status bar display.
+
+        This is a simple wrapper for wxStatusBar::SetStatusText() which doesn't
+        do anything if the frame has no status bar, i.e. GetStatusBar() returns
+        @NULL.
 
         @param text
             The text for the status field.
@@ -445,6 +471,25 @@ public:
     */
     virtual void SetToolBar(wxToolBar* toolBar);
 
+    /**
+        MSW-specific function for accessing the taskbar button under Windows 7 or later.
+
+        Returns a wxTaskBarButton pointer representing the taskbar button of the
+        window under Windows 7 or later. The returned wxTaskBarButton may be
+        used, if non-@c NULL, to access the functionality including thumbnail
+        representations, thumbnail toolbars, notification and status overlays,
+        and progress indicators.
+
+        The returned pointer must @em not be deleted, it is owned by the frame
+        and will be only deleted when the frame itself is destroyed.
+
+        This function is not available in the other ports by design, any
+        occurrences of it in the portable code must be guarded by
+        @code #ifdef __WXMSW__ @endcode preprocessor guards.
+
+        @since 3.1.0
+    */
+    wxTaskBarButton* MSWGetTaskBarButton();
 
     void PushStatusText(const wxString &text, int number = 0);
     void PopStatusText(int number = 0);

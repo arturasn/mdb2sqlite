@@ -6,13 +6,13 @@
 #include "sqlitestatementexecution.h"
 #include "Relationshipstatements.h"
 #include "FieldStatements.h"
+#include "StructurePreviewDlg.h"
 #include <wx/gauge.h>
 #include <wx/textctrl.h>
 #include <fstream>
 #include <codecvt>
 #include "DBTable.h"
 #include "UIObs.h"
-#include "StructurePreviewDlg.h"
 
 void CSettingsReader::ReadFromCSimpleIni(CSettings &settings)
 {

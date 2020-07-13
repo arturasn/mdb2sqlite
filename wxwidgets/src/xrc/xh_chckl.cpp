@@ -26,7 +26,7 @@
 
 #include "wx/xml/xml.h"
 
-IMPLEMENT_DYNAMIC_CLASS(wxCheckListBoxXmlHandler, wxXmlResourceHandler)
+wxIMPLEMENT_DYNAMIC_CLASS(wxCheckListBoxXmlHandler, wxXmlResourceHandler);
 
 wxCheckListBoxXmlHandler::wxCheckListBoxXmlHandler()
 : wxXmlResourceHandler(), m_insideBox(false)
@@ -94,10 +94,7 @@ wxObject *wxCheckListBoxXmlHandler::DoCreateResource()
         // handle <item checked="boolean">Label</item>
 
         // add to the list
-        wxString str = GetNodeContent(m_node);
-        if (m_resource->GetFlags() & wxXRC_USE_LOCALE)
-            str = wxGetTranslation(str, m_resource->GetDomain());
-        strList.Add(str);
+        strList.Add(GetNodeText(m_node, wxXRC_TEXT_NO_ESCAPE));
         return NULL;
     }
 }
