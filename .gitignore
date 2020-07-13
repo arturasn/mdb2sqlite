@@ -43,3 +43,12 @@
 *.iss
 *.vcproj
 *.vcxproj.user
+CMakeCache.txt
+*.sln
+*.vcxproj
+*.filters
+*.cmake
+*.bin
+*.log
+*.opendb
+*/CMakeFiles/**

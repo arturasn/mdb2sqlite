@@ -2,7 +2,7 @@
 #include "stdafx.h"
 #include "sqlitestatementexecution.h"
 #include "sqlite3.h"
-#include "wxuse.h"
+#include "wxWidgetsLink.h"
 #include <wx/gauge.h>
 #include <wx/textctrl.h>
 #include "UIObs.h"
