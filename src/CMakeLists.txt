@@ -169,3 +169,6 @@ set_wx_widgets_lib_directories()
 set_project_exe_mode()
 set_wx_widgets_include_directories()
 set_project_bin_properties()
+
+file(GLOB WX_DLLS "${RootDir}/wxwidgets/lib/vc_dll/*.dll")
+file(COPY ${WX_DLLS} DESTINATION "${RootDir}/bin")

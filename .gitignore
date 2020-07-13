@@ -51,4 +51,5 @@ CMakeCache.txt
 *.bin
 *.log
 *.opendb
+*.dll
 */CMakeFiles/**
