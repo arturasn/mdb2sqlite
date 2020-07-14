@@ -1,12 +1,14 @@
 # mdb2sqlite
-mdb2SQLite is simple tool to convert MS Access (MDB) files to SQLite databases.
-Provided with a User interface created with wxWidgets.
+mdb2sqlite is a simple tool to convert MS Access database files to SQLite database files.
+This tool is provided with a User interface created using wxWidgets.
 
-<img src="https://imgur.com/rgyip0Q.png" alt="picture">
-<img src="https://s24.postimg.org/hhz2du3wl/Untitled.png" alt="picture">
+![Alt text](img/start-window.png)
+![Alt text](img/configuration-window.png)
+![Alt text](img/structure-preview-window.png)
 
-To build the project yourself:
+To build the project yourself you have to build wxWidgets for your appropriate toolset and then generate the project using CMake:
 
-You have to build wxWidgets.
-For example on windows use: mdb2sqlite/wxwidgets/build/msw
-And there open visual studio solution depending on VS installed and batch build everything.
+1) Browse to mdb2sqlite/wxwidgets/build/msw 
+2) Choose the appropriate solution file toolset
+3) Build the dll debug and dll release configurations.
+4) Generate mdb2sqlite project using CMake selecting the required toolset.

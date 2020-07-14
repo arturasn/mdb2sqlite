@@ -26,11 +26,11 @@ CStructPreviewDlg::CStructPreviewDlg(wxWindow *pParent, std::vector<CDBTable> &t
 	wxInitAllImageHandlers();
 
 	wxImageList *pImg = new wxImageList(16, 16, true);
-	pImg->Add(wxBitmap(wxImage("table.png")));
-	pImg->Add(wxBitmap(wxImage("page_green.png")));
-	pImg->Add(wxBitmap(wxImage("tag_blue.png")));
-	pImg->Add(wxBitmap(wxImage("folder.png")));
-	pImg->Add(wxBitmap(wxImage("cog.png")));
+	pImg->Add(wxBitmap(wxImage("../img/table.png")));
+	pImg->Add(wxBitmap(wxImage("../img/page_green.png")));
+	pImg->Add(wxBitmap(wxImage("../img/tag_blue.png")));
+	pImg->Add(wxBitmap(wxImage("../img/folder.png")));
+	pImg->Add(wxBitmap(wxImage("../img/cog.png")));
 
 	m_pTreeCtrl->SetImageList(pImg);
 
