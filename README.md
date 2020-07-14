@@ -7,6 +7,7 @@ This tool is provided with a User interface created using wxWidgets.
 ![Alt text](img/configuration-window.png)
 ![Alt text](img/structure-preview-window.png)
 
+## Compiling
 To build the project yourself you have to build wxWidgets for your appropriate toolset and then generate the project using CMake:
 
 1) Browse to mdb2sqlite/wxwidgets/build/msw 
