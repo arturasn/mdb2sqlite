@@ -41,7 +41,7 @@ Colourful log:
 ## Compiling
 To build the project yourself you have to build wxWidgets for your appropriate toolset and then generate the project using CMake:
 
-1) Browse to mdb2sqlite/wxwidgets/build/msw 
-2) Choose the appropriate solution file toolset
-3) Build the dll debug and dll release configurations.
-4) Generate mdb2sqlite project using CMake selecting the required too
+1) Browse to mdb2sqlite/wxwidgets/build/msw. 
+2) Choose the appropriate solution file for your target toolset.
+3) Build your target configuration DLL Debug/DLL Release.
+4) Generate mdb2sqlite project using CMake selecting the required toolset.
