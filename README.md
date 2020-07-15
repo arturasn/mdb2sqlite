@@ -50,3 +50,6 @@ To build the project yourself you have to build wxWidgets for your appropriate t
 2) Choose the appropriate solution file for your target toolset.
 3) Build your target configuration DLL Debug/DLL Release.
 4) Generate mdb2sqlite project using CMake selecting the required toolset.
+
+## License
+mdb2sqlite is MIT licensed.
