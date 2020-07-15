@@ -12,7 +12,7 @@ Abillity to transfer:
   * INTEGER
   * BLOB
 * Records
-* Relationships(MS Accces) / Triggers(SQLite)
+* Relationships(MS Accces)/Triggers(SQLite)
 * Indexes 
 * Indexes properties
   * UNIQUE
