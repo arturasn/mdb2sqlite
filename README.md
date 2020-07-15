@@ -6,6 +6,11 @@
 Abillity to transfer:
 * Tables
 * Fields
+* Field Types
+  * TEXT
+  * REAL
+  * INTEGER
+  * BLOB
 * Records
 * Relationships(MS Accces) / Triggers(SQLite)
 * Indexes 
