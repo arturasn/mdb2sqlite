@@ -1,11 +1,10 @@
 #define _AFXDLL
-#include "StdAfx.h"
+#include "stdAfx.h"
 #include "StructurePreviewDlg.h"
+#include "wx/treectrl.h"
 
 #ifdef _DEBUG
-#undef THIS_FILE
-static char THIS_FILE[]=__FILE__;
-#define new DEBUG_NEW
+	#define new DEBUG_NEW
 #endif
 
 namespace internal
@@ -94,9 +93,9 @@ void CStructPreviewDlg::LoadTable(CDBTable &table)
 	}
 }
 
-void CStructPreviewDlg::LoadFieldAndIndex(wxTreeItemId idparent, CDBFieldIndex &fieldidx, int idximg)
+void CStructPreviewDlg::LoadFieldAndIndex(const wxTreeItemId &parent, CDBFieldIndex &fieldidx, int idximg)
 {
-	wxTreeItemId idfieldidx = m_pTreeCtrl->AppendItem(idparent, internal::CstringToWxString(fieldidx.GetName()), idximg);
+	wxTreeItemId idfieldidx = m_pTreeCtrl->AppendItem(parent, internal::CstringToWxString(fieldidx.GetName()), idximg);
 	std::vector<CString> &constraints = fieldidx.GetConstraints();
 	for(auto &constraint : constraints)
 	{

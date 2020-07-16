@@ -10,15 +10,14 @@
 	#include "wx/dialog.h"
 #endif
 
-#ifndef _WX_TREECTRL_H_BASE_
-	#include "wx/treectrl.h"
-#endif
-
 #include <vector>
 
 #ifndef __DB_TABLE_H__
 	#include "DBTable.h"
 #endif
+
+class wxTreeCtrl;
+class wxTreeItemId;
 
 class CStructPreviewDlg : public wxDialog
 {
@@ -29,7 +28,7 @@ public:
 private:
 	void LoadData(std::vector<CDBTable> &tables);
 	void LoadTable(CDBTable &table);
-	void LoadFieldAndIndex(wxTreeItemId idparent, CDBFieldIndex &fieldIdx, int idximg);
+	void LoadFieldAndIndex(const wxTreeItemId &parent, CDBFieldIndex &fieldIdx, int idximg);
 
 public:
 	void OnOK(wxCommandEvent &WXUNUSED(event));

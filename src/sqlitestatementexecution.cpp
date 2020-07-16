@@ -8,9 +8,7 @@
 #include "UIObs.h"
 
 #ifdef _DEBUG
-#undef THIS_FILE
-static char THIS_FILE[]=__FILE__;
-#define new DEBUG_NEW
+	#define new DEBUG_NEW
 #endif
 
   #pragma comment (lib, "../bin/sqlite3.lib")
@@ -36,12 +34,12 @@ inline bool FileExists(const std::string &name)
 
 std::string CSQLiteConversion::ConvertToUTF8(const wchar_t *wstr)
 {
-        const int nLen = wcslen(wstr);
-        if( nLen <= 0  ) return std::string();
-        const int size_needed = WideCharToMultiByte(CP_UTF8, 0, &wstr[0], nLen, NULL, 0, NULL, NULL);
-        std::string strTo(size_needed, 0);
-        WideCharToMultiByte(CP_UTF8, 0, &wstr[0], nLen, &strTo[0], size_needed, NULL, NULL);
-        return strTo;
+    const int nLen = wcslen(wstr);
+    if( nLen <= 0  ) return std::string();
+    const int size_needed = WideCharToMultiByte(CP_UTF8, 0, &wstr[0], nLen, NULL, 0, NULL, NULL);
+    std::string strTo(size_needed, 0);
+    WideCharToMultiByte(CP_UTF8, 0, &wstr[0], nLen, &strTo[0], size_needed, NULL, NULL);
+    return strTo;
 }
 
 void CSQLiteConversion::SqliteStatementExecution(std::vector<CString> &statements, sqlite3 *&sqlitedatabase, int rc , CUIObs *pObs, unsigned &nValue,
@@ -61,21 +59,21 @@ void CSQLiteConversion::SqliteStatementExecution(std::vector<CString> &statement
 	          {
 				  ++nErrorCount;
 				  pObs->SetDefaultStyle(wxTextAttr (wxNullColour, *wxRED));
-				  wxString ErrorMessage = wxT("");
-				  ErrorMessage += wxString::FromUTF8(zErrMsg);
-				  ErrorMessage += " \n";
-				  pObs->WriteText(ErrorMessage);
+				  std::wstring sErrorMessage = L"";
+                  sErrorMessage += wxString::FromUTF8(zErrMsg);
+                  sErrorMessage += L" \n";
+				  pObs->WriteText(sErrorMessage);
 				  CT2CA pszConvertedAnsiString (*it);
 	              std::string strStd (pszConvertedAnsiString);
-				  ErrorMessage = wxString::FromUTF8(_strdup(strStd.c_str() ) ) + "\n";
-				  pObs->WriteText(ErrorMessage);
+				  sErrorMessage = wxString::FromUTF8(_strdup(strStd.c_str() ) ) + "\n";
+				  pObs->WriteText(sErrorMessage);
 				  if(flag & 1)
 				  {
-					ErrorMessage = wxT("Table: ");
+					sErrorMessage = L"Table: ";
 					sB = ConvertToUTF8(sTableNames[nValue-1]);
-					ErrorMessage += wxString::FromUTF8(_strdup(sB.c_str() ) );
-					ErrorMessage += wxT(" wasnt created succesfully \n");
-					pObs->WriteText(ErrorMessage);
+                    sErrorMessage += wxString::FromUTF8(_strdup(sB.c_str() ) );
+                    sErrorMessage += L" wasnt created succesfully \n";
+					pObs->WriteText(sErrorMessage);
 				  }
 				  pObs->SetDefaultStyle(wxTextAttr (wxNullColour));
                   sqlite3_free(zErrMsg);
@@ -84,7 +82,7 @@ void CSQLiteConversion::SqliteStatementExecution(std::vector<CString> &statement
 			{
 				if(flag & ExecuteTables)
 				{ 
-					wxString sMessage = wxT("Table: ");
+					std::wstring sMessage = wxT("Table: ");
 					sB = ConvertToUTF8(sTableNames[nValue-1]);
 					sMessage += wxString::FromUTF8(_strdup(sB.c_str() ) );
 					sMessage += wxT(" created succesfully \n");
@@ -95,7 +93,7 @@ void CSQLiteConversion::SqliteStatementExecution(std::vector<CString> &statement
 					if(*it == "END TRANSACTION")
 					{
 						sTableNames[index];
-						wxString sMessage = wxT("Table: ");
+						std::wstring sMessage = L"Table: ";
 						sB = ConvertToUTF8(sTableNames[index]);
 						sMessage += wxString::FromUTF8(_strdup(sB.c_str() ) );
 						sMessage += wxT(" records inserted \n");
@@ -109,7 +107,7 @@ void CSQLiteConversion::SqliteStatementExecution(std::vector<CString> &statement
 						{
 							while( index < indextable.size() && !indextable[index] )
 								{	
-									wxString sMessage = wxT("indexes of table: ");
+									std::wstring sMessage = L"indexes of table: ";
 									sB = ConvertToUTF8(sIndexTableNames[index]);
 									sMessage += wxString::FromUTF8(_strdup(sB.c_str() ) );
 									sMessage += wxT(" created \n");
@@ -122,7 +120,7 @@ void CSQLiteConversion::SqliteStatementExecution(std::vector<CString> &statement
 						{
 							if( !indextable[index] )
 							{
-								wxString sMessage = wxT("indexes of table: ");
+								std::wstring sMessage = L"indexes of table: ";
 								sB = ConvertToUTF8(sIndexTableNames[index]);
 								sMessage += wxString::FromUTF8(_strdup(sB.c_str() ) );
 								sMessage += wxT(" created \n");
@@ -134,8 +132,7 @@ void CSQLiteConversion::SqliteStatementExecution(std::vector<CString> &statement
 						{
 							while( index < indextable.size() && indextable[index]  )
 								{	
-						
-									wxString sMessage = wxT("indexes of table: ");
+									std::wstring sMessage = wxT("indexes of table: ");
 									sB = ConvertToUTF8(sIndexTableNames[index]);
 									sMessage += wxString::FromUTF8(_strdup(sB.c_str() ) );
 									sMessage += wxT(" created \n");
@@ -195,15 +192,18 @@ void CSQLiteConversion::SqliteConversion(std::vector<CString> &statements, std::
 		 pObs->WriteText(wxT("All indexes created \n"));
 	 }
 
-	 wxString ConclusionMessage = wxT("Statements executed successfully: ");
-	 ConclusionMessage << nValue-nErrorCount;
+	 std::wstring sConclusionMessage = L"Statements executed successfully: ";
+     sConclusionMessage += std::to_wstring(nValue - nErrorCount);
 	 pObs->SetDefaultStyle(wxTextAttr (*wxBLUE));
-	 pObs->WriteText(ConclusionMessage);
-	 ConclusionMessage = wxT("\nErrors: ");
-	 ConclusionMessage << nErrorCount;
-	 pObs->WriteText(ConclusionMessage);
-	 ConclusionMessage = wxT(", Warnings: ");
-	 ConclusionMessage << nWarningCount;
-	 pObs->WriteText(ConclusionMessage);
+	 pObs->WriteText(sConclusionMessage);
+
+     std::wstring sErrorConclusion = L"\nErrors: ";
+     sErrorConclusion += std::to_wstring(nErrorCount);
+	 pObs->WriteText(sErrorConclusion);
+
+	 std::wstring sWarningConclusonMessage = L", Warnings: ";
+     sWarningConclusonMessage += std::to_wstring(nWarningCount);
+	 pObs->WriteText(sWarningConclusonMessage);
+
      sqlite3_close(sqlitedatabase);
  }

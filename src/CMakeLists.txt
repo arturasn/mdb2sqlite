@@ -85,7 +85,7 @@ function(set_project_compile_options)
 endfunction(set_project_compile_options)
 
 function(set_project_compile_flags)
-		set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS_DEBUG "/INCREMENTAL /DEBUG:FASTLINK /SUBSYSTEM:WINDOWS /SAFESEH:NO /LARGEADDRESSAWARE")
+		set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS_DEBUG "/INCREMENTAL /DEBUG:FASTLINK /SUBSYSTEM:WINDOWS /SAFESEH:NO /LARGEADDRESSAWARE /NODEFAULTLIB:MSVCRT")
 		set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS_RELEASE "/INCREMENTAL:NO /DEBUG:FULL /SUBSYSTEM:WINDOWS /SAFESEH:NO /MAP /ignore:4099 /LARGEADDRESSAWARE")
 endfunction(set_project_compile_flags)
 

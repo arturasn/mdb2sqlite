@@ -24,8 +24,8 @@ class wxCheckBox;
 class wxTextAttr;
 class wxGauge;
 
-class CMainDlg : public wxDialog,
-				 public CUIObs
+class CMainDlg final : public wxDialog,
+				       public CUIObs
 {
 public:
 	 CMainDlg(const wxString sTitle, const int nX, const int nY, const int nSizeX);
@@ -43,9 +43,9 @@ private:
 public:
 	virtual void CreateAdditionalItems() override;
 	virtual void SetDefaultStyle(const wxTextAttr &atr) override;
-	virtual void WriteText(wxString sMsg) override;
-	virtual void SetRange(int range) override;
-	virtual void SetValue(int value) override;
+	virtual void WriteText(std::wstring sMsg) override;
+	virtual void SetRange(int nRange) override;
+	virtual void SetValue(int nValue) override;
 private:
 	void OnSaveWndInfo();
 

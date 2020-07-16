@@ -5,14 +5,12 @@
 #include <wx/textctrl.h>
 
 #ifdef _DEBUG
-#undef THIS_FILE
-static char THIS_FILE[]=__FILE__;
-#define new DEBUG_NEW
+	#define new DEBUG_NEW
 #endif
 
 std::vector<CDBFieldIndex> CIndexStatements::Indexes(CDaoTableDef &TableDef, std::vector<CString> &IndexStatements, const CDaoTableDefInfo &tabledefinfo, std::vector<CString> &sTableNames, 
 	                           std::vector<CString> &UniqueFields, std::vector<CString> &CollateIndexFields, const bool &m_bCollateNoCaseIndexAdd, const bool &m_bTrimTextValues,  
-							   const bool &bKeyWordList, CString (&ReservedKeyWords)[124], std::vector<CString> &primary_fields, unsigned &nWarningCount, std::vector<int> &indextable, std::vector<wxString> &warnings)
+							   const bool &bKeyWordList, CString (&ReservedKeyWords)[124], std::vector<CString> &primary_fields, unsigned &nWarningCount, std::vector<int> &indextable, std::vector<std::wstring> &warnings)
 {
 	CString sParrent;
 	CString sStatement;
@@ -54,13 +52,13 @@ std::vector<CDBFieldIndex> CIndexStatements::Indexes(CDaoTableDef &TableDef, std
 				if( !(indexinfo.m_strName.CompareNoCase(ReservedKeyWords[i1])) )
 				{
 					++nWarningCount;
-					wxString ErrorMessage = wxT("WARNING: index found as sqlite keyword this could lead to unexpected behaviour, index name found: ");
+					std::wstring sErrorMessage = wxT("WARNING: index found as sqlite keyword this could lead to unexpected behaviour, index name found: ");
 					//PrgDlg->SetDefaultStyle(wxTextAttr (wxNullColour, *wxYELLOW));
 					CT2CA pszConvertedAnsiString (indexinfo.m_strName);
 					std::string strStd (pszConvertedAnsiString);
-					ErrorMessage += wxString::FromUTF8(_strdup(strStd.c_str() ) );
-					ErrorMessage += wxT("\n");
-					warnings.push_back(ErrorMessage);
+                    sErrorMessage += wxString::FromUTF8(_strdup(strStd.c_str() ) );
+                    sErrorMessage += wxT("\n");
+					warnings.push_back(sErrorMessage);
 					//PrgDlg->WriteText(ErrorMessage);
 					//PrgDlg->SetDefaultStyle(wxTextAttr (wxNullColour));
 				}

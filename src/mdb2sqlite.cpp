@@ -9,6 +9,10 @@
 #include <wx/statline.h>
 #include <wx/filename.h>
 
+#ifdef _DEBUG
+	#define new DEBUG_NEW
+#endif
+
 IMPLEMENT_APP(MyApp)
 wxBEGIN_EVENT_TABLE ( CMainDlg, wxDialog )
     EVT_BUTTON (Close_button, CMainDlg::OnExit ) 
@@ -198,7 +202,7 @@ void CMainDlg::SetDefaultStyle(const wxTextAttr &atr)
 	}
 }
 
-void CMainDlg::WriteText(wxString sMsg)
+void CMainDlg::WriteText(std::wstring sMsg)
 {
 	if( m_pPrgDlg ) {
 		m_pPrgDlg->WriteText(sMsg);

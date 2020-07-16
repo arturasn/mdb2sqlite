@@ -10,9 +10,7 @@
 #include <vector>
 
 #ifdef _DEBUG
-#undef THIS_FILE
-static char THIS_FILE[]=__FILE__;
-#define new DEBUG_NEW
+	#define new DEBUG_NEW
 #endif
 
 CSettingsDlg::CSettingsDlg(wxWindow *pParent) : wxDialog(pParent, wxID_ANY, wxT("Values to export"))

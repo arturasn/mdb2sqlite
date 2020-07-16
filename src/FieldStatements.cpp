@@ -8,9 +8,7 @@
 #include <iomanip>
 
 #ifdef _DEBUG
-#undef THIS_FILE
-static char THIS_FILE[]=__FILE__;
-#define new DEBUG_NEW
+	#define new DEBUG_NEW
 #endif
 
 CString CFieldStatements::GetDaoFieldDescription(CString &strFieldName, CString &strTableName, CDaoDatabase &db) 
@@ -70,7 +68,7 @@ wxString CFieldStatements::CstringToWxString(const CString &ConversionString)
 }
 
 std::vector<CDBFieldIndex> CFieldStatements::fFields(CDaoDatabase &db, CDaoTableDef &TableDef, CDaoTableDefInfo &tabledefinfo, std::vector<CString> &InsertStatements, std::vector<CString> &UniqueFields, 
-	CSettings &settings, CString &sStatement,CString (&ReservedKeyWords)[124], std::vector<CString> &TableField, std::vector<CString> &primary_fields, unsigned &nWarningCount, std::vector<wxString> &warnings)
+	CSettings &settings, CString &sStatement,CString (&ReservedKeyWords)[124], std::vector<CString> &TableField, std::vector<CString> &primary_fields, unsigned &nWarningCount, std::vector<std::wstring> &warnings)
 {
 		size_t nFieldCount = TableDef.GetFieldCount();
 		std::vector<CString> sFieldnames; 
@@ -110,13 +108,13 @@ std::vector<CDBFieldIndex> CFieldStatements::fFields(CDaoDatabase &db, CDaoTable
 					if( !(fieldinfo.m_strName.CompareNoCase(ReservedKeyWords[i2])) )
 					{
 							++nWarningCount;
-							wxString ErrorMessage = wxT("WARNING: found field name sqlite keyword this could lead to unexpected behaviour, found on table: ");
+							std::wstring sErrorMessage = L"WARNING: found field name sqlite keyword this could lead to unexpected behaviour, found on table: ";
 							//PrgDlg->SetDefaultStyle(wxTextAttr (wxNullColour, *wxYELLOW));
-							ErrorMessage += CstringToWxString(tabledefinfo.m_strName);
-							ErrorMessage += wxT(" field name: ");
-							ErrorMessage += CstringToWxString(fieldinfo.m_strName);
-							ErrorMessage += wxT("\n");
-							warnings.push_back(ErrorMessage);
+                            sErrorMessage += CstringToWxString(tabledefinfo.m_strName);
+                            sErrorMessage += L" field name: ";
+                            sErrorMessage += CstringToWxString(fieldinfo.m_strName);
+                            sErrorMessage += L"\n";
+							warnings.push_back(sErrorMessage);
 							//PrgDlg->WriteText(ErrorMessage);
 							//PrgDlg->SetDefaultStyle(wxTextAttr (wxNullColour));
 					}
@@ -220,7 +218,7 @@ void CFieldStatements::AutoIncrementAdd(const CDaoFieldInfo &fieldinfo, CString 
 }
 
 void CFieldStatements::DefaultValueAdd( const CDaoFieldInfo &fieldinfo, CDaoTableDefInfo &tabledefinfo, CString &sStatement, CDaoFieldInfo &recordinfo, unsigned &nWarningCount, 
-	                                    std::vector<CString> &constraints, std::vector<wxString> &warnings)
+	                                    std::vector<CString> &constraints, std::vector<std::wstring> &warnings)
 {
 	if( !(fieldinfo.m_strDefaultValue.IsEmpty()) )
 	{
@@ -265,14 +263,14 @@ void CFieldStatements::DefaultValueAdd( const CDaoFieldInfo &fieldinfo, CDaoTabl
 
 			++nWarningCount;
 			//PrgDlg->SetDefaultStyle(wxTextAttr (*wxRED));
-			wxString ErrorMessage = wxT("Unable to recognize default value: ");
-			ErrorMessage += CstringToWxString(fieldinfo.m_strDefaultValue);
-			ErrorMessage += wxT(" on table: ");
-			ErrorMessage += CstringToWxString(tabledefinfo.m_strName);
-			ErrorMessage += wxT(" column: ");
-			ErrorMessage += CstringToWxString(fieldinfo.m_strName);
-			ErrorMessage += wxT("\n");
-			warnings.push_back(ErrorMessage);
+			std::wstring sErrorMessage = L"Unable to recognize default value: ";
+            sErrorMessage += CstringToWxString(fieldinfo.m_strDefaultValue);
+            sErrorMessage += L" on table: ";
+            sErrorMessage += CstringToWxString(tabledefinfo.m_strName);
+            sErrorMessage += L" column: ";
+            sErrorMessage += CstringToWxString(fieldinfo.m_strName);
+            sErrorMessage += L"\n";
+			warnings.push_back(sErrorMessage);
 			//PrgDlg->WriteText(ErrorMessage);
 			//PrgDlg->SetDefaultStyle(wxTextAttr (wxNullColour));
 		}

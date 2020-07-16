@@ -89,7 +89,7 @@ bool CSettingsReader::Control(const char *Path, const char *dPath, CUIObs *pObs,
 	std::vector<CString> sIndexTableNames; 
 	std::vector<int> indextable;
 	std::vector<CDBTable> structure;
-	std::vector<wxString> warnings;
+	std::vector<std::wstring> warnings;
 
 	for( int i = 0; i < nTableCount; ++i )
 	{
@@ -125,13 +125,13 @@ bool CSettingsReader::Control(const char *Path, const char *dPath, CUIObs *pObs,
 						if( !(tabledefinfo.m_strName.CompareNoCase(ReservedKeyWords[i1])) )
 						{
 							++nWarningCount;
-							wxString ErrorMessage = wxT("WARNING: table name found as sqlite keyword this could lead to unexpected behaviour, table name found: ");
+							std::wstring sErrorMessage = L"WARNING: table name found as sqlite keyword this could lead to unexpected behaviour, table name found: ";
 							pObs->SetDefaultStyle(wxTextAttr (wxNullColour, *wxYELLOW));
 							CT2CA pszConvertedAnsiString (tabledefinfo.m_strName);
 							std::string strStd (pszConvertedAnsiString);
-							ErrorMessage += wxString::FromUTF8(_strdup(strStd.c_str() ) );
-							ErrorMessage += wxT("\n");
-							pObs->WriteText(ErrorMessage);
+                            sErrorMessage += wxString::FromUTF8(_strdup(strStd.c_str() ) );
+                            sErrorMessage += L"\n";
+							pObs->WriteText(sErrorMessage);
 							pObs->SetDefaultStyle(wxTextAttr (wxNullColour));
 						}
 
