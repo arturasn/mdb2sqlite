@@ -10,23 +10,19 @@
 	#include "wx/dialog.h"
 #endif
 
-#include <vector>
-
 class wxCheckBox;
 
 class CSettingsDlg : public wxDialog
 {
 public:
 	 CSettingsDlg(wxWindow *pParent);
-	 virtual ~CSettingsDlg();
+	 virtual ~CSettingsDlg() { }
 
 public:
 	std::vector<std::pair<bool, std::wstring>> GetSettingsArr() const;
 
 private:
 	void RefreshSettings();
-
-public:
 	void OnOK(wxCommandEvent &WXUNUSED(event));
 
 private:

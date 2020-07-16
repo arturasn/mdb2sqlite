@@ -15,21 +15,21 @@
 
 CSettingsDlg::CSettingsDlg(wxWindow *pParent) : wxDialog(pParent, wxID_ANY, wxT("Values to export"))
 {
-	m_RelationshipCheckbox		= new wxCheckBox(this, wxID_ANY, wxT("Relationship add"), wxDefaultPosition);
-	m_RecordCheckbox		= new wxCheckBox(this, wxID_ANY, wxT("Record add"), wxDefaultPosition);
-    	m_NotNullValueCheckbox		= new wxCheckBox(this, wxID_ANY, wxT("Not Null value add"), wxDefaultPosition);
-	m_AutoincrementCheckbox		= new wxCheckBox(this, wxID_ANY, wxT("AutoIncrement value add"), wxDefaultPosition);
-	m_DefaultValueCheckbox		= new wxCheckBox(this, wxID_ANY, wxT("Default value add"), wxDefaultPosition);
-	m_IndexCheckbox			= new wxCheckBox(this, wxID_ANY, wxT("Index add"), wxDefaultPosition);
-	m_UniqueFieldsCheckbox		= new wxCheckBox(this, wxID_ANY, wxT("Unique fields add"), wxDefaultPosition);
-	m_CollateNcIndexCheckbox	= new wxCheckBox(this, wxID_ANY, wxT("Collate nocase for index add"), wxDefaultPosition);
-	m_CollateNcFieldsCheckbox	= new wxCheckBox(this, wxID_ANY, wxT("Collatee nocase for fields add"), wxDefaultPosition);
-	m_TrimCheckbox			= new wxCheckBox(this, wxID_ANY, wxT("Trim text values"), wxDefaultPosition);
-	m_DescriptionCheckbox		= new wxCheckBox(this, wxID_ANY, wxT("Add field comments"), wxDefaultPosition);
-	m_ReservedKeywordCheckbox	= new wxCheckBox(this, wxID_ANY, wxT("Reserved keyword list add"), wxDefaultPosition);
-	m_ForeignKeySupportCheckbox 	= new wxCheckBox(this, wxID_ANY, wxT("Foreign key support"), wxDefaultPosition);
-	m_PrimaryKeyCheckbox		= new wxCheckBox(this, wxID_ANY, wxT("Primary key support"), wxDefaultPosition);
-	m_ForeignKeyPrimaryCheckbox 	= new wxCheckBox(this, wxID_ANY, wxT("Foreign key both primary fields"), wxDefaultPosition);
+	m_RelationshipCheckbox		= new wxCheckBox(this, wxID_ANY, L"Relationship add",                   wxDefaultPosition);
+	m_RecordCheckbox		    = new wxCheckBox(this, wxID_ANY, L"Record add",                         wxDefaultPosition);
+    m_NotNullValueCheckbox	    = new wxCheckBox(this, wxID_ANY, L"Not Null value add",                 wxDefaultPosition);
+	m_AutoincrementCheckbox		= new wxCheckBox(this, wxID_ANY, L"AutoIncrement value add",            wxDefaultPosition);
+	m_DefaultValueCheckbox		= new wxCheckBox(this, wxID_ANY, L"Default value add",                  wxDefaultPosition);
+	m_IndexCheckbox			    = new wxCheckBox(this, wxID_ANY, L"Index add",                          wxDefaultPosition);
+	m_UniqueFieldsCheckbox		= new wxCheckBox(this, wxID_ANY, L"Unique fields add",                  wxDefaultPosition);
+	m_CollateNcIndexCheckbox	= new wxCheckBox(this, wxID_ANY, L"Collate nocase for index add",       wxDefaultPosition);
+	m_CollateNcFieldsCheckbox	= new wxCheckBox(this, wxID_ANY, L"Collatee nocase for fields add",     wxDefaultPosition);
+	m_TrimCheckbox			    = new wxCheckBox(this, wxID_ANY, L"Trim text values",                   wxDefaultPosition);
+	m_DescriptionCheckbox		= new wxCheckBox(this, wxID_ANY, L"Add field comments",                 wxDefaultPosition);
+	m_ReservedKeywordCheckbox	= new wxCheckBox(this, wxID_ANY, L"Reserved keyword list add",          wxDefaultPosition);
+	m_ForeignKeySupportCheckbox = new wxCheckBox(this, wxID_ANY, L"Foreign key support",                wxDefaultPosition);
+	m_PrimaryKeyCheckbox		= new wxCheckBox(this, wxID_ANY, L"Primary key support",                wxDefaultPosition);
+	m_ForeignKeyPrimaryCheckbox = new wxCheckBox(this, wxID_ANY, L"Foreign key both primary fields",    wxDefaultPosition);
 
 	RefreshSettings();
 	file_utils::GetSettings(m_settings);
@@ -108,11 +108,6 @@ CSettingsDlg::CSettingsDlg(wxWindow *pParent) : wxDialog(pParent, wxID_ANY, wxT(
 	SetSizerAndFit(pSettingSzr);
 
 	Connect(wxID_OK, wxEVT_BUTTON, wxCommandEventHandler(CSettingsDlg::OnOK), nullptr, this);
-}
-
-CSettingsDlg::~CSettingsDlg()
-{
-
 }
 
 void CSettingsDlg::OnOK(wxCommandEvent &WXUNUSED(event))

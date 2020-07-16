@@ -10,8 +10,6 @@
 	#include "wx/dialog.h"
 #endif
 
-#include <vector>
-
 #ifndef __DB_TABLE_H__
 	#include "DBTable.h"
 #endif
