@@ -160,8 +160,8 @@ function(set_project_exe_mode)
 	STRING (REGEX REPLACE "/RTC(su|[1su])" "" CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
 endfunction(set_project_exe_mode)
 
-set(CMAKE_EXE_LINKER_FLAGS_DEBUG "")
-set(CMAKE_EXE_LINKER_FLAGS_RELEASE "")
+set(CMAKE_EXE_LINKER_FLAGS_DEBUG 	"")
+set(CMAKE_EXE_LINKER_FLAGS_RELEASE 	"")
 
 project(mdb2sqlite)
 
