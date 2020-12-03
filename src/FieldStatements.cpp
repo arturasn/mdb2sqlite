@@ -109,14 +109,11 @@ std::vector<CDBFieldIndex> CFieldStatements::fFields(CDaoDatabase &db, CDaoTable
 					{
 							++nWarningCount;
 							std::wstring sErrorMessage = L"WARNING: found field name sqlite keyword this could lead to unexpected behaviour, found on table: ";
-							//PrgDlg->SetDefaultStyle(wxTextAttr (wxNullColour, *wxYELLOW));
                             sErrorMessage += CstringToWxString(tabledefinfo.m_strName);
                             sErrorMessage += L" field name: ";
                             sErrorMessage += CstringToWxString(fieldinfo.m_strName);
                             sErrorMessage += L"\n";
 							warnings.push_back(sErrorMessage);
-							//PrgDlg->WriteText(ErrorMessage);
-							//PrgDlg->SetDefaultStyle(wxTextAttr (wxNullColour));
 					}
 				}
 			}
@@ -144,7 +141,6 @@ std::vector<CDBFieldIndex> CFieldStatements::fFields(CDaoDatabase &db, CDaoTable
 			bool bRealPrimaryKey = isPrimary && settings.m_PrimaryKeySupport && (!(fieldinfo.m_lAttributes & dbAutoIncrField) || !settings.m_bAutoIncrementAdd);
 			if( bRealPrimaryKey ) 
 			{
-				//sStatement += _T(" PRIMARY KEY");
 				real_primary_keys.push_back(std::wstring(fieldinfo.m_strName));
 			}
 
@@ -171,7 +167,6 @@ std::vector<CDBFieldIndex> CFieldStatements::fFields(CDaoDatabase &db, CDaoTable
 				}
 			}
 			if( i1 != nFieldCount - 1 ) sStatement += (_T(","));
-			//else sStatement+= (_T(");"));
 			fields.push_back(CDBFieldIndex(sFieldNameAndType, constraints));	
 		}
 
@@ -262,7 +257,6 @@ void CFieldStatements::DefaultValueAdd( const CDaoFieldInfo &fieldinfo, CDaoTabl
 			}
 
 			++nWarningCount;
-			//PrgDlg->SetDefaultStyle(wxTextAttr (*wxRED));
 			std::wstring sErrorMessage = L"Unable to recognize default value: ";
             sErrorMessage += CstringToWxString(fieldinfo.m_strDefaultValue);
             sErrorMessage += L" on table: ";
@@ -271,8 +265,6 @@ void CFieldStatements::DefaultValueAdd( const CDaoFieldInfo &fieldinfo, CDaoTabl
             sErrorMessage += CstringToWxString(fieldinfo.m_strName);
             sErrorMessage += L"\n";
 			warnings.push_back(sErrorMessage);
-			//PrgDlg->WriteText(ErrorMessage);
-			//PrgDlg->SetDefaultStyle(wxTextAttr (wxNullColour));
 		}
 		else 
 		{
