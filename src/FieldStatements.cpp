@@ -277,10 +277,21 @@ void CFieldStatements::DefaultValueAdd( const CDaoFieldInfo &fieldinfo, CDaoTabl
 		else 
 		{
 			CString sDef = _T("DEFAULT ");
-			sDef += fieldinfo.m_strDefaultValue;
+            CString sDefaulValue;
+            if (fieldinfo.m_strDefaultValue.Find(L"Now()") == -1) 
+            {
+                sDef += fieldinfo.m_strDefaultValue;
+                sDefaulValue = fieldinfo.m_strDefaultValue;
+            }
+            else 
+            {
+                sDef += L"CURRENT_TIMESTAMP";
+                sDefaulValue = L"CURRENT_TIMESTAMP";
+            }
+
 			constraints.push_back(sDef);
 			sStatement += _T(" DEFAULT ");
-			sStatement += fieldinfo.m_strDefaultValue;
+            sStatement += sDefaulValue;
 		}
 	}
 }
@@ -293,6 +304,7 @@ void CFieldStatements::FieldTypeAdd(CDaoTableDef &TableDef, const short nType, b
 	CString sReal = L"REAL";
 	CString sText = L"TEXT";
 	CString sBlob = L"BLOB";
+    CString sDateTime = L"DATETIME";
 
 	switch(nType)
 	{
@@ -325,8 +337,8 @@ void CFieldStatements::FieldTypeAdd(CDaoTableDef &TableDef, const short nType, b
 				sFieldAndType += sReal;
 				break;
 		case dbDate: 
-				sStatement += sInt; 
-				sFieldAndType += sInt;
+				sStatement += sDateTime;
+				sFieldAndType += sDateTime;
 				break;
 		case dbBinary: 
 				sStatement += sBlob; 
@@ -378,13 +390,13 @@ void CFieldStatements::FieldTypeAdd(CDaoTableDef &TableDef, const short nType, b
 				sFieldAndType += sReal;
 				break;
 		case dbTime: 
-				sStatement += sInt; 
-				sFieldAndType += sInt;
+				sStatement += sDateTime;
+				sFieldAndType += sDateTime;
 				break;
 		case dbTimeStamp: 
 				ASSERT(FALSE); 
-				sStatement += sInt; 
-				sFieldAndType += sInt;
+				sStatement += sDateTime;
+				sFieldAndType += sDateTime;
 				break;
 		default:
 				break;
