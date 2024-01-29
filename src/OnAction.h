@@ -32,7 +32,7 @@ class CSettingsReader
 {
    public:
 		static void ReadFromCSimpleIni(CSettings &settings);
-		static bool Control(const char *Path, const char *dPath, CUIObs *pObs, bool bConvert);
+		static bool Control(const char *Path, const char *dPath, CUIObs *pObs, bool bConvert, bool bCmd);
    private:
 	    static void Dumping(std::vector<CString> &statements, std::vector<CString> &InsertStatements, std::vector<CString> &RelationFields, std::vector<CString> &IndexStatements, 
 			                const char *&dPath);

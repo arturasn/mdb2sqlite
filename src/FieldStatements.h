@@ -10,6 +10,7 @@ struct CDaoTableDefInfo;
 struct CDaoFieldInfo;
 
 #include "OnAction.h"
+#include <string>
 
 #ifndef __DB_FIELD_H__
 	#include "DBField.h"
