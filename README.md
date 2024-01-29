@@ -51,6 +51,9 @@ To build the project yourself you have to build wxWidgets for your appropriate t
 3) Build your target configuration DLL Debug/DLL Release.
 4) Generate mdb2sqlite project using CMake selecting the required toolset.
 
+## Command line
+> mdb2sqlite.exe <SourcePath> <TargetPath>
+
 ## Additional notes
 Does not work if database is password protected
 

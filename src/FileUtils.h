@@ -3,6 +3,7 @@
 #pragma once
 
 #include <vector>
+#include <string>
 
 namespace file_utils
 {

@@ -30,10 +30,45 @@ namespace internal
 		wxMessageDialog dlg(pParent, sMsg, sTitle);
 		dlg.ShowModal();
 	}
+
+	class CUIObsCmdImpl : public CUIObs
+	{
+	public:
+		virtual void CreateAdditionalItems() override { };
+		virtual void SetDefaultStyle(const wxTextAttr &atr) override { };
+		virtual void WriteText(std::wstring sMsg) override { };
+		virtual void SetRange(int nRange) override { };
+		virtual void SetValue(int nValue) override { };
+	};
+
+	static bool UseCommandLine(int argc, const wxCmdLineArgsArray &argv) 
+	{
+		if (3 == argc) {
+			const wxString sSource = argv[1];
+			const wxString sTarget = argv[2];
+
+			if (sSource.empty() || sTarget.empty()) {
+				return false;
+			}
+
+			CUIObsCmdImpl obsImpl;
+
+			const bool bRet = CSettingsReader::Control(sSource.mb_str(), sTarget.mb_str(), &obsImpl, true, true);
+			if (bRet) {
+				return true;
+			}
+		}
+
+		return false;
+	}
 };
 
 bool MyApp::OnInit()
 {
+	if (internal::UseCommandLine(argc, argv)) {
+		return false;
+	}	
+
 	int nPosX, nPosY, nSizeX;
 	file_utils::GetWindowInformation(nPosX, nPosY, nSizeX);
 
@@ -151,7 +186,7 @@ void CMainDlg::OnDump( wxCommandEvent &WXUNUSED(event) )
 			const char *pSrcPath = sSrcPath.mb_str();
 			const char *pDstPath = sDstPath.mb_str();
 
-			CSettingsReader::Control(pSrcPath, pDstPath, this, false);
+			CSettingsReader::Control(pSrcPath, pDstPath, this, false, false);
 			internal::ShowMessageDlg(this, wxT("Succesfully dumped."), wxT("Dump information"));
 		}
 
@@ -174,7 +209,7 @@ void CMainDlg::OnConvert(wxCommandEvent &WXUNUSED(event) )
 		const char *pSrcPath		= sPathMDB.mb_str();
 		const char *pDPath		= sPathSQLite.mb_str();
 
-		bool bRet = CSettingsReader::Control(pSrcPath, pDPath, this, true);
+		bool bRet = CSettingsReader::Control(pSrcPath, pDPath, this, true, false);
 		if( bRet )
 			internal::ShowMessageDlg(this, wxString::Format(wxT("Succesfully exported %s to SQLite"), sFilename), wxT("Succesfully exported to SQLite"));
 	}

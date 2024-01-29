@@ -63,7 +63,7 @@ void CSettingsReader::Dumping(std::vector<CString> &statements, std::vector<CStr
 	dumpfile.close();
 }
 
-bool CSettingsReader::Control(const char *Path, const char *dPath, CUIObs *pObs, bool bConvert)
+bool CSettingsReader::Control(const char *Path, const char *dPath, CUIObs *pObs, bool bConvert, bool bCmd)
 {
 	AfxDaoInit();
 	std::vector<CString> statements, InsertStatements, RelationFields, IndexStatements, UniqueFields, CollateIndexFields, 
@@ -156,7 +156,7 @@ bool CSettingsReader::Control(const char *Path, const char *dPath, CUIObs *pObs,
 		} 
 	} 
 
-	if( bConvert )
+	if( bConvert && !bCmd)
 	{
 		CStructPreviewDlg dlg(nullptr, structure);
 		bool bOK = dlg.ShowModal() == wxID_OK;

@@ -4,6 +4,7 @@
 #pragma once
 
 #include <vector>
+#include <string>
 
 class CUIObs;
 struct sqlite3;
